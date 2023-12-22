@@ -4,6 +4,8 @@ public class CeilingUltraModule : EverestModule {
 
     public static CeilingUltraModule Instance;
 
+    public static string Warnings = "";
+
     public static CeilingUltraSettings Settings => CeilingUltraSettings.Instance;
     public CeilingUltraModule() {
         Instance = this;

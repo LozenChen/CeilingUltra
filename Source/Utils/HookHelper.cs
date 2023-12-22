@@ -157,5 +157,6 @@ public static class CILCodeHelper {
     public static bool Apply = false;
 
     public static bool AsShift = true;
+
 }
 

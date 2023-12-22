@@ -4,6 +4,7 @@ using Monocle;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using MonoMod.Utils;
+using MonoMod.RuntimeDetour;
 using CelesteInput = Celeste.Input;
 
 namespace Celeste.Mod.CeilingUltra.Gameplay;
@@ -34,15 +35,17 @@ public static class CeilingTechMechanism {
 
     [Initialize]
     public static void Initialize() {
-        typeof(Player).GetMethodInfo("OnCollideV").IlHook(CeilingUltraHookOnCollideV);
-        typeof(Player).GetMethodInfo("DashCoroutine").GetStateMachineTarget().IlHook(CeilingUltraHookDashCoroutine);
-        typeof(Player).GetMethodInfo("orig_Update").IlHook(OnCeilingHookPlayerUpdate);
-        typeof(Player).GetMethodInfo("NormalUpdate").IlHook(CeilingJumpHookNormalUpdate);
-        typeof(Player).GetMethodInfo("SwimUpdate").IlHook(CeilingJumpHookSwimUpdate);
-        typeof(Player).GetMethodInfo("StarFlyUpdate").IlHook(CeilingJumpHookFeatherUpdate);
-        typeof(Player).GetMethodInfo("HitSquashUpdate").IlHook(CeilingJumpHookHitSquashUpdate);
-        typeof(Player).GetMethodInfo("DashUpdate").IlHook(CeilingHyperHookDashUpdate);
-        typeof(Player).GetMethodInfo("RedDashUpdate").IlHook(CeilingHyperHookRedDashUpdate);
+        using (new DetourContext { Before = new List<string> { "*"}, ID = "Ceiling Tech Mechanism" }) {
+            typeof(Player).GetMethodInfo("OnCollideV").IlHook(CeilingUltraHookOnCollideV);
+            typeof(Player).GetMethodInfo("DashCoroutine").GetStateMachineTarget().IlHook(CeilingUltraHookDashCoroutine);
+            typeof(Player).GetMethodInfo("orig_Update").IlHook(OnCeilingHookPlayerUpdate);
+            typeof(Player).GetMethodInfo("NormalUpdate").IlHook(CeilingJumpHookNormalUpdate);
+            typeof(Player).GetMethodInfo("SwimUpdate").IlHook(CeilingJumpHookSwimUpdate);
+            typeof(Player).GetMethodInfo("StarFlyUpdate").IlHook(CeilingJumpHookFeatherUpdate);
+            typeof(Player).GetMethodInfo("HitSquashUpdate").IlHook(CeilingJumpHookHitSquashUpdate);
+            typeof(Player).GetMethodInfo("DashUpdate").IlHook(CeilingHyperHookDashUpdate);
+            typeof(Player).GetMethodInfo("RedDashUpdate").IlHook(CeilingHyperHookRedDashUpdate);
+        }
     }
 
     private static Player OnLoadNewPlayer(On.Celeste.Level.orig_LoadNewPlayer orig, Vector2 Position, PlayerSpriteMode spriteMode) {
@@ -101,7 +104,7 @@ public static class CeilingTechMechanism {
                 cursor.EmitDelegate(TryApplyCeilingUltraAndPassBoolean);
             }
         }
-        LogHookData("Ceiling Ultra", "OnCollideV", success);
+        "OnCollideV".LogHookData("Ceiling Ultra", success);
     }
 
     private static bool TryApplyCeilingUltraAndPassBoolean(bool b, Player player) {
@@ -126,7 +129,7 @@ public static class CeilingTechMechanism {
         else {
             success = false;
         }
-        LogHookData("Ceiling Ultra", "Player.DashCoroutine", success);
+        "Player.DashCoroutine".LogHookData("Ceiling Ultra", success);
 
         success = true;
         if (cursor.TryGotoNext(ins => ins.MatchLdcR4(160f))) {
@@ -140,7 +143,7 @@ public static class CeilingTechMechanism {
         else {
             success = false;
         }
-        LogHookData("Updiag Dash Don't Lose Horizontal Speed On End", "Player.DashCoroutine", success);
+        "Player.DashCoroutine".LogHookData("Updiag Dash Don't Lose Horizontal Speed On End", success);
     }
 
     private static void CheckCeilingUltraInDashCoroutine(Player player) {
@@ -195,7 +198,7 @@ public static class CeilingTechMechanism {
         ILCursor cursor = new (il);
         cursor.Emit(OpCodes.Ldarg_0);
         cursor.EmitDelegate(UpdateOnCeiling); // only hiccup jump will affect this, so i dont insert this after onground evaluation
-        LogHookData("Ceiling Jump & RefillStamina", "Player.orig_Update", true);
+        "Player.orig_Update".LogHookData("Ceiling Jump & RefillStamina", true);
 
         bool success = true;
         if (cursor.TryGotoNext(MoveType.AfterLabel, ins => ins.OpCode == OpCodes.Ldarg_0, ins => ins.MatchLdfld<Player>(nameof(Player.dashRefillCooldownTimer)), ins => ins.MatchLdcR4(0f), ins => ins.OpCode == OpCodes.Ble_Un_S)) {
@@ -209,7 +212,7 @@ public static class CeilingTechMechanism {
         else {
             success = false;
         }
-        LogHookData("Ceiling RefillDash", "Player.orig_Update", success);
+        "Player.orig_Update".LogHookData("Ceiling RefillDash", success);
     }
 
     public static void CheckCeilingRefillDash(Player player) {
@@ -217,7 +220,6 @@ public static class CeilingTechMechanism {
             player.RefillDash();
         }
     }
-
 
     public static void CeilingJump(this Player player, bool particles = true, bool playSfx = true) {
         player.maxFall = 240f;
@@ -270,7 +272,7 @@ public static class CeilingTechMechanism {
         else {
             success = false;
         }
-        LogHookData("Ceiling Jump", "Player.NormalUpdate", success);
+        "Player.NormalUpdate".LogHookData("Ceiling Jump", success);
     }
 
     private static bool CheckAndApplyCeilingJump(Player player) {
@@ -294,7 +296,7 @@ public static class CeilingTechMechanism {
         else {
             success = false;
         }
-        LogHookData("Ceiling Jump", "Player.SwimUpdate", success);
+        "Player.SwimUpdate".LogHookData("Ceiling Jump", success);
     }
 
     private static bool CheckAndApplyCeilingJumpInWater(Player player) {
@@ -320,7 +322,7 @@ public static class CeilingTechMechanism {
         else {
             success = false;
         }
-        LogHookData("Ceiling Jump", "Player.StarFlyUpdate", success);
+        "Player.StarFlyUpdate".LogHookData("Ceiling Jump", success);
     }
 
     private static bool CheckAndApplyCeilingJumpInFeather(Player player) {
@@ -346,7 +348,7 @@ public static class CeilingTechMechanism {
         else {
             success = false;
         }
-        LogHookData("Ceiling Jump", "Player.HitSquashUpdate", success);
+        "Player.HitSquashUpdate".LogHookData("Ceiling Jump", success);
     }
     private static bool CheckAndApplyCeilingJumpInHitSquash(Player player) {
         if (CeilingJumpEnabled && PlayerOnCeiling) {
@@ -408,7 +410,7 @@ public static class CeilingTechMechanism {
         else {
             success = false;
         }
-        LogHookData("Ceiling Hyper", "Player.DashUpdate", success);
+        "Player.DashUpdate".LogHookData("Ceiling Hyper", success);
     }
 
     private static bool SkipDashEndLoseSpeed(Player player) {
@@ -435,7 +437,7 @@ public static class CeilingTechMechanism {
         else {
             success = false;
         }
-        LogHookData("Ceiling Hyper", "Player.RedDashUpdate", success);
+        "Player.RedDashUpdate".LogHookData("Ceiling Hyper", success);
     }
 
     private static bool CheckAndApplyCeilingHyper(Player player) {
@@ -453,14 +455,5 @@ public static class CeilingTechMechanism {
             return true;
         }
         return false;
-    }
-
-    private static void LogHookData(string hook, string methodBase, bool success) {
-        if (success) {
-            Logger.Log("CeilingUltra", $"{hook} hook {methodBase}");
-        }
-        else {
-            Logger.Log(LogLevel.Warn, "CeilingUltra", $"{hook} fail to hook {methodBase}");
-        }
     }
 }

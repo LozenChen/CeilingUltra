@@ -20,4 +20,13 @@ internal static class GlobalMethod {
         return obj;
     }
 
+    public static void LogHookData(this string methodBase, string hook, bool success) {
+        if (success) {
+            Logger.Log("CeilingUltra", $"{hook} hook {methodBase}");
+        }
+        else {
+            Logger.Log(LogLevel.Warn, "CeilingUltra", $"{hook} fail to hook {methodBase}");
+            CeilingUltraModule.Warnings += $"\n{hook} fail to hook {methodBase}";
+        }
+    }
 }
