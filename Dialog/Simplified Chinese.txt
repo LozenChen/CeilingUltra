@@ -1,0 +1,4 @@
+﻿# https://github.com/EverestAPI/Resources/wiki/Adding-Custom-Dialogue
+# https://maddie480.ovh/celeste/font-generator
+
+CEILING_ULTRA_ENABLED=                                        开关
