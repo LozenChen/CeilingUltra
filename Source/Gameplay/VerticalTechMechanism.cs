@@ -270,7 +270,7 @@ public static class VerticalTechMechanism {
     }
 
     private static bool SkipUnflattenInOrigUpdate(Player player) {
-        return player.IsFlattened() && CeilingTechMechanism.VerticalHyperGraceTimer > 0f;
+        return player.IsFlattened() && (CeilingTechMechanism.LeftWallGraceTimer > 0f || CeilingTechMechanism.RightWallGraceTimer > 0f);
     }
 
     private static void VerticalHyper(this Player player, int xDirection, int yDirection) {
@@ -343,30 +343,35 @@ public static class VerticalTechMechanism {
 
     private static bool TryVerticalHyper(Player player) {
         if (VerticalHyperEnabled && player.IsFlattened() && CelesteInput.Jump.Pressed && Math.Abs(player.DashDir.X) < 0.1f && player.CanUnFlattenInUnDuck()) {
-            int sign = 1;
-            if (CelesteInput.MoveX > 0f) {
-                sign = -1;
+            int yDirection = Math.Sign(CelesteInput.MoveY);
+            if (yDirection == 0) {
+                yDirection = Math.Sign(player.Speed.Y);
             }
-            if (player.CollideCheck<Solid>(player.Position + sign * Vector2.UnitX)) {
-                int yDirection = Math.Sign(CelesteInput.MoveY);
-                if (yDirection == 0) {
-                    yDirection = Math.Sign(player.Speed.Y);
-                }
-                if (yDirection == 0) {
-                    yDirection = -1;
-                }
-                player.VerticalHyper(-sign, yDirection);
+            if (yDirection == 0) {
+                yDirection = -1;
+            }
+            int wantedDirection = CelesteInput.MoveX != 0f ? CelesteInput.MoveX : (int)player.Facing; // we dont use player.moveX so forceMoveX is ignored lol
+            if (player.CollideCheck<Solid>(player.Position - wantedDirection * Vector2.UnitX)) {
+                player.VerticalHyper(wantedDirection, yDirection);
                 return true;
             }
-            if (player.CollideCheck<Solid>(player.Position - sign * Vector2.UnitX)) {
-                int yDirection = Math.Sign(CelesteInput.MoveY);
-                if (yDirection == 0) {
-                    yDirection = Math.Sign(player.Speed.Y);
+            if (player.CollideCheck<Solid>(player.Position + wantedDirection * Vector2.UnitX)) {
+                player.VerticalHyper(-wantedDirection, yDirection);
+                return true;
+            }
+            // in previous two cases, we force the direction according to the wall. if there are two walls, based on your wanted direction
+            // now there's no walls
+            if (CeilingTechMechanism.LeftWallGraceTimer > 0f) {
+                if (CeilingTechMechanism.RightWallGraceTimer > 0f) {
+                    player.VerticalHyper(wantedDirection, yDirection);
                 }
-                if (yDirection == 0) {
-                    yDirection = -1;
+                else {
+                    player.VerticalHyper(1, yDirection);
                 }
-                player.VerticalHyper(sign, yDirection);
+                return true;
+            }
+            if (CeilingTechMechanism.RightWallGraceTimer > 0f) {
+                player.VerticalHyper(-1, yDirection);
                 return true;
             }
         }

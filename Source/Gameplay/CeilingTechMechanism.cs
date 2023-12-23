@@ -66,7 +66,8 @@ public static class CeilingTechMechanism {
     }
     public static void SetExtendedJumpGraceTimer() {
         CeilingJumpGraceTimer = 0f;
-        VerticalHyperGraceTimer = 0f;
+        LeftWallGraceTimer = 0f;
+        RightWallGraceTimer = 0f;
     }
 
     private static Player OnLoadNewPlayer(On.Celeste.Level.orig_LoadNewPlayer orig, Vector2 Position, PlayerSpriteMode spriteMode) {
@@ -259,7 +260,9 @@ public static class CeilingTechMechanism {
 
     public static float CeilingJumpGraceTimer = 0f;
 
-    public static float VerticalHyperGraceTimer = 0f;
+    public static float LeftWallGraceTimer = 0f;
+
+    public static float RightWallGraceTimer = 0f;
 
     public static float LastGroundJumpGraceTimer = 1f;
 
@@ -293,15 +296,21 @@ public static class CeilingTechMechanism {
         }
 
 
-        if (player.PlayerOnWall()) {
-            if (WallRefillStamina) {
-                player.Stamina = 110f;
-                player.wallSlideTimer = 1.2f;
-            }
-            VerticalHyperGraceTimer = 0.1f;
+        if (WallRefillStamina && player.PlayerOnWall()) {
+            player.Stamina = 110f;
+            player.wallSlideTimer = 1.2f;
         }
-        else if (VerticalHyperGraceTimer > 0f) {
-            VerticalHyperGraceTimer -= Engine.DeltaTime;
+        if (player.CollideCheck<Solid>(player.Position - Vector2.UnitX)) {
+            LeftWallGraceTimer = 0.1f;
+        }
+        else if (LeftWallGraceTimer > 0f) {
+            LeftWallGraceTimer -= Engine.DeltaTime;
+        }
+        if (player.CollideCheck<Solid>(player.Position + Vector2.UnitX)) {
+            RightWallGraceTimer = 0.1f;
+        }
+        else if (RightWallGraceTimer > 0f) {
+            RightWallGraceTimer -= Engine.DeltaTime;
         }
 
         if (LastGroundJumpGraceTimer > 0f && player.jumpGraceTimer <= 0f) { // so it's killed by something that maybe we have not hooked
