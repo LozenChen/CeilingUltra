@@ -39,9 +39,9 @@ public static class CeilingTechMechanism {
     [Initialize]
     public static void Initialize() {
         using (new DetourContext { Before = new List<string> { "*"}, ID = "Ceiling Tech Mechanism" }) {
+            typeof(Player).GetMethodInfo("orig_Update").IlHook(HookPlayerUpdate);
             typeof(Player).GetMethodInfo("OnCollideV").IlHook(CeilingUltraHookOnCollideV);
             typeof(Player).GetMethodInfo("DashCoroutine").GetStateMachineTarget().IlHook(CeilingUltraHookDashCoroutine);
-            typeof(Player).GetMethodInfo("orig_Update").IlHook(OnCeilingHookPlayerUpdate);
             typeof(Player).GetMethodInfo("NormalUpdate").IlHook(CeilingJumpHookNormalUpdate);
             typeof(Player).GetMethodInfo("SwimUpdate").IlHook(CeilingJumpHookSwimUpdate);
             typeof(Player).GetMethodInfo("StarFlyUpdate").IlHook(CeilingJumpHookFeatherUpdate);
@@ -49,30 +49,32 @@ public static class CeilingTechMechanism {
             typeof(Player).GetMethodInfo("DashUpdate").IlHook(CeilingHyperHookDashUpdate);
             typeof(Player).GetMethodInfo("RedDashUpdate").IlHook(CeilingHyperHookRedDashUpdate);
 
-            new List<string> { "OnTransition", "Jump", "SuperJump", "SuperWallJump", "Bounce", "SuperBounce", "StarFlyBegin", "orig_WallJump", "SideBounce", "DreamDashEnd" }.Select(str => typeof(Player).GetMethodInfo(str)).ToList().ForEach(x => x.IlHook(SetCeilingJumpGraceTimerIL));
+            new List<string> { "OnTransition", "Jump", "SuperJump", "SuperWallJump", "Bounce", "SuperBounce", "StarFlyBegin", "orig_WallJump", "SideBounce", "DreamDashEnd" }.Select(str => typeof(Player).GetMethodInfo(str)).ToList().ForEach(x => x.IlHook(SetExtendedJumpGraceTimerIL));
         }
     }
 
-    private static void SetCeilingJumpGraceTimerIL(ILContext il) {
+    private static void SetExtendedJumpGraceTimerIL(ILContext il) {
         ILCursor cursor = new ILCursor(il);
         bool success = false;
         while (cursor.TryGotoNext(ins => ins.OpCode == OpCodes.Ldarg_0, ins => ins.MatchLdcR4(0f), ins => ins.MatchStfld<Player>(nameof(Player.jumpGraceTimer)))) {
             cursor.Index += 3;
-            cursor.EmitDelegate(SetCeilingJumpGraceTimer);
+            cursor.EmitDelegate(SetExtendedJumpGraceTimer);
             success = true;
         }
-        "SomeSetJumpGraceTimerMethod".LogHookData("Ceiling Jump Grace Timer", success);
+        "SomeSetJumpGraceTimerMethod".LogHookData("Set Jump Grace Timer", success);
         
     }
-    private static void SetCeilingJumpGraceTimer() {
+    public static void SetExtendedJumpGraceTimer() {
         CeilingJumpGraceTimer = 0f;
+        VerticalHyperGraceTimer = 0f;
     }
 
     private static Player OnLoadNewPlayer(On.Celeste.Level.orig_LoadNewPlayer orig, Vector2 Position, PlayerSpriteMode spriteMode) {
         Player player = orig(Position, spriteMode);
         PlayerOnCeiling = false;
-        CeilingJumpGraceTimer = 0f;
+        SetExtendedJumpGraceTimer();
         LastGroundJumpGraceTimer = 1f;
+        NextMaxFall = 0f;
         return player;
     }
 
@@ -168,11 +170,13 @@ public static class CeilingTechMechanism {
             return true;
         }
         Collider collider = player.Collider;
+        Hitbox hurtbox = player.hurtbox;
         Vector2 position = player.Position;
         CeilingUnduck_Normal(player);
         bool result = !player.CollideCheck<Solid>();
         player.Position = position;
         player.Collider = collider;
+        player.hurtbox = hurtbox;
         return result;
     }
 
@@ -241,7 +245,8 @@ public static class CeilingTechMechanism {
     private static void CheckCeilingVerticalUltraInDashCoroutine(Player player) {
         if (CeilingUltraEnabled && PlayerOnCeiling && (!player.Inventory.DreamDash || !player.CollideCheck<DreamBlock>(player.Position - Vector2.UnitY))) {
             player.CeilingUltra();
-        }else if (player.PlayerOnWall() && player.Speed.X != 0f && (!player.Inventory.DreamDash || !player.CollideCheck<DreamBlock>(player.Position + Vector2.UnitX * Math.Sign(player.Speed.X)))) {
+        }
+        else if (player.PlayerOnWall() && player.Speed.X != 0f && (!player.Inventory.DreamDash || !player.CollideCheck<DreamBlock>(player.Position + Vector2.UnitX * Math.Sign(player.Speed.X)))) {
             player.TryVerticalUltra();
         }
     }
@@ -254,9 +259,17 @@ public static class CeilingTechMechanism {
 
     public static float CeilingJumpGraceTimer = 0f;
 
+    public static float VerticalHyperGraceTimer = 0f;
+
     public static float LastGroundJumpGraceTimer = 1f;
 
+    public static float NextMaxFall = 0f;
+
     public static void UpdateOnCeilingAndWall(Player player) {
+        if (NextMaxFall > 160f && player.StateMachine.State == 0) { // NormalBegin resets maxFall to be 160f, so we need this for vertical hyper
+            player.maxFall = NextMaxFall;
+        }
+        NextMaxFall = 0f;
         if (player.StateMachine.State == 9) {
             PlayerOnCeiling = false;
         }
@@ -279,14 +292,22 @@ public static class CeilingTechMechanism {
             CeilingJumpGraceTimer -= Engine.DeltaTime;
         }
 
-        if (LastGroundJumpGraceTimer > 0f && player.jumpGraceTimer <= 0f) { // so it's killed by something that maybe we have not hooked
-            CeilingJumpGraceTimer = 0f;
+
+        if (player.PlayerOnWall()) {
+            if (WallRefillStamina) {
+                player.Stamina = 110f;
+                player.wallSlideTimer = 1.2f;
+            }
+            VerticalHyperGraceTimer = 0.1f;
+        }
+        else if (VerticalHyperGraceTimer > 0f) {
+            VerticalHyperGraceTimer -= Engine.DeltaTime;
         }
 
-        if (WallRefillStamina && player.PlayerOnWall()) {
-            player.Stamina = 110f;
-            player.wallSlideTimer = 1.2f;
+        if (LastGroundJumpGraceTimer > 0f && player.jumpGraceTimer <= 0f) { // so it's killed by something that maybe we have not hooked
+            SetExtendedJumpGraceTimer();
         }
+
     }
 
     private static void RecordGroundJumpGraceTimer(Player player) {
@@ -297,7 +318,7 @@ public static class CeilingTechMechanism {
         return player.CollideCheck<Solid>(player.Position + Vector2.UnitX) || player.CollideCheck<Solid>(player.Position - Vector2.UnitX);
     }
 
-    private static void OnCeilingHookPlayerUpdate(ILContext il) {
+    private static void HookPlayerUpdate(ILContext il) {
         ILCursor cursor = new (il);
         cursor.Emit(OpCodes.Ldarg_0);
         cursor.EmitDelegate(UpdateOnCeilingAndWall); // only hiccup jump will affect this, so i dont insert this after onground evaluation
@@ -331,10 +352,10 @@ public static class CeilingTechMechanism {
     }
 
     public static void CeilingJump(this Player player, bool particles = true, bool playSfx = true) {
-        player.maxFall = 240f;
+        NextMaxFall = 240f;
         Input.Jump.ConsumeBuffer();
         player.jumpGraceTimer = 0f;
-        CeilingJumpGraceTimer = 0f;
+        SetExtendedJumpGraceTimer();
         player.varJumpTimer = 0f; // does not produce varJumpTimer
         player.AutoJump = false;
         player.dashAttackTimer = 0f;
@@ -472,7 +493,7 @@ public static class CeilingTechMechanism {
         // this actually contains ceiling super
         Input.Jump.ConsumeBuffer();
         player.jumpGraceTimer = 0f;
-        CeilingJumpGraceTimer = 0f;
+        SetExtendedJumpGraceTimer();
         player.varJumpTimer = 0f; // as what we do in ceiling jump
         player.AutoJump = false;
         player.dashAttackTimer = 0f;

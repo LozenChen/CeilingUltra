@@ -1,1 +1,14 @@
 ﻿CEILING_ULTRA_ENABLED=                                        Enabled
+CEILING_ULTRA_CEILING_MECHANISMS=                             Ceiling Mechanisms
+CEILING_ULTRA_CEILING_ULTRA=                                  Ceiling Ultra
+CEILING_ULTRA_CEILING_REFILL_STAMINA=                         Ceiling Refill Stamina
+CEILING_ULTRA_CEILING_REFILL_DASH=                            Ceiling Refill Dash
+CEILING_ULTRA_CEILING_JUMP=                                   Ceiling Jump
+CEILING_ULTRA_CEILING_SUPER_HYPER=                            Ceiling Super/Hyper
+CEILING_ULTRA_UPDIAG_DASH_END_NO_HORIZONTAL_SPEED_LOSS=       Updiag Dash End No Horizontal Speed Loss
+CEILING_ULTRA_VERTICAL_MECHANISMS=                            Vertical Mechanisms
+CEILING_ULTRA_VERTICAL_ULTRA=                                 Vertical Ultra
+CEILING_ULTRA_VERTICAL_HYPER=                                 Vertical Hyper
+CEILING_ULTRA_WALL_REFILL_STAMINA=                            Wall Refill Stamina
+CEILING_ULTRA_WALL_REFILL_DASH=                               Wall Refill Dash
+CEILING_ULTRA_DASH_BEGIN_NO_VERTICAL_SPEED_LOSS=              Dash Begin No Vertical Speed Loss

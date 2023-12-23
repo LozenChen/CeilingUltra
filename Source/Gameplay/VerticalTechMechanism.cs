@@ -270,15 +270,18 @@ public static class VerticalTechMechanism {
     }
 
     private static bool SkipUnflattenInOrigUpdate(Player player) {
-        return player.IsFlattened() && (player.StateMachine.State == 2 || player.StateMachine.State == 5);
+        return player.IsFlattened() && CeilingTechMechanism.VerticalHyperGraceTimer > 0f;
     }
 
     private static void VerticalHyper(this Player player, int xDirection, int yDirection) {
         // sadly, if you buffer a jump then you will get a wall jump instead of a vertical hyper
         // only hyper, no vertical super jump (which is replaced a super wall jump)
         Input.Jump.ConsumeBuffer();
+        if (yDirection > 0) {
+             CeilingTechMechanism.NextMaxFall = 320f;
+        }
         player.jumpGraceTimer = 0f;
-        CeilingTechMechanism.CeilingJumpGraceTimer = 0f;
+        CeilingTechMechanism.SetExtendedJumpGraceTimer();
         player.AutoJump = false;
         player.dashAttackTimer = 0f;
         player.wallSlideTimer = 1.2f;
@@ -301,7 +304,7 @@ public static class VerticalTechMechanism {
         }
 
         if (player.Speed.Y < 0f) {
-            player.varJumpTimer = 0.2f; // would be cursed i guess
+            player.varJumpTimer = 0.1f; // 12 frames is a bit too long so i cut it half (although it's already a crazy mod)
             player.varJumpSpeed = player.Speed.Y;
         }
         else {
@@ -340,7 +343,11 @@ public static class VerticalTechMechanism {
 
     private static bool TryVerticalHyper(Player player) {
         if (VerticalHyperEnabled && player.IsFlattened() && CelesteInput.Jump.Pressed && Math.Abs(player.DashDir.X) < 0.1f && player.CanUnFlattenInUnDuck()) {
-            if (player.CollideCheck<Solid>(player.Position + Vector2.UnitX)) {
+            int sign = 1;
+            if (CelesteInput.MoveX > 0f) {
+                sign = -1;
+            }
+            if (player.CollideCheck<Solid>(player.Position + sign * Vector2.UnitX)) {
                 int yDirection = Math.Sign(CelesteInput.MoveY);
                 if (yDirection == 0) {
                     yDirection = Math.Sign(player.Speed.Y);
@@ -348,10 +355,10 @@ public static class VerticalTechMechanism {
                 if (yDirection == 0) {
                     yDirection = -1;
                 }
-                player.VerticalHyper(-1, yDirection);
+                player.VerticalHyper(-sign, yDirection);
                 return true;
             }
-            if (player.CollideCheck<Solid>(player.Position - Vector2.UnitX)) {
+            if (player.CollideCheck<Solid>(player.Position - sign * Vector2.UnitX)) {
                 int yDirection = Math.Sign(CelesteInput.MoveY);
                 if (yDirection == 0) {
                     yDirection = Math.Sign(player.Speed.Y);
@@ -359,7 +366,7 @@ public static class VerticalTechMechanism {
                 if (yDirection == 0) {
                     yDirection = -1;
                 }
-                player.VerticalHyper(1, yDirection);
+                player.VerticalHyper(sign, yDirection);
                 return true;
             }
         }

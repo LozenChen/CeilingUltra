@@ -53,20 +53,26 @@ public class CeilingUltraModule : EverestModule {
     }
 
     public static void CreateMenu(EverestModule everestModule, TextMenu menu, bool inGame) {
-        menu.Add(new TextMenu.OnOff("Enabled", ceilingUltraSetting.Enabled).Change(value => ceilingUltraSetting.Enabled = value));
-        menu.Add(new TextMenuExt.SubHeaderExt("Ceiling Mechanisms") { HeightExtra = 10f});
-        menu.Add(new TextMenu.OnOff("Ceiling Ultra", ceilingUltraSetting.CeilingUltraEnabled).Change(value => ceilingUltraSetting.CeilingUltraEnabled = value));
-        menu.Add(new TextMenu.OnOff("Ceiling Refill Stamina", ceilingUltraSetting.CeilingRefillStamina).Change(value => ceilingUltraSetting.CeilingRefillStamina = value));
-        menu.Add(new TextMenu.OnOff("Ceiling Refill Dash", ceilingUltraSetting.CeilingRefillDash).Change(value => ceilingUltraSetting.CeilingRefillDash = value));
-        menu.Add(new TextMenu.OnOff("Ceiling Jump", ceilingUltraSetting.CeilingJumpEnabled).Change(value => ceilingUltraSetting.CeilingJumpEnabled = value));
-        menu.Add(new TextMenu.OnOff("Ceiling Super/Hyper", ceilingUltraSetting.CeilingHyperEnabled).Change(value => ceilingUltraSetting.CeilingHyperEnabled = value));
-        menu.Add(new TextMenu.OnOff("Updiag Dash End No Horizontal Speed Loss", ceilingUltraSetting.UpdiagDashEndNoHorizontalSpeedLoss).Change(value => ceilingUltraSetting.UpdiagDashEndNoHorizontalSpeedLoss = value));
-        menu.Add(new TextMenuExt.SubHeaderExt("Vertical Mechanisms") { HeightExtra = 10f});
-        menu.Add(new TextMenu.OnOff("Vertical Ultra", ceilingUltraSetting.VerticalUltraEnabled).Change(value => ceilingUltraSetting.VerticalUltraEnabled = value));
-        menu.Add(new TextMenu.OnOff("Vertical Hyper", ceilingUltraSetting.VerticalHyperEnabled).Change(value => ceilingUltraSetting.VerticalHyperEnabled = value));
-        menu.Add(new TextMenu.OnOff("Wall Refill Stamina", ceilingUltraSetting.WallRefillStamina).Change(value => ceilingUltraSetting.WallRefillStamina = value));
-        menu.Add(new TextMenu.OnOff("Wall Refill Dash", ceilingUltraSetting.WallRefillDash).Change(value => ceilingUltraSetting.WallRefillDash = value));
-        menu.Add(new TextMenu.OnOff("Dash Begin No Vertical Speed Loss", ceilingUltraSetting.DashBeginNoVerticalSpeedLoss).Change(value => ceilingUltraSetting.DashBeginNoVerticalSpeedLoss = value));
+        menu.Add(new TextMenu.OnOff("Enabled".ToDialogText(), ceilingUltraSetting.Enabled).Change(value => ceilingUltraSetting.Enabled = value));
+        menu.Add(new TextMenuExt.SubHeaderExt("Ceiling Mechanisms".ToDialogText()) { HeightExtra = 10f});
+        menu.Add(new TextMenu.OnOff("Ceiling Refill Stamina".ToDialogText(), ceilingUltraSetting.CeilingRefillStamina).Change(value => ceilingUltraSetting.CeilingRefillStamina = value));
+        menu.Add(new TextMenu.OnOff("Ceiling Refill Dash".ToDialogText(), ceilingUltraSetting.CeilingRefillDash).Change(value => ceilingUltraSetting.CeilingRefillDash = value));
+        menu.Add(new TextMenu.OnOff("Ceiling Jump".ToDialogText(), ceilingUltraSetting.CeilingJumpEnabled).Change(value => ceilingUltraSetting.CeilingJumpEnabled = value));
+        menu.Add(new TextMenu.OnOff("Ceiling Super Hyper".ToDialogText(), ceilingUltraSetting.CeilingHyperEnabled).Change(value => ceilingUltraSetting.CeilingHyperEnabled = value));
+        menu.Add(new TextMenu.OnOff("Ceiling Ultra".ToDialogText(), ceilingUltraSetting.CeilingUltraEnabled).Change(value => ceilingUltraSetting.CeilingUltraEnabled = value));
+        menu.Add(new TextMenu.OnOff("Updiag Dash End No Horizontal Speed Loss".ToDialogText(), ceilingUltraSetting.UpdiagDashEndNoHorizontalSpeedLoss).Change(value => ceilingUltraSetting.UpdiagDashEndNoHorizontalSpeedLoss = value));
+        menu.Add(new TextMenuExt.SubHeaderExt("Vertical Mechanisms".ToDialogText()) { HeightExtra = 10f});
+        menu.Add(new TextMenu.OnOff("Wall Refill Stamina".ToDialogText(), ceilingUltraSetting.WallRefillStamina).Change(value => ceilingUltraSetting.WallRefillStamina = value));
+        menu.Add(new TextMenu.OnOff("Wall Refill Dash".ToDialogText(), ceilingUltraSetting.WallRefillDash).Change(value => ceilingUltraSetting.WallRefillDash = value));
+        menu.Add(new TextMenu.OnOff("Vertical Hyper".ToDialogText(), ceilingUltraSetting.VerticalHyperEnabled).Change(value => ceilingUltraSetting.VerticalHyperEnabled = value));
+        menu.Add(new TextMenu.OnOff("Vertical Ultra".ToDialogText(), ceilingUltraSetting.VerticalUltraEnabled).Change(value => ceilingUltraSetting.VerticalUltraEnabled = value));
+        menu.Add(new TextMenu.OnOff("Dash Begin No Vertical Speed Loss".ToDialogText(), ceilingUltraSetting.DashBeginNoVerticalSpeedLoss).Change(value => ceilingUltraSetting.DashBeginNoVerticalSpeedLoss = value));
 
     }
+
+}
+
+public static class DialogExtension {
+
+    internal static string ToDialogText(this string input) => Dialog.Clean("CEILING_ULTRA_" + input.ToUpper().Replace(" ", "_"));
 }
