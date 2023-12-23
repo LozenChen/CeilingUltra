@@ -33,7 +33,7 @@ public static class VerticalTechMechanism {
             typeof(Player).GetMethodInfo("OnCollideH").IlHook(VerticalUltraHookOnCollideH);
             typeof(Player).GetMethodInfo("get_CanUnDuck").IlHook(ModifyCanUnDuck);
             typeof(Player).GetMethodInfo("set_Ducking").IlHook(ModifySetDucking);
-            typeof(Player).GetMethodInfo("orig_Update").IlHook(NoUnflattenInDash);
+            typeof(Player).GetMethodInfo("orig_Update").IlHook(NoUnflattenInCoyote);
             typeof(Player).GetMethodInfo("DashUpdate").IlHook(VerticalHyperHookDashUpdate);
             typeof(Player).GetMethodInfo("RedDashUpdate").IlHook(VerticalHyperHookDashUpdate);
             typeof(Player).GetMethodInfo("DashCoroutine").GetStateMachineTarget().IlHook(DashBeginDontLoseVertSpeed);
@@ -254,7 +254,7 @@ public static class VerticalTechMechanism {
         "Player.set_Ducking".LogHookData("Compatiblity with FlattenHitbox", true);
     }
 
-    private static void NoUnflattenInDash(ILContext il) {
+    private static void NoUnflattenInCoyote(ILContext il) {
         ILCursor cursor = new ILCursor(il);
         bool success = true;
         if (cursor.TryGotoNext(ins => ins.OpCode == OpCodes.Ldarg_0, ins => ins.OpCode == OpCodes.Ldc_I4_0, ins => ins.MatchCallOrCallvirt<Player>("set_Ducking"))) {
@@ -262,15 +262,24 @@ public static class VerticalTechMechanism {
             cursor.Emit(OpCodes.Ldarg_0);
             cursor.EmitDelegate(SkipUnflattenInOrigUpdate);
             cursor.Emit(OpCodes.Brtrue, label);
+            cursor.GotoLabel(label);
+            cursor.Emit(OpCodes.Ldarg_0);
+            cursor.EmitDelegate(UnflattenOnGround);
         }
         else {
             success = false;
         }
-        "Player.orig_Update".LogHookData("No Unflatten In Dash State", success);
+        "Player.orig_Update".LogHookData("No Unflatten In Coyote Time", success);
     }
 
     private static bool SkipUnflattenInOrigUpdate(Player player) {
         return player.IsFlattened() && (CeilingTechMechanism.LeftWallGraceTimer > 0f || CeilingTechMechanism.RightWallGraceTimer > 0f);
+    }
+
+    private static void UnflattenOnGround(Player player) {
+        if (player.IsFlattened() && player.onGround && player.CanUnDuck) {
+            player.Ducking = false;
+        }
     }
 
     private static void VerticalHyper(this Player player, int xDirection, int yDirection) {
