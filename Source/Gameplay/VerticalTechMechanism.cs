@@ -1,0 +1,389 @@
+using Celeste.Mod.CeilingUltra.Utils;
+using Microsoft.Xna.Framework;
+using Monocle;
+using Mono.Cecil.Cil;
+using MonoMod.Cil;
+using MonoMod.Utils;
+using MonoMod.RuntimeDetour;
+using CelesteInput = Celeste.Input;
+
+namespace Celeste.Mod.CeilingUltra.Gameplay;
+
+public static class VerticalTechMechanism {
+
+    public static bool VerticalUltraEnabled => ceilingUltraSetting.Enabled && ceilingUltraSetting.VerticalUltraEnabled;
+
+    public static bool VerticalHyperEnabled => ceilingUltraSetting.Enabled && ceilingUltraSetting.VerticalHyperEnabled;
+
+    public static bool DashBeginDontLoseVerticalSpeed => ceilingUltraSetting.Enabled && ceilingUltraSetting.DashBeginNoVerticalSpeedLoss;
+
+    [Load]
+    public static void Load() {
+        On.Celeste.Level.LoadNewPlayer += OnLoadNewPlayer;
+    }
+
+    [Unload]
+    public static void Unload() {
+        On.Celeste.Level.LoadNewPlayer -= OnLoadNewPlayer;
+    }
+
+    [Initialize]
+    public static void Initialize() {
+        using (new DetourContext { Before = new List<string> { "*" }, ID = "Vertical Tech Mechanism" }) {
+            typeof(Player).GetMethodInfo("OnCollideH").IlHook(VerticalUltraHookOnCollideH);
+            typeof(Player).GetMethodInfo("get_CanUnDuck").IlHook(ModifyCanUnDuck);
+            typeof(Player).GetMethodInfo("set_Ducking").IlHook(ModifySetDucking);
+            typeof(Player).GetMethodInfo("orig_Update").IlHook(NoUnflattenInDash);
+            typeof(Player).GetMethodInfo("DashUpdate").IlHook(VerticalHyperHookDashUpdate);
+            typeof(Player).GetMethodInfo("RedDashUpdate").IlHook(VerticalHyperHookDashUpdate);
+            typeof(Player).GetMethodInfo("DashCoroutine").GetStateMachineTarget().IlHook(DashBeginDontLoseVertSpeed);
+        }
+
+        int[] xOffsets = { 0, 1, -1 };
+        int count = 0;
+        wiggleList = new Vector2[18];
+        for (int yOffset = 0; yOffset <= 5; yOffset++) {
+            foreach (int xOffset in xOffsets) {
+                wiggleList[count] = new Vector2(xOffset, yOffset);
+                count++;
+            }
+        }
+    }
+
+    private static Hitbox flattenHitbox = new Hitbox(6f, 11f, -3f, -11f);
+
+    private static Hitbox flattenHurtbox = new Hitbox(6f, 9f, -3f, -11f);
+    private static Player OnLoadNewPlayer(On.Celeste.Level.orig_LoadNewPlayer orig, Vector2 Position, PlayerSpriteMode spriteMode) {
+        Player player = orig(Position, spriteMode);
+        flattenHitbox = new Hitbox(6f, 11f, -3f, -11f);
+        flattenHurtbox = new Hitbox(6f, 9f, -3f, -11f);
+        return player;
+    }
+
+    public static bool IsFlattened(this Player player) {
+        return player.Collider == flattenHitbox || player.Collider == flattenHurtbox;
+    }
+    public static void SetFlattenHitbox(this Player player) {
+        player.Collider = flattenHitbox;
+        player.hurtbox = flattenHurtbox;
+    }
+
+    public static bool CanFlattenHitbox(this Player player, float xDirection, float yDirection, out Vector2 offset) {
+        // we do this check so if maddy crushes into the wall with a duck hitbox, it's still properly handled
+        if (xDirection < 0 && yDirection < 0) {
+            // upper-left dash: keep bottom left invariant
+            Collider collider = player.Collider;
+            Vector2 position = player.Position;
+            Vector2 orig = player.Collider.BottomLeft;
+            player.Collider = flattenHitbox;
+            offset = orig - player.Collider.BottomLeft; // we didn't use player.BottomLeft, so we can avoid possible float position and related issues. offset will always be integer
+            player.Position += offset;
+            bool result = !player.CollideCheck<Solid>();
+            player.Position = position;
+            player.Collider = collider;
+            return result;
+        }
+        if (xDirection < 0 && yDirection > 0) {
+            // lower-left dash: keep top left invariant
+            Collider collider = player.Collider;
+            Vector2 position = player.Position;
+            Vector2 orig = player.Collider.TopLeft;
+            player.Collider = flattenHitbox;
+            offset = orig - player.Collider.TopLeft;
+            player.Position += offset;
+            bool result = !player.CollideCheck<Solid>();
+            player.Position = position;
+            player.Collider = collider;
+            return result;
+        }
+        if (xDirection > 0 && yDirection < 0) {
+            // upper-right dash: keep bottom right invariant
+            Collider collider = player.Collider;
+            Vector2 position = player.Position;
+            Vector2 orig = player.Collider.BottomRight;
+            player.Collider = flattenHitbox;
+            offset = orig - player.Collider.BottomRight;
+            player.Position += offset;
+            bool result = !player.CollideCheck<Solid>();
+            player.Position = position;
+            player.Collider = collider;
+            return result;
+        }
+        if (xDirection > 0 && yDirection > 0) {
+            // lower-right dash: keep top right variant
+            Collider collider = player.Collider;
+            Vector2 position = player.Position;
+            Vector2 orig = player.Collider.TopRight;
+            player.Collider = flattenHitbox;
+            offset = orig - player.Collider.TopRight;
+            player.Position += offset;
+            bool result = !player.CollideCheck<Solid>();
+            player.Position = position;
+            player.Collider = collider;
+            return result;
+        }
+        offset = Vector2.Zero;
+        return false;
+    }
+
+    public static bool TryFlattenHitbox(this Player player, float xDirection, float yDirection) {
+        if (player.CanFlattenHitbox(xDirection, yDirection, out Vector2 offset)) {
+            player.NaiveMove(offset);
+            player.SetFlattenHitbox();
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    private static void VerticalUltraHookOnCollideH(ILContext il) {
+        ILCursor cursor = new ILCursor(il);
+        bool success = false;
+        if (cursor.TryGotoNext(ins => ins.MatchCallOrCallvirt<Player>(nameof(Player.DreamDashCheck)), ins => ins.OpCode == OpCodes.Brfalse_S)) {
+            ILLabel label = (ILLabel)cursor.Next.Next.Operand;
+            cursor.GotoLabel(label);
+            if (cursor.Next.Next.Next.Next.MatchBgtUn(out ILLabel label2)) {
+                success = true;
+                cursor.MoveAfterLabels();
+                cursor.Emit(OpCodes.Ldarg_0);
+                cursor.EmitDelegate(TryVerticalUltra);
+                cursor.Emit(OpCodes.Brtrue, label2); // skip wallSpeedRetention, as in some sense, an ultra converts vertical speed into horizontal speed, so a vertical ultra should converts horizontal speed into vertical, and you will lose your horizontal speed anyway
+            }
+        }
+        "Player.OnCollideH".LogHookData("Vertical Ultra", success);
+    }
+
+    public static bool TryVerticalUltra(this Player player) {
+        if (VerticalUltraEnabled && Math.Sign(player.DashDir.X) is { } xSign && xSign != 0 && xSign == Math.Sign(player.Speed.X) && player.DashDir.Y != 0f && player.TryFlattenHitbox(xSign, player.Speed.Y)) {
+            player.DashDir.Y = Math.Sign(player.DashDir.Y); // wow, this allows you to super wall jump after an upward vertical ultra
+            player.DashDir.X = 0f;
+            player.Speed.X = 0f;
+            player.Speed.Y *= 1.2f;
+            player.Sprite.Scale = new Vector2(0.5f, 1.5f);
+            return true;
+        }
+        return false;
+    }
+
+    private static void ModifyCanUnDuck(ILContext il) {
+        ILCursor cursor = new ILCursor(il);
+        Instruction target = cursor.Next;
+        cursor.Emit(OpCodes.Ldarg_0);
+        cursor.EmitDelegate(IsFlattened);
+        cursor.Emit(OpCodes.Brfalse, target);
+        cursor.Emit(OpCodes.Ldarg_0);
+        cursor.EmitDelegate(CanUnFlattenInUnDuck);
+        cursor.Emit(OpCodes.Ret);
+        "Player.get_CanUnDuck".LogHookData("Compatiblity with FlattenHitbox", true);
+    }
+
+    private static bool CanUnFlattenInUnDuck(this Player player) {
+        Collider collider = player.Collider;
+        player.Collider = player.normalHitbox;
+        bool result = !player.CollideCheck<Solid>() || !player.CollideCheck<Solid>(player.Position + Vector2.UnitX) || !player.CollideCheck<Solid>(player.Position - Vector2.UnitX);
+        player.Collider = collider;
+        return result;
+    }
+
+    private static void UnFlatten(this Player player, bool duck = false) {
+        if (!duck) {
+            // in most cases, Ducking = false goes with a CanUnDuck check
+            Collider collider = player.Collider;
+            Vector2 position = player.Position;
+            bool result = false;
+            player.Collider = player.normalHitbox;
+            if (!player.CollideCheck<Solid>()) {
+                result = true;
+            }
+            else {
+                player.Position = position + Vector2.UnitX;
+                if (!player.CollideCheck<Solid>()) {
+                    result = true;
+                }
+                else {
+                    player.Position = position - Vector2.UnitX;
+                    if (!player.CollideCheck<Solid>()) {
+                        result = true;
+                    }
+                }
+            }
+            if (result) {
+                player.hurtbox = player.normalHurtbox;
+            }
+            else {
+                player.Collider = collider;
+                player.Position = position;
+            }
+        }
+        else {
+            // however, Ducking = true almost has no check
+            Collider collider = player.Collider;
+            Vector2 position = player.Position;
+            bool result = false;
+            player.Collider = player.duckHitbox;
+            foreach (Vector2 offset in wiggleList) {
+                player.Position = position + offset;
+                if (!player.CollideCheck<Solid>()) {
+                    result = true;
+                    break;
+                }
+            }
+            if (result) {
+                player.hurtbox = player.duckHurtbox;
+            }
+            else {
+                player.Collider = collider;
+                player.Position = position;
+            }
+        }
+    }
+
+    private static Vector2[] wiggleList;
+
+    private static void ModifySetDucking(ILContext il) {
+        ILCursor cursor = new ILCursor(il);
+        Instruction next = cursor.Next;
+        cursor.Emit(OpCodes.Ldarg_0);
+        cursor.EmitDelegate(IsFlattened);
+        cursor.Emit(OpCodes.Brfalse, next);
+        cursor.Emit(OpCodes.Ldarg_0);
+        cursor.Emit(OpCodes.Ldarg_1);
+        cursor.EmitDelegate(UnFlatten);
+        cursor.Emit(OpCodes.Ret);
+        "Player.set_Ducking".LogHookData("Compatiblity with FlattenHitbox", true);
+    }
+
+    private static void NoUnflattenInDash(ILContext il) {
+        ILCursor cursor = new ILCursor(il);
+        bool success = true;
+        if (cursor.TryGotoNext(ins => ins.OpCode == OpCodes.Ldarg_0, ins => ins.OpCode == OpCodes.Ldc_I4_0, ins => ins.MatchCallOrCallvirt<Player>("set_Ducking"))) {
+            ILLabel label = (ILLabel) cursor.Prev.Operand;
+            cursor.Emit(OpCodes.Ldarg_0);
+            cursor.EmitDelegate(SkipUnflattenInOrigUpdate);
+            cursor.Emit(OpCodes.Brtrue, label);
+        }
+        else {
+            success = false;
+        }
+        "Player.orig_Update".LogHookData("No Unflatten In Dash State", success);
+    }
+
+    private static bool SkipUnflattenInOrigUpdate(Player player) {
+        return player.IsFlattened() && (player.StateMachine.State == 2 || player.StateMachine.State == 5);
+    }
+
+    private static void VerticalHyper(this Player player, int xDirection, int yDirection) {
+        // sadly, if you buffer a jump then you will get a wall jump instead of a vertical hyper
+        // only hyper, no vertical super jump (which is replaced a super wall jump)
+        Input.Jump.ConsumeBuffer();
+        player.jumpGraceTimer = 0f;
+        CeilingTechMechanism.CeilingJumpGraceTimer = 0f;
+        player.AutoJump = false;
+        player.dashAttackTimer = 0f;
+        player.wallSlideTimer = 1.2f;
+        player.wallBoostTimer = 0f;
+
+        player.Speed.X = 105f * xDirection + player.LiftBoost.X;
+        player.Speed.Y = 260f * yDirection + (yDirection < 0 ? player.LiftBoost.Y : 0f);
+        player.gliderBoostTimer = 0.55f;
+        player.Play("event:/char/madeline/jump");
+
+        if (true) { // always Flattened
+            player.UnFlatten(false);
+            player.Speed.X *= 0.5f;
+            player.Speed.Y *= 1.25f;
+            player.Play("event:/char/madeline/jump_superslide");
+            player.gliderBoostDir = Monocle.Calc.AngleToVector((float)Math.PI * (1f / 2f - 3f / 16f * xDirection) * yDirection, 1f);
+        }
+        else {
+            // how
+        }
+
+        if (player.Speed.Y < 0f) {
+            player.varJumpTimer = 0.2f; // would be cursed i guess
+            player.varJumpSpeed = player.Speed.Y;
+        }
+        else {
+            player.varJumpTimer = 0f;
+            player.varJumpSpeed = 0f;
+        }
+
+        player.launched = true;
+        player.Sprite.Scale = new Vector2(0.6f, 1.4f);
+        int index = -1;
+        Platform platformByPriority = SurfaceIndex.GetPlatformByPriority(player.CollideAll<Platform>(player.Position - xDirection * Vector2.UnitX, player.temp));
+        if (platformByPriority != null) {
+            index = platformByPriority.GetLandSoundIndex(player);
+        }
+        Dust.Burst(xDirection > 0 ? player.CenterLeft : player.CenterRight, xDirection > 0f ? (float) Math.PI : 0f, 4, player.DustParticleFromSurfaceIndex(index));
+        SaveData.Instance.TotalJumps++;
+    }
+
+    private static void VerticalHyperHookDashUpdate(ILContext il) {
+        ILCursor cursor = new ILCursor(il);
+        bool success = true;
+        if (cursor.TryGotoNext(ins => ins.OpCode == OpCodes.Ldarg_0, ins => ins.MatchCallOrCallvirt<Player>("get_SuperWallJumpAngleCheck"))) {
+            Instruction next = cursor.Next;
+            cursor.MoveAfterLabels();
+            cursor.Emit(OpCodes.Ldarg_0);
+            cursor.EmitDelegate(TryVerticalHyper);
+            cursor.Emit(OpCodes.Brfalse, next);
+            cursor.Emit(OpCodes.Ldc_I4_0);
+            cursor.Emit(OpCodes.Ret);
+        }
+        else {
+            success = false;
+        }
+        "Player.(Red)DashUpdate".LogHookData("Vertical Hyper", success);
+    }
+
+    private static bool TryVerticalHyper(Player player) {
+        if (VerticalHyperEnabled && player.IsFlattened() && CelesteInput.Jump.Pressed && Math.Abs(player.DashDir.X) < 0.1f && player.CanUnFlattenInUnDuck()) {
+            if (player.CollideCheck<Solid>(player.Position + Vector2.UnitX)) {
+                int yDirection = Math.Sign(CelesteInput.MoveY);
+                if (yDirection == 0) {
+                    yDirection = Math.Sign(player.Speed.Y);
+                }
+                if (yDirection == 0) {
+                    yDirection = -1;
+                }
+                player.VerticalHyper(-1, yDirection);
+                return true;
+            }
+            if (player.CollideCheck<Solid>(player.Position - Vector2.UnitX)) {
+                int yDirection = Math.Sign(CelesteInput.MoveY);
+                if (yDirection == 0) {
+                    yDirection = Math.Sign(player.Speed.Y);
+                }
+                if (yDirection == 0) {
+                    yDirection = -1;
+                }
+                player.VerticalHyper(1, yDirection);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static void DashBeginDontLoseVertSpeed(ILContext il) {
+        ILCursor cursor = new ILCursor(il);
+        bool success = true;
+        if (cursor.TryGotoNext(ins => ins.OpCode == OpCodes.Ldloc_1, ins => ins.OpCode == OpCodes.Ldloc_3, ins => ins.MatchStfld<Player>(nameof(Player.Speed)))) {
+            cursor.Index += 3;
+            cursor.MoveAfterLabels();
+            cursor.Emit(OpCodes.Ldloc_1);
+            cursor.EmitDelegate(TryDontLoseVertSpeed);
+        }
+        else {
+            success = false;
+        }
+        "Player.DashCoroutine".LogHookData("Dash Begin No Vertical Speed Loss", success);
+    }
+
+    private static void TryDontLoseVertSpeed(Player player) {
+        if (DashBeginDontLoseVerticalSpeed && Math.Sign(player.beforeDashSpeed.Y) == Math.Sign(player.Speed.Y) && Math.Abs(player.beforeDashSpeed.Y) > Math.Abs(player.Speed.Y)) {
+            player.Speed.Y = player.beforeDashSpeed.Y;
+        }
+    }
+}

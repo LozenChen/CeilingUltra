@@ -1,4 +1,6 @@
 using Celeste.Mod.CeilingUltra.Utils;
+using MonoMod.RuntimeDetour;
+using System.Reflection;
 
 namespace Celeste.Mod.CeilingUltra.Module;
 
@@ -14,6 +16,8 @@ internal static class Loader {
     }
 
     public static void Initialize() {
+        HookLogs.Clear();
+        CeilingUltraModule.Warnings = "";
         HookHelper.InitializeAtFirst();
         ModUtils.InitializeAtFirst();
         AttributeUtils.Invoke<InitializeAttribute>();
@@ -21,6 +25,15 @@ internal static class Loader {
         if (Reloading) {
             OnReload();
             Reloading = false;
+        }
+        foreach (HookData hookData in HookLogs.Keys) {
+            if (HookLogs[hookData]) {
+                Logger.Log("CeilingUltra", $"{hookData.hook} hook {hookData.methodBase}");
+            }
+            else {
+                Logger.Log(LogLevel.Warn, "CeilingUltra", $"{hookData.hook} fail to hook {hookData.methodBase}");
+                CeilingUltraModule.Warnings += $"\n{hookData.hook} fail to hook {hookData.methodBase}";
+            }
         }
     }
 
@@ -36,4 +49,15 @@ internal static class Loader {
     }
 
     public static bool Reloading;
+
+    public static Dictionary<HookData, bool> HookLogs = new();
+
+    public struct HookData {
+        public string methodBase;
+        public string hook;
+        public HookData(string methodBase, string hook) {
+            this.methodBase = methodBase;
+            this.hook = hook;
+        }
+    }
 }

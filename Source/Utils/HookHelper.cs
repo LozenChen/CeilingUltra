@@ -137,7 +137,7 @@ public static class CILCodeHelper {
         }
     }
 
-    public static void CILCodeLogger(this MethodBase methodBase, int logCount = 19, bool useCommand = true) {
+    public static void CILCodeLogger(this MethodBase methodBase, int logCount = 9999, bool useCommand = true) {
         new ILHook(methodBase, il => {
             ILCursor cursor = new ILCursor(il);
             CILCodeLogger(cursor, logCount, useCommand);

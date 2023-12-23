@@ -24,5 +24,16 @@ public class CeilingUltraSettings : EverestModuleSettings {
 
     public bool CeilingHyperEnabled { get; set; } = true;
 
-    public bool UpdiagDashDontLoseHorizontalSpeed { get; set; } = true;
+    public bool UpdiagDashEndNoHorizontalSpeedLoss { get; set; } = true;
+
+    public bool VerticalUltraEnabled { get; set; } = true;
+
+    public bool VerticalHyperEnabled { get; set; } = true;
+
+    public bool DashBeginNoVerticalSpeedLoss { get; set; } = true;
+
+
+    public bool WallRefillStamina { get; set; } = true;
+
+    public bool WallRefillDash { get; set; } = true;
 }

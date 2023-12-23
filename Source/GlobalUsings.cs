@@ -21,12 +21,13 @@ internal static class GlobalMethod {
     }
 
     public static void LogHookData(this string methodBase, string hook, bool success) {
-        if (success) {
-            Logger.Log("CeilingUltra", $"{hook} hook {methodBase}");
+        Loader.HookData data = new Loader.HookData(methodBase, hook);
+        if (Loader.HookLogs.ContainsKey(data)) {
+            // multiple hooks on same methodBase would create too many logs, so we store this and log them after all hooks have been done
+            Loader.HookLogs[data] &= success;
         }
         else {
-            Logger.Log(LogLevel.Warn, "CeilingUltra", $"{hook} fail to hook {methodBase}");
-            CeilingUltraModule.Warnings += $"\n{hook} fail to hook {methodBase}";
+            Loader.HookLogs[data] = success;
         }
     }
 }
