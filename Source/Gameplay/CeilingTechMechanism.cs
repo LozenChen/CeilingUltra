@@ -108,7 +108,7 @@ public static class CeilingTechMechanism {
     }
 
     private static bool TryApplyCeilingUltraAndPassBoolean(bool b, Player player) {
-        if (CeilingUltraEnabled) {
+        if (!b && CeilingUltraEnabled) { // do not ultra when dream dash check
             player.CeilingUltra();
         }
         return b;
@@ -225,6 +225,7 @@ public static class CeilingTechMechanism {
         player.maxFall = 240f;
         Input.Jump.ConsumeBuffer();
         player.jumpGraceTimer = 0f;
+        CeilingJumpGraceTimer = 0f;
         player.varJumpTimer = 0f; // does not produce varJumpTimer
         player.AutoJump = false;
         player.dashAttackTimer = 0f;
@@ -361,6 +362,7 @@ public static class CeilingTechMechanism {
     private static void CeilingHyper(this Player player) {
         Input.Jump.ConsumeBuffer();
         player.jumpGraceTimer = 0f;
+        CeilingJumpGraceTimer = 0f;
         player.varJumpTimer = 0f; // as what we do in ceiling jump
         player.AutoJump = false;
         player.dashAttackTimer = 0f;
