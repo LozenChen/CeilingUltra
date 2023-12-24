@@ -37,6 +37,7 @@ public static class VerticalTechMechanism {
             typeof(Player).GetMethodInfo("DashUpdate").IlHook(VerticalHyperHookDashUpdate);
             typeof(Player).GetMethodInfo("RedDashUpdate").IlHook(VerticalHyperHookDashUpdate);
             typeof(Player).GetMethodInfo("DashCoroutine").GetStateMachineTarget().IlHook(DashBeginDontLoseVertSpeed);
+            typeof(Player).GetMethodInfo("OnCollideV").IlHook(ProtectJumpGraceTimer);
         }
 
         int[] xOffsets = { 0, 1, -1 };
@@ -334,6 +335,7 @@ public static class VerticalTechMechanism {
             player.varJumpTimer = 0.1f; // 12 frames is a bit too long so i cut it half (although it's already a crazy mod)
             // bad news: in this case, OnCollideV will immediately kill varJumpTimer since varJumpTimer < 0.15f
             player.varJumpSpeed = player.Speed.Y;
+            CeilingTechMechanism.ProtectJumpGraceTimer = 0.1f; // so we invent this to protect varJumpTimer, this will be enough to go around a 1px corner
         }
         else {
             player.varJumpTimer = 0f;
@@ -425,5 +427,24 @@ public static class VerticalTechMechanism {
         if (DashBeginDontLoseVerticalSpeed && Math.Sign(player.beforeDashSpeed.Y) == Math.Sign(player.Speed.Y) && Math.Abs(player.beforeDashSpeed.Y) > Math.Abs(player.Speed.Y)) {
             player.Speed.Y = player.beforeDashSpeed.Y;
         }
+    }
+
+    private static void ProtectJumpGraceTimer(ILContext il) {
+        ILCursor cursor = new ILCursor(il);
+        bool success = true;
+        if (cursor.TryGotoNext(ins => ins.OpCode == OpCodes.Ldarg_0, ins => ins.MatchLdfld<Player>(nameof(Player.varJumpTimer)), ins => ins.MatchLdcR4(0.15f), ins => ins.OpCode == OpCodes.Bge_Un_S)) {
+            ILLabel label = (ILLabel)cursor.Next.Next.Next.Next.Operand;
+            cursor.MoveAfterLabels();
+            cursor.EmitDelegate(CheckProtectJumpGraceTimer);
+            cursor.Emit(OpCodes.Brtrue, label);
+        }
+        else {
+            success = false;
+        }
+        "Player.OnCollideV".LogHookData("Protect Jump Grace Timer", success);
+    }
+
+    private static bool CheckProtectJumpGraceTimer() {
+        return CeilingTechMechanism.ProtectJumpGraceTimer > 0f;
     }
 }

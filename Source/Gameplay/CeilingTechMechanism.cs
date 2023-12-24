@@ -70,6 +70,7 @@ public static class CeilingTechMechanism {
         CeilingJumpGraceTimer = 0f;
         LeftWallGraceTimer = 0f;
         RightWallGraceTimer = 0f;
+        ProtectJumpGraceTimer = 0f;
     }
 
     private static Player OnLoadNewPlayer(On.Celeste.Level.orig_LoadNewPlayer orig, Vector2 Position, PlayerSpriteMode spriteMode) {
@@ -177,9 +178,11 @@ public static class CeilingTechMechanism {
         Vector2 position = player.Position;
         CeilingUnduck_Normal(player);
         bool result = !player.CollideCheck<Solid>();
-        player.Position = position;
-        player.Collider = collider;
-        player.hurtbox = hurtbox;
+        if (!result) {
+            player.Position = position;
+            player.Collider = collider;
+            player.hurtbox = hurtbox;
+        }
         return result;
     }
 
@@ -247,11 +250,11 @@ public static class CeilingTechMechanism {
     }
 
     private static void CheckCeilingVerticalUltraInDashCoroutine(Player player) {
-        if (CeilingUltraEnabled && PlayerOnCeiling && (!player.Inventory.DreamDash || !player.CollideCheck<DreamBlock>(player.Position - Vector2.UnitY))) {
-            player.CeilingUltra();
-        }
-        else if (player.Speed.X != 0f && player.CollideCheck<Solid>(player.Position + Vector2.UnitX * Math.Sign(player.Speed.X)) && (!player.Inventory.DreamDash || !player.CollideCheck<DreamBlock>(player.Position + Vector2.UnitX * Math.Sign(player.Speed.X)))) {
+        if (player.Speed.X != 0f && player.CollideCheck<Solid>(player.Position + Vector2.UnitX * Math.Sign(player.Speed.X)) && (!player.Inventory.DreamDash || !player.CollideCheck<DreamBlock>(player.Position + Vector2.UnitX * Math.Sign(player.Speed.X)))) {
             player.TryVerticalUltra();
+        } // try vertical ultra first, so it matchs the intuition that, first horizontal movement, then vertical
+        else if (CeilingUltraEnabled && PlayerOnCeiling && (!player.Inventory.DreamDash || !player.CollideCheck<DreamBlock>(player.Position - Vector2.UnitY))) {
+            player.CeilingUltra();
         }
     }
 
@@ -267,11 +270,16 @@ public static class CeilingTechMechanism {
 
     public static float RightWallGraceTimer = 0f;
 
+    public static float ProtectJumpGraceTimer = 0f;
+
     public static float LastGroundJumpGraceTimer = 1f;
 
     public static float NextMaxFall = 0f;
 
     public static void UpdateOnCeilingAndWall(Player player) {
+        if (LastGroundJumpGraceTimer > 0f && player.jumpGraceTimer <= 0f) { // so it's killed by something that maybe we have not hooked
+            SetExtendedJumpGraceTimer();
+        }
         if (NextMaxFall > 160f && player.StateMachine.State == 0) { // NormalBegin resets maxFall to be 160f, so we need this for vertical hyper
             player.maxFall = NextMaxFall;
         }
@@ -314,9 +322,8 @@ public static class CeilingTechMechanism {
         else if (RightWallGraceTimer > 0f) {
             RightWallGraceTimer -= Engine.DeltaTime;
         }
-        
-        if (LastGroundJumpGraceTimer > 0f && player.jumpGraceTimer <= 0f) { // so it's killed by something that maybe we have not hooked
-            SetExtendedJumpGraceTimer();
+        if (ProtectJumpGraceTimer > 0f) {
+            ProtectJumpGraceTimer -= Engine.DeltaTime;
         }
     }
 
