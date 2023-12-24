@@ -89,7 +89,7 @@ public static class CeilingTechMechanism {
     }
 
     public static bool TryCeilingDuck(this Player player, int priorDirection = 1) {
-        if (player.IsFlattened()) {
+        if (player.IsSqueezed()) {
             Collider collider = player.Collider;
             Vector2 position = player.Position;
             bool result = false;
@@ -137,7 +137,7 @@ public static class CeilingTechMechanism {
 
     public static bool TryCeilingUnduck(this Player player, out bool wasDuck, int priorDirection = 1) {
         wasDuck = player.Ducking;
-        if (player.IsFlattened()) {
+        if (player.IsSqueezed()) {
             Collider collider2 = player.Collider;
             Vector2 position2 = player.Position;
             bool result2 = false;
@@ -298,7 +298,6 @@ public static class CeilingTechMechanism {
             CeilingJumpGraceTimer -= Engine.DeltaTime;
         }
 
-
         if (WallRefillStamina && player.PlayerOnWall()) {
             player.Stamina = 110f;
             player.wallSlideTimer = 1.2f;
@@ -315,11 +314,10 @@ public static class CeilingTechMechanism {
         else if (RightWallGraceTimer > 0f) {
             RightWallGraceTimer -= Engine.DeltaTime;
         }
-
+        
         if (LastGroundJumpGraceTimer > 0f && player.jumpGraceTimer <= 0f) { // so it's killed by something that maybe we have not hooked
             SetExtendedJumpGraceTimer();
         }
-
     }
 
     private static void RecordGroundJumpGraceTimer(Player player) {

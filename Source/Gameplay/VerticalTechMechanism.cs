@@ -33,7 +33,7 @@ public static class VerticalTechMechanism {
             typeof(Player).GetMethodInfo("OnCollideH").IlHook(VerticalUltraHookOnCollideH);
             typeof(Player).GetMethodInfo("get_CanUnDuck").IlHook(ModifyCanUnDuck);
             typeof(Player).GetMethodInfo("set_Ducking").IlHook(ModifySetDucking);
-            typeof(Player).GetMethodInfo("orig_Update").IlHook(AutoUnflatten);
+            typeof(Player).GetMethodInfo("orig_Update").IlHook(AutoUnsqueeze);
             typeof(Player).GetMethodInfo("DashUpdate").IlHook(VerticalHyperHookDashUpdate);
             typeof(Player).GetMethodInfo("RedDashUpdate").IlHook(VerticalHyperHookDashUpdate);
             typeof(Player).GetMethodInfo("DashCoroutine").GetStateMachineTarget().IlHook(DashBeginDontLoseVertSpeed);
@@ -50,32 +50,32 @@ public static class VerticalTechMechanism {
         }
     }
 
-    private static Hitbox flattenHitbox = new Hitbox(6f, 11f, -3f, -11f);
+    private static Hitbox squeezedHitbox = new Hitbox(6f, 11f, -3f, -11f);
 
-    private static Hitbox flattenHurtbox = new Hitbox(6f, 9f, -3f, -11f);
+    private static Hitbox squeezedHurtbox = new Hitbox(6f, 9f, -3f, -11f);
     private static Player OnLoadNewPlayer(On.Celeste.Level.orig_LoadNewPlayer orig, Vector2 Position, PlayerSpriteMode spriteMode) {
         Player player = orig(Position, spriteMode);
-        flattenHitbox = new Hitbox(6f, 11f, -3f, -11f);
-        flattenHurtbox = new Hitbox(6f, 9f, -3f, -11f);
+        squeezedHitbox = new Hitbox(6f, 11f, -3f, -11f);
+        squeezedHurtbox = new Hitbox(6f, 9f, -3f, -11f);
         return player;
     }
 
-    public static bool IsFlattened(this Player player) {
-        return player.Collider == flattenHitbox || player.Collider == flattenHurtbox;
+    public static bool IsSqueezed(this Player player) {
+        return player.Collider == squeezedHitbox || player.Collider == squeezedHurtbox;
     }
-    public static void SetFlattenHitbox(this Player player) {
-        player.Collider = flattenHitbox;
-        player.hurtbox = flattenHurtbox;
+    public static void SetSqueezedHitbox(this Player player) {
+        player.Collider = squeezedHitbox;
+        player.hurtbox = squeezedHurtbox;
     }
 
-    public static bool CanFlattenHitbox(this Player player, float xDirection, float yDirection, out Vector2 offset) {
+    public static bool CanSqueezeHitbox(this Player player, float xDirection, float yDirection, out Vector2 offset) {
         // we do this check so if maddy crushes into the wall with a duck hitbox, it's still properly handled
         if (xDirection < 0 && yDirection < 0) {
             // upper-left dash: keep bottom left invariant
             Collider collider = player.Collider;
             Vector2 position = player.Position;
             Vector2 orig = player.Collider.BottomLeft;
-            player.Collider = flattenHitbox;
+            player.Collider = squeezedHitbox;
             offset = orig - player.Collider.BottomLeft; // we didn't use player.BottomLeft, so we can avoid possible float position and related issues. offset will always be integer
             player.Position += offset;
             bool result = !player.CollideCheck<Solid>();
@@ -88,7 +88,7 @@ public static class VerticalTechMechanism {
             Collider collider = player.Collider;
             Vector2 position = player.Position;
             Vector2 orig = player.Collider.TopLeft;
-            player.Collider = flattenHitbox;
+            player.Collider = squeezedHitbox;
             offset = orig - player.Collider.TopLeft;
             player.Position += offset;
             bool result = !player.CollideCheck<Solid>();
@@ -101,7 +101,7 @@ public static class VerticalTechMechanism {
             Collider collider = player.Collider;
             Vector2 position = player.Position;
             Vector2 orig = player.Collider.BottomRight;
-            player.Collider = flattenHitbox;
+            player.Collider = squeezedHitbox;
             offset = orig - player.Collider.BottomRight;
             player.Position += offset;
             bool result = !player.CollideCheck<Solid>();
@@ -114,7 +114,7 @@ public static class VerticalTechMechanism {
             Collider collider = player.Collider;
             Vector2 position = player.Position;
             Vector2 orig = player.Collider.TopRight;
-            player.Collider = flattenHitbox;
+            player.Collider = squeezedHitbox;
             offset = orig - player.Collider.TopRight;
             player.Position += offset;
             bool result = !player.CollideCheck<Solid>();
@@ -126,10 +126,10 @@ public static class VerticalTechMechanism {
         return false;
     }
 
-    public static bool TryFlattenHitbox(this Player player, float xDirection, float yDirection) {
-        if (player.CanFlattenHitbox(xDirection, yDirection, out Vector2 offset)) {
+    public static bool TrySqueezeHitbox(this Player player, float xDirection, float yDirection) {
+        if (player.CanSqueezeHitbox(xDirection, yDirection, out Vector2 offset)) {
             player.NaiveMove(offset);
-            player.SetFlattenHitbox();
+            player.SetSqueezedHitbox();
             return true;
         }
         else {
@@ -147,15 +147,32 @@ public static class VerticalTechMechanism {
                 success = true;
                 cursor.MoveAfterLabels();
                 cursor.Emit(OpCodes.Ldarg_0);
-                cursor.EmitDelegate(TryVerticalUltra);
+                // cursor.EmitDelegate(TryVerticalUltra);
+                cursor.EmitDelegate(TryVerticalUltraWithRetention);
                 cursor.Emit(OpCodes.Brtrue, label2); // skip wallSpeedRetention, as in some sense, an ultra converts vertical speed into horizontal speed, so a vertical ultra should converts horizontal speed into vertical, and you will lose your horizontal speed anyway
+                // no i've changed my idea now, I LOVE WALL SPEED RETAINED
             }
+            
         }
         "Player.OnCollideH".LogHookData("Vertical Ultra", success);
     }
 
     public static bool TryVerticalUltra(this Player player) {
-        if (VerticalUltraEnabled && Math.Sign(player.DashDir.X) is { } xSign && xSign != 0 && xSign == Math.Sign(player.Speed.X) && player.DashDir.Y != 0f && player.TryFlattenHitbox(xSign, player.Speed.Y)) {
+        if (VerticalUltraEnabled && Math.Sign(player.DashDir.X) is { } xSign && xSign != 0 && xSign == Math.Sign(player.Speed.X) && player.DashDir.Y != 0f && player.TrySqueezeHitbox(xSign, player.Speed.Y)) {
+            player.DashDir.Y = Math.Sign(player.DashDir.Y); // wow, this allows you to super wall jump after an upward vertical ultra
+            player.DashDir.X = 0f;
+            player.Speed.X = 0f;
+            player.Speed.Y *= 1.2f;
+            player.Sprite.Scale = new Vector2(0.5f, 1.5f);
+            return true;
+        }
+        return false;
+    }
+
+    public static bool TryVerticalUltraWithRetention(this Player player) {
+        if (VerticalUltraEnabled && Math.Sign(player.DashDir.X) is { } xSign && xSign != 0 && xSign == Math.Sign(player.Speed.X) && player.DashDir.Y != 0f && player.TrySqueezeHitbox(xSign, player.Speed.Y)) {
+            player.wallSpeedRetained = player.Speed.X;
+            player.wallSpeedRetentionTimer = 0.06f;
             player.DashDir.Y = Math.Sign(player.DashDir.Y); // wow, this allows you to super wall jump after an upward vertical ultra
             player.DashDir.X = 0f;
             player.Speed.X = 0f;
@@ -170,15 +187,15 @@ public static class VerticalTechMechanism {
         ILCursor cursor = new ILCursor(il);
         Instruction target = cursor.Next;
         cursor.Emit(OpCodes.Ldarg_0);
-        cursor.EmitDelegate(IsFlattened);
+        cursor.EmitDelegate(IsSqueezed);
         cursor.Emit(OpCodes.Brfalse, target);
         cursor.Emit(OpCodes.Ldarg_0);
-        cursor.EmitDelegate(CanUnFlattenInUnDuck);
+        cursor.EmitDelegate(CanUnSqueezeInUnDuck);
         cursor.Emit(OpCodes.Ret);
-        "Player.get_CanUnDuck".LogHookData("Compatiblity with FlattenHitbox", true);
+        "Player.get_CanUnDuck".LogHookData("Compatiblity with SqueezedHitbox", true);
     }
 
-    private static bool CanUnFlattenInUnDuck(this Player player) {
+    private static bool CanUnSqueezeInUnDuck(this Player player) {
         Collider collider = player.Collider;
         player.Collider = player.normalHitbox;
         bool result = !player.CollideCheck<Solid>() || !player.CollideCheck<Solid>(player.Position + Vector2.UnitX) || !player.CollideCheck<Solid>(player.Position - Vector2.UnitX);
@@ -186,7 +203,7 @@ public static class VerticalTechMechanism {
         return result;
     }
 
-    private static void UnFlatten(this Player player, bool duck = false) {
+    private static void UnSqueeze(this Player player, bool duck = false) {
         if (!duck) {
             // in most cases, Ducking = false goes with a CanUnDuck check
             Collider collider = player.Collider;
@@ -245,40 +262,40 @@ public static class VerticalTechMechanism {
         ILCursor cursor = new ILCursor(il);
         Instruction next = cursor.Next;
         cursor.Emit(OpCodes.Ldarg_0);
-        cursor.EmitDelegate(IsFlattened);
+        cursor.EmitDelegate(IsSqueezed);
         cursor.Emit(OpCodes.Brfalse, next);
         cursor.Emit(OpCodes.Ldarg_0);
         cursor.Emit(OpCodes.Ldarg_1);
-        cursor.EmitDelegate(UnFlatten);
+        cursor.EmitDelegate(UnSqueeze);
         cursor.Emit(OpCodes.Ret);
-        "Player.set_Ducking".LogHookData("Compatiblity with FlattenHitbox", true);
+        "Player.set_Ducking".LogHookData("Compatiblity with SqueezedHitbox", true);
     }
 
-    private static void AutoUnflatten(ILContext il) {
-        // to conclude, once you are flatten, you can keep this state all along a left/right wall, until you touch ground (or untii you wallslide / grab a wall in normal update etc)
+    private static void AutoUnsqueeze(ILContext il) {
+        // to conclude, once you are Squeezed, you can keep this state all along a left/right wall, until you touch ground (or untii you wallslide / grab a wall in normal update etc)
         ILCursor cursor = new ILCursor(il);
         bool success = true;
         if (cursor.TryGotoNext(ins => ins.OpCode == OpCodes.Ldarg_0, ins => ins.OpCode == OpCodes.Ldc_I4_0, ins => ins.MatchCallOrCallvirt<Player>("set_Ducking"))) {
             ILLabel label = (ILLabel) cursor.Prev.Operand;
             cursor.Emit(OpCodes.Ldarg_0);
-            cursor.EmitDelegate(SkipUnflattenInOrigUpdate);
+            cursor.EmitDelegate(SkipUnSqueezeInOrigUpdate);
             cursor.Emit(OpCodes.Brtrue, label);
             cursor.GotoLabel(label);
             cursor.Emit(OpCodes.Ldarg_0);
-            cursor.EmitDelegate(UnflattenOnGround);
+            cursor.EmitDelegate(UnsqueezeOnGround);
         }
         else {
             success = false;
         }
-        "Player.orig_Update".LogHookData("Auto Unflatten", success);
+        "Player.orig_Update".LogHookData("Auto Unsqueeze", success);
     }
 
-    private static bool SkipUnflattenInOrigUpdate(Player player) {
-        return player.IsFlattened() && (CeilingTechMechanism.LeftWallGraceTimer > 0f || CeilingTechMechanism.RightWallGraceTimer > 0f);
+    private static bool SkipUnSqueezeInOrigUpdate(Player player) {
+        return player.IsSqueezed() && (CeilingTechMechanism.LeftWallGraceTimer > 0f || CeilingTechMechanism.RightWallGraceTimer > 0f);
     }
 
-    private static void UnflattenOnGround(Player player) {
-        if (player.IsFlattened() && player.onGround && player.CanUnDuck) {
+    private static void UnsqueezeOnGround(Player player) {
+        if (player.IsSqueezed() && player.onGround && player.CanUnDuck) {
             player.Ducking = false;
         }
     }
@@ -302,8 +319,8 @@ public static class VerticalTechMechanism {
         player.gliderBoostTimer = 0.55f;
         player.Play("event:/char/madeline/jump");
 
-        if (true) { // always Flattened
-            player.UnFlatten(false);
+        if (true) { // always Squeezed
+            player.UnSqueeze(false);
             player.Speed.X *= 0.5f;
             player.Speed.Y *= 1.25f;
             player.Play("event:/char/madeline/jump_superslide");
@@ -315,6 +332,7 @@ public static class VerticalTechMechanism {
 
         if (player.Speed.Y < 0f) {
             player.varJumpTimer = 0.1f; // 12 frames is a bit too long so i cut it half (although it's already a crazy mod)
+            // bad news: in this case, OnCollideV will immediately kill varJumpTimer since varJumpTimer < 0.15f
             player.varJumpSpeed = player.Speed.Y;
         }
         else {
@@ -352,7 +370,7 @@ public static class VerticalTechMechanism {
     }
 
     private static bool TryVerticalHyper(Player player) {
-        if (VerticalHyperEnabled && player.IsFlattened() && CelesteInput.Jump.Pressed && Math.Abs(player.DashDir.X) < 0.1f && player.CanUnFlattenInUnDuck()) {
+        if (VerticalHyperEnabled && player.IsSqueezed() && CelesteInput.Jump.Pressed && Math.Abs(player.DashDir.X) < 0.1f && player.CanUnSqueezeInUnDuck()) {
             int yDirection = Math.Sign(CelesteInput.MoveY);
             if (yDirection == 0) {
                 yDirection = Math.Sign(player.Speed.Y);
