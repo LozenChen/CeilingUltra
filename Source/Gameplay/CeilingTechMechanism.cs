@@ -26,6 +26,8 @@ public static class CeilingTechMechanism {
 
     public static bool UpdiagDashDontLoseHorizontalSpeed => ceilingUltraSetting.Enabled && ceilingUltraSetting.UpdiagDashEndNoHorizontalSpeedLoss;
 
+    public static bool UpdiagDashDontLoseVerticalSpeed => ceilingUltraSetting.Enabled && ceilingUltraSetting.UpdiagDashEndNoVerticalSpeedLoss;
+
     [Load]
     public static void Load() {
         On.Celeste.Level.LoadNewPlayer += OnLoadNewPlayer;
@@ -41,7 +43,7 @@ public static class CeilingTechMechanism {
         using (new DetourContext { Before = new List<string> { "*"}, ID = "Ceiling Tech Mechanism" }) {
             typeof(Player).GetMethodInfo("orig_Update").IlHook(HookPlayerUpdate);
             typeof(Player).GetMethodInfo("OnCollideV").IlHook(CeilingUltraHookOnCollideV);
-            typeof(Player).GetMethodInfo("DashCoroutine").GetStateMachineTarget().IlHook(CeilingUltraHookDashCoroutine);
+            typeof(Player).GetMethodInfo("DashCoroutine").GetStateMachineTarget().IlHook(CeilingVerticalUltraHookDashCoroutine);
             typeof(Player).GetMethodInfo("NormalUpdate").IlHook(CeilingJumpHookNormalUpdate);
             typeof(Player).GetMethodInfo("SwimUpdate").IlHook(CeilingJumpHookSwimUpdate);
             typeof(Player).GetMethodInfo("StarFlyUpdate").IlHook(CeilingJumpHookFeatherUpdate);
@@ -211,7 +213,7 @@ public static class CeilingTechMechanism {
         return b;
     }
 
-    private static void CeilingUltraHookDashCoroutine(ILContext iLContext) {
+    private static void CeilingVerticalUltraHookDashCoroutine(ILContext iLContext) {
         ILCursor cursor = new ILCursor(iLContext);
         bool success = true;
         if (cursor.TryGotoNext(
@@ -230,7 +232,7 @@ public static class CeilingTechMechanism {
 
         success = true;
         if (cursor.TryGotoNext(ins => ins.MatchLdcR4(160f))) {
-            Instruction target = cursor.Next.Next.Next.Next;
+            Instruction target = cursor.Next.Next.Next.Next; // goes to Speed.X *= swapCancel.X;
             cursor.Index -= 3;
             cursor.MoveAfterLabels();
             cursor.Emit(OpCodes.Ldloc_1);
@@ -241,13 +243,14 @@ public static class CeilingTechMechanism {
             success = false;
         }
         "Player.DashCoroutine".LogHookData("Updiag Dash End No Horizontal Speed Loss", success);
+        "Player.DashCoroutine".LogHookData("Updiag Dash End No Vertical Speed Loss", success);
     }
 
     private static void CheckCeilingVerticalUltraInDashCoroutine(Player player) {
         if (CeilingUltraEnabled && PlayerOnCeiling && (!player.Inventory.DreamDash || !player.CollideCheck<DreamBlock>(player.Position - Vector2.UnitY))) {
             player.CeilingUltra();
         }
-        else if (player.PlayerOnWall() && player.Speed.X != 0f && (!player.Inventory.DreamDash || !player.CollideCheck<DreamBlock>(player.Position + Vector2.UnitX * Math.Sign(player.Speed.X)))) {
+        else if (player.Speed.X != 0f && player.CollideCheck<Solid>(player.Position + Vector2.UnitX * Math.Sign(player.Speed.X)) && (!player.Inventory.DreamDash || !player.CollideCheck<DreamBlock>(player.Position + Vector2.UnitX * Math.Sign(player.Speed.X)))) {
             player.TryVerticalUltra();
         }
     }
@@ -552,11 +555,31 @@ public static class CeilingTechMechanism {
         }
         "Player.DashUpdate".LogHookData("Ceiling Hyper", success);
     }
-
+    private const float startRemainFullVerticalSpeed = -325f;
     private static bool SkipDashEndLoseSpeed(Player player) {
-        bool result = UpdiagDashDontLoseHorizontalSpeed && player.DashDir.Y != 0f;
+        bool result = UpdiagDashDontLoseHorizontalSpeed && player.DashDir.Y < 0f;
         if (result) {
-            player.Speed.Y = player.DashDir.Y * 160f; // if vertical speed also doesn't get lost, then it would be a bit crazy
+            if (UpdiagDashDontLoseVerticalSpeed && player.DashDir.X != 0f) {
+                // speed < 169.7f: half
+                // speed > 325f : remain
+                // between: linear interpolate
+
+                float startLerpVerticalSpeed = 240f * player.DashDir.Y;
+                if (player.Speed.Y >= startLerpVerticalSpeed) {
+                    player.Speed.Y = startLerpVerticalSpeed / 2f;
+                }
+                else if (player.Speed.Y <= startRemainFullVerticalSpeed) {
+                    // remain invariant
+                }
+                else {
+                    player.Speed.Y = MathHelper.Lerp(startLerpVerticalSpeed / 2f, startRemainFullVerticalSpeed, (player.Speed.Y - startLerpVerticalSpeed) / (startRemainFullVerticalSpeed - startLerpVerticalSpeed));
+                }
+            }
+            else {
+                player.Speed.Y = player.DashDir.Y * 120f;
+            }
+
+            player.Speed.Y *= 4f / 3f; // as it will encounter a 0.75f factor later
         }
         return result;
     }

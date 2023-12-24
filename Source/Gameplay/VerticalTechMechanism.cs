@@ -33,7 +33,7 @@ public static class VerticalTechMechanism {
             typeof(Player).GetMethodInfo("OnCollideH").IlHook(VerticalUltraHookOnCollideH);
             typeof(Player).GetMethodInfo("get_CanUnDuck").IlHook(ModifyCanUnDuck);
             typeof(Player).GetMethodInfo("set_Ducking").IlHook(ModifySetDucking);
-            typeof(Player).GetMethodInfo("orig_Update").IlHook(NoUnflattenInCoyote);
+            typeof(Player).GetMethodInfo("orig_Update").IlHook(AutoUnflatten);
             typeof(Player).GetMethodInfo("DashUpdate").IlHook(VerticalHyperHookDashUpdate);
             typeof(Player).GetMethodInfo("RedDashUpdate").IlHook(VerticalHyperHookDashUpdate);
             typeof(Player).GetMethodInfo("DashCoroutine").GetStateMachineTarget().IlHook(DashBeginDontLoseVertSpeed);
@@ -254,7 +254,8 @@ public static class VerticalTechMechanism {
         "Player.set_Ducking".LogHookData("Compatiblity with FlattenHitbox", true);
     }
 
-    private static void NoUnflattenInCoyote(ILContext il) {
+    private static void AutoUnflatten(ILContext il) {
+        // to conclude, once you are flatten, you can keep this state all along a left/right wall, until you touch ground (or untii you wallslide / grab a wall in normal update etc)
         ILCursor cursor = new ILCursor(il);
         bool success = true;
         if (cursor.TryGotoNext(ins => ins.OpCode == OpCodes.Ldarg_0, ins => ins.OpCode == OpCodes.Ldc_I4_0, ins => ins.MatchCallOrCallvirt<Player>("set_Ducking"))) {
@@ -269,7 +270,7 @@ public static class VerticalTechMechanism {
         else {
             success = false;
         }
-        "Player.orig_Update".LogHookData("No Unflatten In Coyote Time", success);
+        "Player.orig_Update".LogHookData("Auto Unflatten", success);
     }
 
     private static bool SkipUnflattenInOrigUpdate(Player player) {

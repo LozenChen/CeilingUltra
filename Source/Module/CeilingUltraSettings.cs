@@ -32,6 +32,7 @@ public class CeilingUltraSettings : EverestModuleSettings {
 
     public bool DashBeginNoVerticalSpeedLoss { get; set; } = true;
 
+    public bool UpdiagDashEndNoVerticalSpeedLoss { get; set; } = true;
 
     public bool WallRefillStamina { get; set; } = true;
 

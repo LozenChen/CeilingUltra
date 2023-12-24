@@ -67,6 +67,7 @@ public class CeilingUltraModule : EverestModule {
         menu.Add(new TextMenu.OnOff("Vertical Hyper".ToDialogText(), ceilingUltraSetting.VerticalHyperEnabled).Change(value => ceilingUltraSetting.VerticalHyperEnabled = value));
         menu.Add(new TextMenu.OnOff("Vertical Ultra".ToDialogText(), ceilingUltraSetting.VerticalUltraEnabled).Change(value => ceilingUltraSetting.VerticalUltraEnabled = value));
         menu.Add(new TextMenu.OnOff("Dash Begin No Vertical Speed Loss".ToDialogText(), ceilingUltraSetting.DashBeginNoVerticalSpeedLoss).Change(value => ceilingUltraSetting.DashBeginNoVerticalSpeedLoss = value));
+        menu.Add(new TextMenu.OnOff("Updiag Dash End No Vertical Speed Loss".ToDialogText(), ceilingUltraSetting.UpdiagDashEndNoVerticalSpeedLoss).Change(value => ceilingUltraSetting.UpdiagDashEndNoVerticalSpeedLoss = value));
 
     }
 
