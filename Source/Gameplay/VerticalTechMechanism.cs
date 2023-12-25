@@ -361,7 +361,7 @@ public static class VerticalTechMechanism {
         if (platformByPriority != null) {
             index = platformByPriority.GetLandSoundIndex(player);
         }
-        Dust.Burst(xDirection > 0 ? player.CenterLeft : player.CenterRight, xDirection > 0f ? (float) Math.PI : 0f, 4, player.DustParticleFromSurfaceIndex(index));
+        Dust.Burst(xDirection > 0 ? player.CenterLeft : player.CenterRight, xDirection > 0f ? 0f : (float) Math.PI, 4, player.DustParticleFromSurfaceIndex(index));
         SaveData.Instance.TotalJumps++;
     }
 
