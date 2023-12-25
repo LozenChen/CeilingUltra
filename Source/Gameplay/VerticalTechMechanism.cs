@@ -71,6 +71,10 @@ public static class VerticalTechMechanism {
 
     public static bool CanSqueezeHitbox(this Player player, float xDirection, float yDirection, out Vector2 offset) {
         // we do this check so if maddy crushes into the wall with a duck hitbox, it's still properly handled
+        if (player.Collider == squeezedHitbox) {
+            offset = Vector2.Zero;
+            return true;
+        }
         if (xDirection < 0 && yDirection < 0) {
             // upper-left dash: keep bottom left invariant
             Collider collider = player.Collider;
@@ -142,14 +146,14 @@ public static class VerticalTechMechanism {
         ILCursor cursor = new ILCursor(il);
         bool success = false;
         if (cursor.TryGotoNext(ins => ins.MatchCallOrCallvirt<Player>(nameof(Player.DreamDashCheck)), ins => ins.OpCode == OpCodes.Brfalse_S)) {
-            ILLabel label = (ILLabel)cursor.Next.Next.Operand;
+            ILLabel label = (ILLabel)cursor.Next.Next.Operand; // goto wall speed retention
             cursor.GotoLabel(label);
             if (cursor.Next.Next.Next.Next.MatchBgtUn(out ILLabel label2)) {
                 success = true;
                 cursor.MoveAfterLabels();
                 cursor.Emit(OpCodes.Ldarg_0);
                 // cursor.EmitDelegate(TryVerticalUltra);
-                cursor.EmitDelegate(TryVerticalUltraWithRetention);
+                cursor.EmitDelegate(CheckAndApplyVerticalUltraWithRetention);
                 cursor.Emit(OpCodes.Brtrue, label2); // skip wallSpeedRetention, as in some sense, an ultra converts vertical speed into horizontal speed, so a vertical ultra should converts horizontal speed into vertical, and you will lose your horizontal speed anyway
                 // no i've changed my idea now, I LOVE WALL SPEED RETAINED
             }
@@ -159,7 +163,7 @@ public static class VerticalTechMechanism {
     }
 
     public static bool TryVerticalUltra(this Player player) {
-        if (VerticalUltraEnabled && Math.Sign(player.DashDir.X) is { } xSign && xSign != 0 && xSign == Math.Sign(player.Speed.X) && player.DashDir.Y != 0f && player.TrySqueezeHitbox(xSign, player.Speed.Y)) {
+        if (Math.Sign(player.DashDir.X) is { } xSign && xSign != 0 && xSign == Math.Sign(player.Speed.X) && player.DashDir.Y != 0f && player.TrySqueezeHitbox(xSign, player.Speed.Y)) {
             player.DashDir.Y = Math.Sign(player.DashDir.Y); // wow, this allows you to super wall jump after an upward vertical ultra
             player.DashDir.X = 0f;
             player.Speed.X = 0f;
@@ -170,11 +174,18 @@ public static class VerticalTechMechanism {
         return false;
     }
 
+    private static bool CheckAndApplyVerticalUltraWithRetention(this Player player) {
+        if (!VerticalUltraEnabled) {
+            return false;
+        }
+        return TryVerticalUltraWithRetention(player);
+    }
+
     public static bool TryVerticalUltraWithRetention(this Player player) {
-        if (VerticalUltraEnabled && Math.Sign(player.DashDir.X) is { } xSign && xSign != 0 && xSign == Math.Sign(player.Speed.X) && player.DashDir.Y != 0f && player.TrySqueezeHitbox(xSign, player.Speed.Y)) {
+        if (Math.Sign(player.DashDir.X) is { } xSign && xSign != 0 && xSign == Math.Sign(player.Speed.X) && player.DashDir.Y != 0f && player.TrySqueezeHitbox(xSign, player.Speed.Y)) {
             player.wallSpeedRetained = player.Speed.X;
             player.wallSpeedRetentionTimer = 0.06f;
-            player.DashDir.Y = Math.Sign(player.DashDir.Y); // wow, this allows you to super wall jump after an upward vertical ultra
+            player.DashDir.Y = Math.Sign(player.DashDir.Y); // wow, this should allow you to super wall jump after an upward vertical ultra (if you manage to unsqueeze during your dash)
             player.DashDir.X = 0f;
             player.Speed.X = 0f;
             player.Speed.Y *= 1.2f;

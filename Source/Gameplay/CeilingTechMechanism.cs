@@ -42,6 +42,7 @@ public static class CeilingTechMechanism {
     public static void Initialize() {
         using (new DetourContext { Before = new List<string> { "*"}, ID = "Ceiling Tech Mechanism" }) {
             typeof(Player).GetMethodInfo("orig_Update").IlHook(HookPlayerUpdate);
+            typeof(Player).GetMethodInfo("orig_Update").IlHook(UpdateMaxFallHook);
             typeof(Player).GetMethodInfo("OnCollideV").IlHook(CeilingUltraHookOnCollideV);
             typeof(Player).GetMethodInfo("DashCoroutine").GetStateMachineTarget().IlHook(CeilingVerticalUltraHookDashCoroutine);
             typeof(Player).GetMethodInfo("NormalUpdate").IlHook(CeilingJumpHookNormalUpdate);
@@ -103,12 +104,12 @@ public static class CeilingTechMechanism {
             }
             else {
                 int direction = priorDirection >= 0 ? 1 : -1;
-                player.Position = position + direction * Vector2.UnitX;
+                player.X += direction;
                 if (!player.CollideCheck<Solid>()) {
                     result = true;
                 }
                 else {
-                    player.Position = position - direction * Vector2.UnitX;
+                    player.X -= 2 * direction;
                     if (!player.CollideCheck<Solid>()) {
                         result = true;
                     }
@@ -150,12 +151,12 @@ public static class CeilingTechMechanism {
                 result2 = true;
             }
             else {
-                player.Position = position2 + priorDirection * Vector2.UnitX;
+                player.X += priorDirection;
                 if (!player.CollideCheck<Solid>()) {
                     result2 = true;
                 }
                 else {
-                    player.Position = position2 - priorDirection * Vector2.UnitX;
+                    player.X -= 2 * priorDirection;
                     if (!player.CollideCheck<Solid>()) {
                         result2 = true;
                     }
@@ -186,13 +187,15 @@ public static class CeilingTechMechanism {
         return result;
     }
 
-    public static void CeilingUltra(this Player player) {
+    public static bool TryCeilingUltra(this Player player) {
         if (player.DashDir.X != 0f && player.DashDir.Y < 0f && player.Speed.Y < 0f && player.TryCeilingDuck(Math.Sign(player.Speed.X))) {
             player.DashDir.X = Math.Sign(player.DashDir.X);
             player.DashDir.Y = 0f;
             player.Speed.Y = 0f;
             player.Speed.X *= 1.2f;
+            return true;
         }
+        return false;
     }
 
     private static void CeilingUltraHookOnCollideV(ILContext iLContext) {
@@ -200,20 +203,21 @@ public static class CeilingTechMechanism {
         bool success = false;
         if (cursor.TryGotoNext(ins => ins.MatchCallOrCallvirt<Player>(nameof(Player.DreamDashCheck)))) {
             cursor.Index++;
-            if (cursor.TryGotoNext(MoveType.After, ins => ins.MatchCallOrCallvirt<Player>(nameof(Player.DreamDashCheck)))) {
+            if (cursor.TryGotoNext(ins => ins.MatchCallOrCallvirt<Player>(nameof(Player.DreamDashCheck)), ins => ins.OpCode == OpCodes.Brfalse_S)) {
                 success = true;
+                ILLabel label = (ILLabel)cursor.Next.Next.Operand;
+                cursor.GotoLabel(label);
                 cursor.Emit(OpCodes.Ldarg_0);
-                cursor.EmitDelegate(TryApplyCeilingUltraAndPassBoolean);
+                cursor.EmitDelegate(CheckAndApplyCeilingUltra);
             }
         }
         "OnCollideV".LogHookData("Ceiling Ultra", success);
     }
 
-    private static bool TryApplyCeilingUltraAndPassBoolean(bool b, Player player) {
-        if (!b && CeilingUltraEnabled) { // do not ultra when dream dash check
-            player.CeilingUltra();
+    private static void CheckAndApplyCeilingUltra(Player player) {
+        if (CeilingUltraEnabled) {
+            player.TryCeilingUltra();
         }
-        return b;
     }
 
     private static void CeilingVerticalUltraHookDashCoroutine(ILContext iLContext) {
@@ -250,11 +254,12 @@ public static class CeilingTechMechanism {
     }
 
     private static void CheckCeilingVerticalUltraInDashCoroutine(Player player) {
-        if (player.Speed.X != 0f && player.CollideCheck<Solid>(player.Position + Vector2.UnitX * Math.Sign(player.Speed.X)) && (!player.Inventory.DreamDash || !player.CollideCheck<DreamBlock>(player.Position + Vector2.UnitX * Math.Sign(player.Speed.X)))) {
-            player.TryVerticalUltra();
+        if (VerticalTechMechanism.VerticalUltraEnabled && player.Speed.X != 0f && player.CollideCheck<Solid>(player.Position + Vector2.UnitX * Math.Sign(player.Speed.X)) && (!player.Inventory.DreamDash || !player.CollideCheck<DreamBlock>(player.Position + Vector2.UnitX * Math.Sign(player.Speed.X))) && player.TryVerticalUltra()) {
+            // already applied as a side effect of TryVerticalUltra
+            // we put TryVerticalUltra inside conditions coz if all other conditions are satisfied but can't vertical ultra (e.g. Can't Squeeze Hitbox), then still need to try Ceiling Ultra
         } // try vertical ultra first, so it matchs the intuition that, first horizontal movement, then vertical
-        else if (CeilingUltraEnabled && PlayerOnCeiling && (!player.Inventory.DreamDash || !player.CollideCheck<DreamBlock>(player.Position - Vector2.UnitY))) {
-            player.CeilingUltra();
+        else if (CeilingUltraEnabled && PlayerOnCeiling && (!player.Inventory.DreamDash || !player.CollideCheck<DreamBlock>(player.Position - Vector2.UnitY)) && player.TryCeilingUltra()) {
+            // already applied
         }
     }
 
@@ -276,14 +281,29 @@ public static class CeilingTechMechanism {
 
     public static float NextMaxFall = 0f;
 
-    public static void UpdateOnCeilingAndWall(Player player) {
-        if (LastGroundJumpGraceTimer > 0f && player.jumpGraceTimer <= 0f) { // so it's killed by something that maybe we have not hooked
-            SetExtendedJumpGraceTimer();
+    private static void UpdateMaxFallHook(ILContext il) {
+        ILCursor cursor = new (il);
+        bool success = false;
+        while (cursor.TryGotoNext(MoveType.AfterLabel, i => i.OpCode == OpCodes.Ret)) {
+            success = true;
+            cursor.Emit(OpCodes.Ldarg_0);
+            cursor.EmitDelegate(UpdateMaxFall);
+            cursor.Index++;
         }
+        "Player.orig_Update".LogHookData("Set MaxFall Helper", success);
+    }
+
+    private static void UpdateMaxFall(Player player) {
         if (NextMaxFall > 160f && player.StateMachine.State == 0) { // NormalBegin resets maxFall to be 160f, so we need this for vertical hyper
             player.maxFall = NextMaxFall;
         }
         NextMaxFall = 0f;
+    }
+
+    public static void UpdateOnCeilingAndWall(Player player) {
+        if (LastGroundJumpGraceTimer > 0f && player.jumpGraceTimer <= 0f) { // so it's killed by something that maybe we have not hooked
+            SetExtendedJumpGraceTimer();
+        }
         if (player.StateMachine.State == 9) {
             PlayerOnCeiling = false;
         }
@@ -369,6 +389,11 @@ public static class CeilingTechMechanism {
     }
 
     public static void CeilingJump(this Player player, bool particles = true, bool playSfx = true) {
+        int priorDirection = (int)player.moveX;
+        if (priorDirection == 0) {
+            priorDirection = (int)player.Facing;
+        }
+        player.TryCeilingUnduck(out _, priorDirection); // it's ok if you can't unduck
         NextMaxFall = 240f;
         Input.Jump.ConsumeBuffer();
         player.jumpGraceTimer = 0f;
@@ -508,6 +533,10 @@ public static class CeilingTechMechanism {
 
     private static void CeilingHyper(this Player player, bool wasDuck) {
         // this actually contains ceiling super
+        float xDirection = Math.Sign(CelesteInput.MoveX);
+        if (xDirection == 0) {
+            xDirection = (float)player.Facing;
+        }
         Input.Jump.ConsumeBuffer();
         player.jumpGraceTimer = 0f;
         SetExtendedJumpGraceTimer();
@@ -516,7 +545,7 @@ public static class CeilingTechMechanism {
         player.dashAttackTimer = 0f;
         player.wallSlideTimer = 1.2f;
         player.wallBoostTimer = 0f;
-        player.Speed.X = 260f * (float)player.Facing + player.LiftBoost.X;
+        player.Speed.X = 260f * xDirection + player.LiftBoost.X;
         player.Speed.Y = +105f;
         player.gliderBoostTimer = 0.55f; // would be cursed i guess
         player.Play("event:/char/madeline/jump");
@@ -524,10 +553,10 @@ public static class CeilingTechMechanism {
             player.Speed.X *= 1.25f;
             player.Speed.Y *= 0.5f;
             player.Play("event:/char/madeline/jump_superslide");
-            player.gliderBoostDir = Monocle.Calc.AngleToVector((float)Math.PI * 3f / 16f, 1f);
+            player.gliderBoostDir = Monocle.Calc.AngleToVector((float)Math.PI * (1f / 2f - xDirection * 5f / 16f), 1f);
         }
         else {
-            player.gliderBoostDir = Monocle.Calc.AngleToVector((float)Math.PI / 4f, 1f);
+            player.gliderBoostDir = Monocle.Calc.AngleToVector((float)Math.PI * (1f / 2f - xDirection / 4f), 1f);
             player.Play("event:/char/madeline/jump_super");
         }
         player.varJumpSpeed = player.Speed.Y;
