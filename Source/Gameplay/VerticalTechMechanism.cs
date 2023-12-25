@@ -6,16 +6,17 @@ using MonoMod.Cil;
 using MonoMod.Utils;
 using MonoMod.RuntimeDetour;
 using CelesteInput = Celeste.Input;
+using Celeste.Mod.CeilingUltra.Module;
 
 namespace Celeste.Mod.CeilingUltra.Gameplay;
 
 public static class VerticalTechMechanism {
 
-    public static bool VerticalUltraEnabled => ceilingUltraSetting.Enabled && ceilingUltraSetting.VerticalUltraEnabled;
+    public static bool VerticalUltraEnabled => LevelSettings.VerticalUltraEnabled;
 
-    public static bool VerticalHyperEnabled => ceilingUltraSetting.Enabled && ceilingUltraSetting.VerticalHyperEnabled;
+    public static bool VerticalHyperEnabled => LevelSettings.VerticalHyperEnabled;
 
-    public static bool DashBeginDontLoseVerticalSpeed => ceilingUltraSetting.Enabled && ceilingUltraSetting.DashBeginNoVerticalSpeedLoss;
+    public static bool DashBeginDontLoseVerticalSpeed => LevelSettings.DashBeginNoVerticalSpeedLoss;
 
     [Load]
     public static void Load() {
@@ -185,7 +186,7 @@ public static class VerticalTechMechanism {
         if (Math.Sign(player.DashDir.X) is { } xSign && xSign != 0 && xSign == Math.Sign(player.Speed.X) && player.DashDir.Y != 0f && player.TrySqueezeHitbox(xSign, player.Speed.Y)) {
             player.wallSpeedRetained = player.Speed.X;
             player.wallSpeedRetentionTimer = 0.06f;
-            player.DashDir.Y = Math.Sign(player.DashDir.Y); // wow, this should allow you to super wall jump after an upward vertical ultra (if you manage to unsqueeze during your dash)
+            player.DashDir.Y = Math.Sign(player.DashDir.Y); // wow, this should allow you to super wall jump after an upward vertical ultra (if you manage to unsqueeze during your dash)(or if you dont enable vertical hyper)
             player.DashDir.X = 0f;
             player.Speed.X = 0f;
             player.Speed.Y *= 1.2f;

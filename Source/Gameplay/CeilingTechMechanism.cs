@@ -6,27 +6,28 @@ using MonoMod.Cil;
 using MonoMod.Utils;
 using MonoMod.RuntimeDetour;
 using CelesteInput = Celeste.Input;
+using Celeste.Mod.CeilingUltra.Module;
 
 namespace Celeste.Mod.CeilingUltra.Gameplay;
 
 public static class CeilingTechMechanism {
 
-    public static bool CeilingUltraEnabled => ceilingUltraSetting.Enabled && ceilingUltraSetting.CeilingUltraEnabled;
+    public static bool CeilingUltraEnabled => LevelSettings.CeilingUltraEnabled;
 
-    public static bool CeilingRefillStamina => ceilingUltraSetting.Enabled && ceilingUltraSetting.CeilingRefillStamina;
+    public static bool CeilingRefillStamina => LevelSettings.CeilingRefillStamina;
 
 
-    public static bool WallRefillStamina => ceilingUltraSetting.Enabled && ceilingUltraSetting.WallRefillStamina;
-    public static bool CeilingRefillDash => ceilingUltraSetting.Enabled && ceilingUltraSetting.CeilingRefillDash;
+    public static bool WallRefillStamina => LevelSettings.WallRefillStamina;
+    public static bool CeilingRefillDash => LevelSettings.CeilingRefillDash;
 
-    public static bool WallRefillDash => ceilingUltraSetting.Enabled && ceilingUltraSetting.WallRefillDash;
-    public static bool CeilingJumpEnabled => ceilingUltraSetting.Enabled && ceilingUltraSetting.CeilingJumpEnabled;
+    public static bool WallRefillDash => LevelSettings.WallRefillDash;
+    public static bool CeilingJumpEnabled => LevelSettings.CeilingJumpEnabled;
 
-    public static bool CeilingHyperEnabled => ceilingUltraSetting.Enabled && ceilingUltraSetting.CeilingHyperEnabled;
+    public static bool CeilingHyperEnabled => LevelSettings.CeilingHyperEnabled;
 
-    public static bool UpdiagDashDontLoseHorizontalSpeed => ceilingUltraSetting.Enabled && ceilingUltraSetting.UpdiagDashEndNoHorizontalSpeedLoss;
+    public static bool UpdiagDashDontLoseHorizontalSpeed => LevelSettings.UpdiagDashEndNoHorizontalSpeedLoss;
 
-    public static bool UpdiagDashDontLoseVerticalSpeed => ceilingUltraSetting.Enabled && ceilingUltraSetting.UpdiagDashEndNoVerticalSpeedLoss;
+    public static bool UpdiagDashDontLoseVerticalSpeed => LevelSettings.UpdiagDashEndNoVerticalSpeedLoss;
 
     [Load]
     public static void Load() {
@@ -257,10 +258,13 @@ public static class CeilingTechMechanism {
         if (VerticalTechMechanism.VerticalUltraEnabled && player.Speed.X != 0f && player.CollideCheck<Solid>(player.Position + Vector2.UnitX * Math.Sign(player.Speed.X)) && (!player.Inventory.DreamDash || !player.CollideCheck<DreamBlock>(player.Position + Vector2.UnitX * Math.Sign(player.Speed.X))) && player.TryVerticalUltra()) {
             // already applied as a side effect of TryVerticalUltra
             // we put TryVerticalUltra inside conditions coz if all other conditions are satisfied but can't vertical ultra (e.g. Can't Squeeze Hitbox), then still need to try Ceiling Ultra
-        } // try vertical ultra first, so it matchs the intuition that, first horizontal movement, then vertical
+        }
         else if (CeilingUltraEnabled && PlayerOnCeiling && (!player.Inventory.DreamDash || !player.CollideCheck<DreamBlock>(player.Position - Vector2.UnitY)) && player.TryCeilingUltra()) {
             // already applied
         }
+        // try vertical ultra first, so it matchs the intuition that, first horizontal movement, then vertical
+        // although that actually ground ultra > vertical ultra > ceiling ultra
+        // ground ultra must be first so a grounded reverse hyper can be performed normally at a corner
     }
 
     public static bool OnCeiling(this Player player, int upCheck = 1) {

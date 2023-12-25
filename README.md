@@ -27,3 +27,5 @@ https://gamebanana.com/mods/485472
 蹬天花板跳时, 会尝试解除蹲姿. 但即使不能解除蹲姿, 也依然能蹬天花板跳.
 
 关于 forceMoveX 究竟何时会起作用, 目前的方案是仅蹬天花板跳会受 forceMoveX 影响 (原版中 super/hyper 也受影响). 但我还没有彻底拿定主意.
+
+冲刺第 5 帧的几种 ultra 的优先级: 地面 ultra > 竖直 ultra > 天花板 ultra. 这保证你在地面靠墙时能顺利做出 reverse hyper.
