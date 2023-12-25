@@ -319,9 +319,7 @@ public static class CeilingTechMechanism {
                 player.Stamina = 110f;
                 player.wallSlideTimer = 1.2f;
             }
-            if (CeilingJumpEnabled || CeilingHyperEnabled) {
-                CeilingJumpGraceTimer = 0.1f;
-            }
+            CeilingJumpGraceTimer = 0.1f;
         } else if (CeilingJumpGraceTimer > 0f) {
             CeilingJumpGraceTimer -= Engine.DeltaTime;
         }
