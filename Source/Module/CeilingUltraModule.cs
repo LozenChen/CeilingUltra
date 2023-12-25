@@ -59,6 +59,7 @@ public class CeilingUltraModule : EverestModule {
         bool overrideMain = LevelSettings.OverrideMainEnabled.HasValue;
         bool overrideCeilTech = LevelSettings.OverrideCeilingTech.HasValue;
         bool overrideCeilRefill = LevelSettings.OverrideCeilingRefill.HasValue;
+        bool overrideUpdiagEnd = LevelSettings.OverrideBigInertiaUpdiagDash.HasValue;
         bool overrideWallRefill = LevelSettings.OverrideWallRefill.HasValue;
         bool overrideVertTech = LevelSettings.OverrideVerticalTech.HasValue;
         
@@ -75,7 +76,9 @@ public class CeilingUltraModule : EverestModule {
         menu.Add(new OnOffExt("Ceiling Jump".ToDialogText(), LevelSettings.CeilingJumpEnabled, overrideCeilTech).Change(value => ceilingUltraSetting.CeilingJumpEnabled = value));
         menu.Add(new OnOffExt("Ceiling Super Hyper".ToDialogText(), LevelSettings.CeilingHyperEnabled, overrideCeilTech).Change(value => ceilingUltraSetting.CeilingHyperEnabled = value));
         menu.Add(new OnOffExt("Ceiling Ultra".ToDialogText(), LevelSettings.CeilingUltraEnabled, overrideCeilTech).Change(value => ceilingUltraSetting.CeilingUltraEnabled = value));
-        menu.Add(new OnOffExt("Updiag Dash End No Horizontal Speed Loss".ToDialogText(), LevelSettings.UpdiagDashEndNoHorizontalSpeedLoss, overrideCeilTech).Change(value => ceilingUltraSetting.UpdiagDashEndNoHorizontalSpeedLoss = value));
+
+
+        menu.Add(new OnOffExt("Updiag Dash End No Horizontal Speed Loss".ToDialogText(), LevelSettings.UpdiagDashEndNoHorizontalSpeedLoss, overrideUpdiagEnd).Change(value => ceilingUltraSetting.UpdiagDashEndNoHorizontalSpeedLoss = value));
 
 
         menu.Add(new TextMenuExt.SubHeaderExt("Vertical Mechanisms".ToDialogText()) { HeightExtra = 10f});
@@ -85,17 +88,18 @@ public class CeilingUltraModule : EverestModule {
         menu.Add(new OnOffExt("Wall Refill Dash".ToDialogText(), LevelSettings.WallRefillDash, overrideWallRefill).Change(value => ceilingUltraSetting.WallRefillDash = value));
 
 
-        menu.Add(new OnOffExt("Vertical Hyper".ToDialogText(), LevelSettings.VerticalHyperEnabled, overrideWallRefill).Change(value => ceilingUltraSetting.VerticalHyperEnabled = value));
-        menu.Add(new OnOffExt("Vertical Ultra".ToDialogText(), LevelSettings.VerticalUltraEnabled, overrideWallRefill).Change(value => ceilingUltraSetting.VerticalUltraEnabled = value));
-        menu.Add(new OnOffExt("Dash Begin No Vertical Speed Loss".ToDialogText(), LevelSettings.DashBeginNoVerticalSpeedLoss, overrideWallRefill).Change(value => ceilingUltraSetting.DashBeginNoVerticalSpeedLoss = value));
-        menu.Add(new OnOffExt("Updiag Dash End No Vertical Speed Loss".ToDialogText(), LevelSettings.UpdiagDashEndNoVerticalSpeedLoss, overrideWallRefill).Change(value => ceilingUltraSetting.UpdiagDashEndNoVerticalSpeedLoss = value));
+        menu.Add(new OnOffExt("Vertical Hyper".ToDialogText(), LevelSettings.VerticalHyperEnabled, overrideVertTech).Change(value => ceilingUltraSetting.VerticalHyperEnabled = value));
+        menu.Add(new OnOffExt("Vertical Ultra".ToDialogText(), LevelSettings.VerticalUltraEnabled, overrideVertTech).Change(value => ceilingUltraSetting.VerticalUltraEnabled = value));
+        menu.Add(new OnOffExt("Dash Begin No Vertical Speed Loss".ToDialogText(), LevelSettings.DashBeginNoVerticalSpeedLoss, overrideVertTech).Change(value => ceilingUltraSetting.DashBeginNoVerticalSpeedLoss = value));
+        menu.Add(new OnOffExt("Updiag Dash End No Vertical Speed Loss".ToDialogText(), LevelSettings.UpdiagDashEndNoVerticalSpeedLoss, overrideVertTech).Change(value => ceilingUltraSetting.UpdiagDashEndNoVerticalSpeedLoss = value));
 
-        if (overrideMain || overrideCeilRefill || overrideCeilTech || overrideVertTech || overrideWallRefill) {
+        if (overrideMain || overrideCeilRefill || overrideCeilTech || overrideVertTech || overrideWallRefill || overrideUpdiagEnd) {
             menu.Add(new TextMenuExt.SubHeaderExt("Lock By Map".ToDialogText()) { TextColor = Color.Goldenrod, HeightExtra = 10f });
         }
     }
-
 }
+
+
 
 public static class DialogExtension {
 
@@ -103,9 +107,6 @@ public static class DialogExtension {
 }
 
 public class OnOffExt : Item {
-
-    
-
     //
     // 摘要:
     //     The displayed name for this setting.

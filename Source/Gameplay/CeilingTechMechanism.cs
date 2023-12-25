@@ -245,7 +245,7 @@ public static class CeilingTechMechanism {
             cursor.MoveAfterLabels();
             cursor.Emit(OpCodes.Ldloc_1);
             cursor.EmitDelegate(SkipDashEndLoseSpeed);
-            cursor.Emit(OpCodes.Brtrue, target);
+            cursor.Emit(OpCodes.Br, target);
         }
         else {
             success = false;
@@ -592,32 +592,41 @@ public static class CeilingTechMechanism {
         "Player.DashUpdate".LogHookData("Ceiling Hyper", success);
     }
     private const float startRemainFullVerticalSpeed = -325f;
-    private static bool SkipDashEndLoseSpeed(Player player) {
-        bool result = UpdiagDashDontLoseHorizontalSpeed && player.DashDir.Y < 0f;
-        if (result) {
-            if (UpdiagDashDontLoseVerticalSpeed && player.DashDir.X != 0f) {
-                // speed < 169.7f: half
-                // speed > 325f : remain
-                // between: linear interpolate
+    private static void SkipDashEndLoseSpeed(Player player) {
+        if (player.DashDir.Y == 0f || player.DashDir.X == 0f) {
+            player.Speed = player.DashDir * 160f;
+            return;
+        }
+        // now DashDir.Y < 0f && DashDir.X != 0f
 
-                float startLerpVerticalSpeed = 240f * player.DashDir.Y;
-                if (player.Speed.Y >= startLerpVerticalSpeed) {
-                    player.Speed.Y = startLerpVerticalSpeed / 2f;
-                }
-                else if (player.Speed.Y <= startRemainFullVerticalSpeed) {
-                    // remain invariant
-                }
-                else {
-                    player.Speed.Y = MathHelper.Lerp(startLerpVerticalSpeed / 2f, startRemainFullVerticalSpeed, (player.Speed.Y - startLerpVerticalSpeed) / (startRemainFullVerticalSpeed - startLerpVerticalSpeed));
-                }
+        if (UpdiagDashDontLoseHorizontalSpeed) {
+            // player.Speed.X remain invariant
+        }
+        else {
+            player.Speed.X = player.DashDir.X * 160f;
+        }
+
+        if (UpdiagDashDontLoseVerticalSpeed) {
+            // speed < 169.7f: half
+            // speed > 325f : remain
+            // between: linear interpolate
+
+            float startLerpVerticalSpeed = 240f * player.DashDir.Y;
+            if (player.Speed.Y >= startLerpVerticalSpeed) {
+                player.Speed.Y = startLerpVerticalSpeed / 2f;
+            }
+            else if (player.Speed.Y <= startRemainFullVerticalSpeed) {
+                // remain invariant
             }
             else {
-                player.Speed.Y = player.DashDir.Y * 120f;
+                player.Speed.Y = MathHelper.Lerp(startLerpVerticalSpeed / 2f, startRemainFullVerticalSpeed, (player.Speed.Y - startLerpVerticalSpeed) / (startRemainFullVerticalSpeed - startLerpVerticalSpeed));
             }
-
-            player.Speed.Y *= 4f / 3f; // as it will encounter a 0.75f factor later
         }
-        return result;
+        else {
+            player.Speed.Y = player.DashDir.Y * 120f;
+        }
+
+        player.Speed.Y *= 4f / 3f; // as it will encounter a 0.75f factor later
     }
 
     private static void CeilingHyperHookRedDashUpdate(ILContext il) {

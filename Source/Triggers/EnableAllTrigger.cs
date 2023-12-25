@@ -16,6 +16,7 @@ public class EnableAllTrigger : AbstractTrigger {
         LevelSettings.OverrideWallRefill = Enable;
         LevelSettings.OverrideCeilingRefill = Enable;
         LevelSettings.OverrideCeilingTech = Enable;
+        LevelSettings.OverrideBigInertiaUpdiagDash = Enable;
         LevelSettings.OverrideVerticalTech = Enable;
     }
 }

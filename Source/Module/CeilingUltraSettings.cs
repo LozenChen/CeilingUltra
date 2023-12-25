@@ -1,3 +1,5 @@
+using YamlDotNet.Serialization;
+
 namespace Celeste.Mod.CeilingUltra.Module;
 
 [SettingName("Ceiling Ultra")]
@@ -12,7 +14,22 @@ public class CeilingUltraSettings : EverestModuleSettings {
     internal void OnLoadSettings() {
     }
 
-    public bool Enabled { get; set; } = true;
+    [YamlMember(Alias = "Enabled")]
+
+    public bool enabled = true;
+
+    [YamlIgnore]
+    public bool Enabled {
+        get => enabled;
+        set {
+            SetAllSettings(value);
+        }
+    }
+
+    public void SetAllSettings(bool value) {
+        enabled = CeilingUltraEnabled = CeilingRefillStamina = CeilingRefillDash = CeilingJumpEnabled = CeilingHyperEnabled = UpdiagDashEndNoHorizontalSpeedLoss = VerticalHyperEnabled = VerticalUltraEnabled = DashBeginNoVerticalSpeedLoss = UpdiagDashEndNoVerticalSpeedLoss = WallRefillStamina = WallRefillDash = value;
+        LevelSettings.ClearAllOverride();
+    }
 
     public bool CeilingUltraEnabled { get; set; } = true;
 
@@ -63,7 +80,7 @@ public static class LevelSettings {
     }
 
     public static void ClearAllOverride() {
-        OverrideMainEnabled = OverrideCeilingTech = OverrideCeilingRefill = OverrideVerticalTech = OverrideWallRefill = null;
+        OverrideMainEnabled = OverrideCeilingTech = OverrideCeilingRefill = OverrideVerticalTech = OverrideWallRefill = OverrideBigInertiaUpdiagDash =  null;
     }
 
     public static bool? OverrideMainEnabled;
@@ -79,7 +96,12 @@ public static class LevelSettings {
 
     public static bool CeilingHyperEnabled => MainEnabled && OverrideCeilingTech.GetValueOrDefault(ceilingUltraSetting.CeilingHyperEnabled);
 
-    public static bool UpdiagDashEndNoHorizontalSpeedLoss => MainEnabled && OverrideCeilingTech.GetValueOrDefault(ceilingUltraSetting.UpdiagDashEndNoHorizontalSpeedLoss);
+    // Big Inertia Updiag Dash End
+    // it will affect normal gameplay even if you dont use those new techs, so it should be controlled by a standalone trigger
+
+    public static bool? OverrideBigInertiaUpdiagDash;
+
+    public static bool UpdiagDashEndNoHorizontalSpeedLoss => MainEnabled && OverrideBigInertiaUpdiagDash.GetValueOrDefault(ceilingUltraSetting.UpdiagDashEndNoHorizontalSpeedLoss);
 
     // CeilingRefill
 
