@@ -1,6 +1,6 @@
 namespace Celeste.Mod.CeilingUltra.Module;
 
-[SettingName("CeilingUltra")]
+[SettingName("Ceiling Ultra")]
 public class CeilingUltraSettings : EverestModuleSettings {
 
     public static CeilingUltraSettings Instance { get; private set; }
