@@ -387,9 +387,6 @@ public static class VerticalTechMechanism {
         if (VerticalHyperEnabled && player.IsSqueezed() && CelesteInput.Jump.Pressed && Math.Abs(player.DashDir.X) < 0.1f && player.CanUnSqueezeInUnDuck()) {
             int yDirection = Math.Sign(CelesteInput.MoveY);
             if (yDirection == 0) {
-                yDirection = Math.Sign(player.Speed.Y);
-            }
-            if (yDirection == 0) {
                 yDirection = -1;
             }
             int wantedDirection = CelesteInput.MoveX != 0f ? CelesteInput.MoveX : (int)player.Facing; // we dont use player.moveX so forceMoveX is ignored lol
