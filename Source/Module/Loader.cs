@@ -1,7 +1,4 @@
 using Celeste.Mod.CeilingUltra.Utils;
-using MonoMod.RuntimeDetour;
-using System.Reflection;
-using static Celeste.Mod.CeilingUltra.Module.Loader;
 
 namespace Celeste.Mod.CeilingUltra.Module;
 

@@ -65,11 +65,11 @@ public class CeilingUltraModule : EverestModule {
         bool overrideUpdiagEnd = LevelSettings.OverrideBigInertiaUpdiagDash.HasValue;
         bool overrideWallRefill = LevelSettings.OverrideWallRefill.HasValue;
         bool overrideVertTech = LevelSettings.OverrideVerticalTech.HasValue;
-        
+
         menu.Add(new OnOffExt("Enabled".ToDialogText(), LevelSettings.MainEnabled, overrideMain).Change(value => ceilingUltraSetting.Enabled = value));
 
 
-        menu.Add(new TextMenuExt.SubHeaderExt("Ceiling Mechanisms".ToDialogText()) { HeightExtra = 10f});
+        menu.Add(new TextMenuExt.SubHeaderExt("Ceiling Mechanisms".ToDialogText()) { HeightExtra = 10f });
 
 
         menu.Add(new OnOffExt("Ceiling Refill Stamina".ToDialogText(), LevelSettings.CeilingRefillStamina, overrideCeilRefill).Change(value => ceilingUltraSetting.CeilingRefillStamina = value));
@@ -84,7 +84,7 @@ public class CeilingUltraModule : EverestModule {
         menu.Add(new OnOffExt("Updiag Dash End No Horizontal Speed Loss".ToDialogText(), LevelSettings.UpdiagDashEndNoHorizontalSpeedLoss, overrideUpdiagEnd).Change(value => ceilingUltraSetting.UpdiagDashEndNoHorizontalSpeedLoss = value));
 
 
-        menu.Add(new TextMenuExt.SubHeaderExt("Vertical Mechanisms".ToDialogText()) { HeightExtra = 10f});
+        menu.Add(new TextMenuExt.SubHeaderExt("Vertical Mechanisms".ToDialogText()) { HeightExtra = 10f });
 
 
         menu.Add(new OnOffExt("Wall Refill Stamina".ToDialogText(), LevelSettings.WallRefillStamina, overrideWallRefill).Change(value => ceilingUltraSetting.WallRefillStamina = value));
@@ -156,7 +156,7 @@ public class OnOffExt : Item {
     // 参数:
     //   label:
     //     The display name for this setting.
-    public OnOffExt(string label): base() {
+    public OnOffExt(string label) : base() {
         Values = new List<Tuple<string, bool>>();
         Label = label;
         Selectable = true;

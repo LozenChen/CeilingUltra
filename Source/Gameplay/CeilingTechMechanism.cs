@@ -1,12 +1,12 @@
+using Celeste.Mod.CeilingUltra.Module;
 using Celeste.Mod.CeilingUltra.Utils;
 using Microsoft.Xna.Framework;
-using Monocle;
 using Mono.Cecil.Cil;
+using Monocle;
 using MonoMod.Cil;
-using MonoMod.Utils;
 using MonoMod.RuntimeDetour;
+using MonoMod.Utils;
 using CelesteInput = Celeste.Input;
-using Celeste.Mod.CeilingUltra.Module;
 
 namespace Celeste.Mod.CeilingUltra.Gameplay;
 
@@ -15,7 +15,6 @@ public static class CeilingTechMechanism {
     public static bool CeilingUltraEnabled => LevelSettings.CeilingUltraEnabled;
 
     public static bool CeilingRefillStamina => LevelSettings.CeilingRefillStamina;
-
 
     public static bool WallRefillStamina => LevelSettings.WallRefillStamina;
     public static bool CeilingRefillDash => LevelSettings.CeilingRefillDash;
@@ -41,7 +40,7 @@ public static class CeilingTechMechanism {
 
     [Initialize]
     public static void Initialize() {
-        using (new DetourContext { Before = new List<string> { "*"}, ID = "Ceiling Tech Mechanism" }) {
+        using (new DetourContext { Before = new List<string> { "*" }, ID = "Ceiling Tech Mechanism" }) {
             typeof(Player).GetMethodInfo("orig_Update").IlHook(HookPlayerUpdate);
             typeof(Player).GetMethodInfo("orig_Update").IlHook(UpdateMaxFallHook);
             typeof(Player).GetMethodInfo("OnCollideV").IlHook(CeilingUltraHookOnCollideV);
@@ -62,23 +61,25 @@ public static class CeilingTechMechanism {
         bool success = false;
         while (cursor.TryGotoNext(ins => ins.OpCode == OpCodes.Ldarg_0, ins => ins.MatchLdcR4(0f), ins => ins.MatchStfld<Player>(nameof(Player.jumpGraceTimer)))) {
             cursor.Index += 3;
-            cursor.EmitDelegate(SetExtendedJumpGraceTimer);
+            cursor.EmitDelegate(ClearExtendedJumpGraceTimer);
             success = true;
         }
         "SomeSetJumpGraceTimerMethod".LogHookData("Set Jump Grace Timer", success);
-        
+
     }
-    public static void SetExtendedJumpGraceTimer() {
+    public static void ClearExtendedJumpGraceTimer() {
         CeilingJumpGraceTimer = 0f;
         LeftWallGraceTimer = 0f;
         RightWallGraceTimer = 0f;
         ProtectJumpGraceTimer = 0f;
+        ProtectGroundSqueezeTimer = 0f;
+        LastFrameSetJumpTimerCalled = true;
     }
 
     private static Player OnLoadNewPlayer(On.Celeste.Level.orig_LoadNewPlayer orig, Vector2 Position, PlayerSpriteMode spriteMode) {
         Player player = orig(Position, spriteMode);
         PlayerOnCeiling = false;
-        SetExtendedJumpGraceTimer();
+        ClearExtendedJumpGraceTimer();
         LastGroundJumpGraceTimer = 1f;
         NextMaxFall = 0f;
         return player;
@@ -281,12 +282,16 @@ public static class CeilingTechMechanism {
 
     public static float ProtectJumpGraceTimer = 0f;
 
+    public static float ProtectGroundSqueezeTimer = 0f;
+
     public static float LastGroundJumpGraceTimer = 1f;
+
+    public static bool LastFrameSetJumpTimerCalled = false;
 
     public static float NextMaxFall = 0f;
 
     private static void UpdateMaxFallHook(ILContext il) {
-        ILCursor cursor = new (il);
+        ILCursor cursor = new(il);
         bool success = false;
         while (cursor.TryGotoNext(MoveType.AfterLabel, i => i.OpCode == OpCodes.Ret)) {
             success = true;
@@ -305,9 +310,11 @@ public static class CeilingTechMechanism {
     }
 
     public static void UpdateOnCeilingAndWall(Player player) {
-        if (LastGroundJumpGraceTimer > 0f && player.jumpGraceTimer <= 0f) { // so it's killed by something that maybe we have not hooked
-            SetExtendedJumpGraceTimer();
+        if (LastGroundJumpGraceTimer > 0f && player.jumpGraceTimer <= 0f && !LastFrameSetJumpTimerCalled) { // so it's killed by something that maybe we have not hooked (e.g. a jump from other mods)
+            ClearExtendedJumpGraceTimer();
         }
+        LastFrameSetJumpTimerCalled = false;
+
         if (player.StateMachine.State == 9) {
             PlayerOnCeiling = false;
         }
@@ -324,7 +331,8 @@ public static class CeilingTechMechanism {
                 player.wallSlideTimer = 1.2f;
             }
             CeilingJumpGraceTimer = 0.1f;
-        } else if (CeilingJumpGraceTimer > 0f) {
+        }
+        else if (CeilingJumpGraceTimer > 0f) {
             CeilingJumpGraceTimer -= Engine.DeltaTime;
         }
 
@@ -358,7 +366,7 @@ public static class CeilingTechMechanism {
     }
 
     private static void HookPlayerUpdate(ILContext il) {
-        ILCursor cursor = new (il);
+        ILCursor cursor = new(il);
         cursor.Emit(OpCodes.Ldarg_0);
         cursor.EmitDelegate(UpdateOnCeilingAndWall); // only hiccup jump will affect this, so i dont insert this after onground evaluation
         "Player.orig_Update".LogHookData("Ceiling Jump", true);
@@ -380,11 +388,11 @@ public static class CeilingTechMechanism {
     }
 
     public static void ExtendedRefillDash(Player player) {
-        if (!player.Inventory.NoRefills 
+        if (!player.Inventory.NoRefills
             && (
-                (CeilingRefillDash && PlayerOnCeiling) || 
+                (CeilingRefillDash && PlayerOnCeiling) ||
                 (WallRefillDash && player.PlayerOnWall())
-            ) 
+            )
             && (!player.CollideCheck<Spikes>() || SaveData.Instance.Assists.Invincible)) {
             player.RefillDash();
         }
@@ -399,7 +407,7 @@ public static class CeilingTechMechanism {
         NextMaxFall = 240f;
         Input.Jump.ConsumeBuffer();
         player.jumpGraceTimer = 0f;
-        SetExtendedJumpGraceTimer();
+        ClearExtendedJumpGraceTimer();
         player.varJumpTimer = 0f; // does not produce varJumpTimer
         player.AutoJump = false;
         player.dashAttackTimer = 0f;
@@ -438,7 +446,7 @@ public static class CeilingTechMechanism {
         bool success = true;
         if (cursor.TryGotoNext(ins => ins.MatchCallOrCallvirt<Player>(nameof(Player.Jump)), ins => ins.OpCode == OpCodes.Br)) {
             cursor.Index += 2;
-            ILLabel endTarget = (ILLabel) cursor.Prev.Operand;
+            ILLabel endTarget = (ILLabel)cursor.Prev.Operand;
             cursor.MoveAfterLabels();
             cursor.Emit(OpCodes.Ldarg_0);
             cursor.EmitDelegate(CheckAndApplyCeilingJump);
@@ -541,7 +549,7 @@ public static class CeilingTechMechanism {
         }
         Input.Jump.ConsumeBuffer();
         player.jumpGraceTimer = 0f;
-        SetExtendedJumpGraceTimer();
+        ClearExtendedJumpGraceTimer();
         player.varJumpTimer = 0f; // as what we do in ceiling jump
         player.AutoJump = false;
         player.dashAttackTimer = 0f;
@@ -574,7 +582,7 @@ public static class CeilingTechMechanism {
     }
 
     private static void CeilingHyperHookDashUpdate(ILContext il) {
-        ILCursor cursor = new (il);
+        ILCursor cursor = new(il);
         bool success = true;
         if (cursor.TryGotoNext(ins => ins.MatchCallOrCallvirt<Player>(nameof(Player.SuperJump)))) {
             cursor.Index += 3;

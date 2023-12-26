@@ -1,12 +1,12 @@
+using Celeste.Mod.CeilingUltra.Module;
 using Celeste.Mod.CeilingUltra.Utils;
 using Microsoft.Xna.Framework;
-using Monocle;
 using Mono.Cecil.Cil;
+using Monocle;
 using MonoMod.Cil;
-using MonoMod.Utils;
 using MonoMod.RuntimeDetour;
+using MonoMod.Utils;
 using CelesteInput = Celeste.Input;
-using Celeste.Mod.CeilingUltra.Module;
 
 namespace Celeste.Mod.CeilingUltra.Gameplay;
 
@@ -158,7 +158,7 @@ public static class VerticalTechMechanism {
                 cursor.Emit(OpCodes.Brtrue, label2); // skip wallSpeedRetention, as in some sense, an ultra converts vertical speed into horizontal speed, so a vertical ultra should converts horizontal speed into vertical, and you will lose your horizontal speed anyway
                 // no i've changed my idea now, I LOVE WALL SPEED RETAINED
             }
-            
+
         }
         "Player.OnCollideH".LogHookData("Vertical Ultra", success);
     }
@@ -289,7 +289,7 @@ public static class VerticalTechMechanism {
         ILCursor cursor = new ILCursor(il);
         bool success = true;
         if (cursor.TryGotoNext(ins => ins.OpCode == OpCodes.Ldarg_0, ins => ins.OpCode == OpCodes.Ldc_I4_0, ins => ins.MatchCallOrCallvirt<Player>("set_Ducking"))) {
-            ILLabel label = (ILLabel) cursor.Prev.Operand;
+            ILLabel label = (ILLabel)cursor.Prev.Operand;
             cursor.Emit(OpCodes.Ldarg_0);
             cursor.EmitDelegate(SkipUnSqueezeInOrigUpdate);
             cursor.Emit(OpCodes.Brtrue, label);
@@ -308,8 +308,18 @@ public static class VerticalTechMechanism {
     }
 
     private static void UnsqueezeOnGround(Player player) {
-        if (player.IsSqueezed() && player.onGround && player.CanUnDuck) {
-            player.Ducking = false;
+        if (player.IsSqueezed()) {
+            if (!player.onGround) {
+                CeilingTechMechanism.ProtectGroundSqueezeTimer = 0.06f; // gives an extra 4f window if you down diag dash to a corner and want to vertical hyper
+            }
+            else {
+                if (CeilingTechMechanism.ProtectGroundSqueezeTimer > 0f) {
+                    CeilingTechMechanism.ProtectGroundSqueezeTimer -= Engine.DeltaTime;
+                }
+                else if (player.CanUnDuck) {
+                    player.Ducking = false;
+                }
+            }
         }
     }
 
@@ -318,10 +328,10 @@ public static class VerticalTechMechanism {
         // only hyper, no vertical super jump (which is replaced a super wall jump)
         Input.Jump.ConsumeBuffer();
         if (yDirection > 0) {
-             CeilingTechMechanism.NextMaxFall = 320f;
+            CeilingTechMechanism.NextMaxFall = 320f;
         }
         player.jumpGraceTimer = 0f;
-        CeilingTechMechanism.SetExtendedJumpGraceTimer();
+        CeilingTechMechanism.ClearExtendedJumpGraceTimer();
         player.AutoJump = false;
         player.dashAttackTimer = 0f;
         player.wallSlideTimer = 1.2f;
@@ -361,7 +371,7 @@ public static class VerticalTechMechanism {
         if (platformByPriority != null) {
             index = platformByPriority.GetLandSoundIndex(player);
         }
-        Dust.Burst(xDirection > 0 ? player.CenterLeft : player.CenterRight, xDirection > 0f ? 0f : (float) Math.PI, 4, player.DustParticleFromSurfaceIndex(index));
+        Dust.Burst(xDirection > 0 ? player.CenterLeft : player.CenterRight, xDirection > 0f ? 0f : (float)Math.PI, 4, player.DustParticleFromSurfaceIndex(index));
         SaveData.Instance.TotalJumps++;
     }
 

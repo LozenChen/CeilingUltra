@@ -59,24 +59,24 @@ public class CeilingUltraSettings : EverestModuleSettings {
 public static class LevelSettings {
 
     public static void ClearAllOverride() {
-        OverrideMainEnabled = OverrideCeilingTech = OverrideCeilingRefill = OverrideVerticalTech = OverrideWallRefill = OverrideBigInertiaUpdiagDash =  null;
+        OverrideMainEnabled = OverrideCeilingTech = OverrideCeilingRefill = OverrideVerticalTech = OverrideWallRefill = OverrideBigInertiaUpdiagDash = null;
     }
 
-    public static bool? OverrideMainEnabled { 
-        get => CeilingUltraSession.Instance?.OverrideMainEnabled; 
-        set { 
+    public static bool? OverrideMainEnabled {
+        get => CeilingUltraSession.Instance?.OverrideMainEnabled;
+        set {
             if (CeilingUltraSession.Instance is { } instance) {
                 instance.OverrideMainEnabled = value;
             }
-        } 
+        }
     }
 
     public static bool MainEnabled => OverrideMainEnabled.GetValueOrDefault(ceilingUltraSetting.Enabled);
 
     // CeilingTech
 
-    public static bool? OverrideCeilingTech { 
-        get => CeilingUltraSession.Instance?.OverrideCeilingTech; 
+    public static bool? OverrideCeilingTech {
+        get => CeilingUltraSession.Instance?.OverrideCeilingTech;
         set {
             if (CeilingUltraSession.Instance is { } instance) {
                 instance.OverrideCeilingTech = value;
@@ -92,7 +92,7 @@ public static class LevelSettings {
     // Big Inertia Updiag Dash End
     // it will affect normal gameplay even if you dont use those new techs, so it should be controlled by a standalone trigger
 
-    public static bool? OverrideBigInertiaUpdiagDash { 
+    public static bool? OverrideBigInertiaUpdiagDash {
         get => CeilingUltraSession.Instance?.OverrideBigInertiaUpdiagDash;
         set {
             if (CeilingUltraSession.Instance is { } instance) {
@@ -105,7 +105,7 @@ public static class LevelSettings {
 
     // CeilingRefill
 
-    public static bool? OverrideCeilingRefill { 
+    public static bool? OverrideCeilingRefill {
         get => CeilingUltraSession.Instance?.OverrideCeilingRefill;
         set {
             if (CeilingUltraSession.Instance is { } instance) {
@@ -119,7 +119,7 @@ public static class LevelSettings {
 
     // WallRefill
 
-    public static bool? OverrideWallRefill { 
+    public static bool? OverrideWallRefill {
         get => CeilingUltraSession.Instance?.OverrideWallRefill;
         set {
             if (CeilingUltraSession.Instance is { } instance) {
@@ -133,7 +133,7 @@ public static class LevelSettings {
 
     // VerticallTech
 
-    public static bool? OverrideVerticalTech { 
+    public static bool? OverrideVerticalTech {
         get => CeilingUltraSession.Instance?.OverrideVerticalTech;
         set {
             if (CeilingUltraSession.Instance is { } instance) {
@@ -150,7 +150,7 @@ public static class LevelSettings {
     public static bool DashBeginNoVerticalSpeedLoss => MainEnabled && OverrideVerticalTech.GetValueOrDefault(ceilingUltraSetting.DashBeginNoVerticalSpeedLoss);
 }
 
-public class CeilingUltraSession: EverestModuleSession {
+public class CeilingUltraSession : EverestModuleSession {
     public static CeilingUltraSession Instance => (CeilingUltraSession)CeilingUltraModule.Instance._Session;
 
     public bool? OverrideMainEnabled;

@@ -1,12 +1,7 @@
 using Celeste.Mod.CeilingUltra.Utils;
-using Microsoft.Xna.Framework;
-using Monocle;
 using Mono.Cecil.Cil;
+using Monocle;
 using MonoMod.Cil;
-using MonoMod.Utils;
-using MonoMod.RuntimeDetour;
-using CelesteInput = Celeste.Input;
-using Mono.Cecil;
 
 namespace Celeste.Mod.CeilingUltra.Gameplay;
 
@@ -51,7 +46,7 @@ public static class TasInfo {
                     list.Add($"RightWallCoyote({rightCoyote})");
                 }
             }
-            
+
         }
     }
 
