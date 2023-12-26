@@ -20,6 +20,8 @@ public class CeilingUltraModule : EverestModule {
     }
 
     public override Type SettingsType => typeof(CeilingUltraSettings);
+
+    public override Type SessionType => typeof(CeilingUltraSession);
     public override void Load() {
         Loader.Load();
     }
@@ -54,6 +56,7 @@ public class CeilingUltraModule : EverestModule {
 
     public static void CreateMenu(EverestModule everestModule, TextMenu menu, bool inGame) {
         if (!inGame) {
+            // if you dont exit map normally (e.g. use a titlescreen command, then session still exists)
             LevelSettings.ClearAllOverride();
         }
         bool overrideMain = LevelSettings.OverrideMainEnabled.HasValue;
