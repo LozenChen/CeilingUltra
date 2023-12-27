@@ -96,7 +96,7 @@ public static class CeilingTechMechanism {
         CeilingJumpGraceTimer = 0f;
         LeftWallGraceTimer = 0f;
         RightWallGraceTimer = 0f;
-        ProtectJumpGraceTimer = 0f;
+        ProtectVarJumpTimer = 0f;
         ProtectGroundSqueezeTimer = 0f;
         LastFrameSetJumpTimerCalled = true;
     }
@@ -258,7 +258,9 @@ public static class CeilingTechMechanism {
 
     private static void TryGroundUltraWithOverride(Player player) {
         if (OverrideGroundUltraDir.HasValue) { // we are already in a Speed.Y > 0f branch, so ultra will succeed
-            player.DashDir = OverrideGroundUltraDir.Value;
+            if (LeftWallGraceTimer <= 0f && RightWallGraceTimer <= 0f) {
+                player.DashDir = OverrideGroundUltraDir.Value;
+            }
             ClearOverrideUltraDir();
         }
         else if (player.DashDir.X != 0f && player.DashDir.Y > 0f) {
@@ -271,7 +273,7 @@ public static class CeilingTechMechanism {
     private static void CheckAndApplyCeilingUltra(Player player) {
         if (CeilingUltraEnabled && player.Speed.Y < 0f) { // this does not lie in the Speed.Y < 0f branch, so we need to check here
             if (OverrideCeilingUltraDir.HasValue) {
-                if (player.TryCeilingDuck(Math.Sign(player.Speed.X))){
+                if (LeftWallGraceTimer <= 0f && RightWallGraceTimer <= 0f && (ProtectVarJumpTimer <= 0f || player.varJumpTimer <= 0f) && player.TryCeilingDuck(Math.Sign(player.Speed.X))){
                     player.DashDir = OverrideCeilingUltraDir.Value;
                     player.TryCeilingUltra();
                 }
@@ -346,7 +348,7 @@ public static class CeilingTechMechanism {
 
     public static float RightWallGraceTimer = 0f;
 
-    public static float ProtectJumpGraceTimer = 0f;
+    public static float ProtectVarJumpTimer = 0f;
 
     public static float ProtectGroundSqueezeTimer = 0f;
 
@@ -458,8 +460,8 @@ public static class CeilingTechMechanism {
         else if (RightWallGraceTimer > 0f) {
             RightWallGraceTimer -= Engine.DeltaTime;
         }
-        if (ProtectJumpGraceTimer > 0f) {
-            ProtectJumpGraceTimer -= Engine.DeltaTime;
+        if (ProtectVarJumpTimer > 0f) {
+            ProtectVarJumpTimer -= Engine.DeltaTime;
         }
     }
 
@@ -510,7 +512,7 @@ public static class CeilingTechMechanism {
             priorDirection = (int)player.Facing;
         }
         player.TryCeilingUnduck(out _, priorDirection); // it's ok if you can't unduck
-        NextMaxFall = 240f;
+
         Input.Jump.ConsumeBuffer();
         player.jumpGraceTimer = 0f;
         ClearExtendedJumpGraceTimer();
@@ -521,8 +523,18 @@ public static class CeilingTechMechanism {
         player.wallSlideTimer = 1.2f;
         player.wallBoostTimer = 0f;
         player.Speed.X += 40f * (float)player.moveX + player.LiftBoost.X;
-        player.Speed.Y = +105f; // no liftboost
-        player.varJumpSpeed = +105f;
+        bool downPressed = CelesteInput.MoveY > 0;
+        if (downPressed) {
+            NextMaxFall = 320f;
+            player.Speed.Y = +280f;
+            player.Sprite.Scale = new Vector2(0.5f, 1.5f);
+        }
+        else {
+            NextMaxFall = 240f;
+            player.Speed.Y = +105f;
+            player.Sprite.Scale = new Vector2(0.6f, 1.4f);
+        }
+        player.varJumpSpeed = player.Speed.Y;
         player.LaunchedBoostCheck();
         if (playSfx) {
             if (player.launched) {
@@ -535,14 +547,13 @@ public static class CeilingTechMechanism {
                 player.Play("event:/char/madeline/jump");
             }
         }
-        player.Sprite.Scale = new Vector2(0.6f, 1.4f);
         if (particles) {
             int index = -1;
             Platform platformByPriority = SurfaceIndex.GetPlatformByPriority(player.CollideAll<Platform>(player.Position - Vector2.UnitY, player.temp));
             if (platformByPriority != null) {
                 index = platformByPriority.GetLandSoundIndex(player);
             }
-            Dust.Burst(player.TopCenter, (float)Math.PI / 2f, 4, player.DustParticleFromSurfaceIndex(index));
+            Dust.BurstFG(player.TopCenter, (float)Math.PI / 2f, downPressed ? 8 : 4, downPressed ? 8f : 4f, player.DustParticleFromSurfaceIndex(index));
         }
         SaveData.Instance.TotalJumps++;
     }

@@ -6,7 +6,6 @@ using Monocle;
 using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
 using MonoMod.Utils;
-using System.Runtime.CompilerServices;
 using CelesteInput = Celeste.Input;
 
 namespace Celeste.Mod.CeilingUltra.Gameplay;
@@ -41,7 +40,7 @@ public static class VerticalTechMechanism {
             typeof(Player).GetMethodInfo("DashUpdate").IlHook(VerticalHyperHookDashUpdate);
             typeof(Player).GetMethodInfo("RedDashUpdate").IlHook(VerticalHyperHookDashUpdate);
             typeof(Player).GetMethodInfo("DashCoroutine").GetStateMachineTarget().IlHook(DashBeginDontLoseVertSpeed);
-            typeof(Player).GetMethodInfo("OnCollideV").IlHook(ProtectJumpGraceTimer);
+            typeof(Player).GetMethodInfo("OnCollideV").IlHook(ProtectVarJumpTimer);
         }
 
         int[] xOffsets = { 0, 1, -1 };
@@ -187,12 +186,15 @@ public static class VerticalTechMechanism {
 
     public static bool TryVerticalUltraWithRetention(this Player player) {
         // return true if wallSpeedRetained is set
-
         if (CeilingTechMechanism.OverrideLeftWallUltraDir.HasValue) {
             if (-1 != Math.Sign(player.Speed.X)) {
                 return false;
             }
-            if (player.TrySqueezeHitbox(-1, player.Speed.Y)) {
+            else if (player.jumpGraceTimer > 0f || CeilingTechMechanism.CeilingJumpGraceTimer > 0f) { 
+                CeilingTechMechanism.ClearOverrideUltraDir();
+                return false;
+            }
+            else if (player.TrySqueezeHitbox(-1, player.Speed.Y)) {
                 player.DashDir = CeilingTechMechanism.OverrideLeftWallUltraDir.Value;
                 CeilingTechMechanism.ClearOverrideUltraDir();
                 player.wallSpeedRetained = player.Speed.X;
@@ -213,7 +215,11 @@ public static class VerticalTechMechanism {
             if (1 != Math.Sign(player.Speed.X)) {
                 return false;
             }
-            if (player.TrySqueezeHitbox(1, player.Speed.Y)) {
+            else if (player.jumpGraceTimer > 0f || CeilingTechMechanism.CeilingJumpGraceTimer > 0f) {
+                CeilingTechMechanism.ClearOverrideUltraDir();
+                return false;
+            }
+            else if (player.TrySqueezeHitbox(1, player.Speed.Y)) {
                 player.DashDir = CeilingTechMechanism.OverrideRightWallUltraDir.Value;
                 CeilingTechMechanism.ClearOverrideUltraDir();
                 player.wallSpeedRetained = player.Speed.X;
@@ -230,7 +236,8 @@ public static class VerticalTechMechanism {
                 return false;
             }
         }
-        else if (Math.Sign(player.DashDir.X) is { } xSign && xSign != 0 && xSign == Math.Sign(player.Speed.X) && player.DashDir.Y != 0f && player.TrySqueezeHitbox(xSign, player.Speed.Y)) {
+        
+        if (Math.Sign(player.DashDir.X) is { } xSign && xSign != 0 && xSign == Math.Sign(player.Speed.X) && player.DashDir.Y != 0f && player.TrySqueezeHitbox(xSign, player.Speed.Y)) {
             if (VerticalUltraIntoHorizontalUltra) {
                 if (player.DashDir.Y < 0f) {
                     if (CeilingTechMechanism.CeilingUltraEnabled) {
@@ -418,7 +425,7 @@ public static class VerticalTechMechanism {
             player.varJumpTimer = 0.1f; // 12 frames is a bit too long so i cut it half (although it's already a crazy mod)
             // bad news: in this case, OnCollideV will immediately kill varJumpTimer since varJumpTimer < 0.15f
             player.varJumpSpeed = player.Speed.Y;
-            CeilingTechMechanism.ProtectJumpGraceTimer = 0.1f; // so we invent this to protect varJumpTimer, this will be enough to go around a 1px corner
+            CeilingTechMechanism.ProtectVarJumpTimer = 0.1f; // so we invent this to protect varJumpTimer, this will be enough to go around a 1px corner
         }
         else {
             player.varJumpTimer = 0f;
@@ -432,7 +439,7 @@ public static class VerticalTechMechanism {
         if (platformByPriority != null) {
             index = platformByPriority.GetLandSoundIndex(player);
         }
-        Dust.Burst(xDirection > 0 ? player.CenterLeft : player.CenterRight, xDirection > 0f ? 0f : (float)Math.PI, 4, player.DustParticleFromSurfaceIndex(index));
+        Dust.BurstFG(xDirection > 0 ? player.CenterLeft : player.CenterRight, xDirection > 0f ? 0f : (float)Math.PI, yDirection > 0 ? 6 : 4, yDirection > 0 ? 6f : 4f, player.DustParticleFromSurfaceIndex(index));
         SaveData.Instance.TotalJumps++;
     }
 
@@ -520,22 +527,22 @@ public static class VerticalTechMechanism {
         }
     }
 
-    private static void ProtectJumpGraceTimer(ILContext il) {
+    private static void ProtectVarJumpTimer(ILContext il) {
         ILCursor cursor = new ILCursor(il);
         bool success = true;
         if (cursor.TryGotoNext(ins => ins.OpCode == OpCodes.Ldarg_0, ins => ins.MatchLdfld<Player>(nameof(Player.varJumpTimer)), ins => ins.MatchLdcR4(0.15f), ins => ins.OpCode == OpCodes.Bge_Un_S)) {
             ILLabel label = (ILLabel)cursor.Next.Next.Next.Next.Operand;
             cursor.MoveAfterLabels();
-            cursor.EmitDelegate(CheckProtectJumpGraceTimer);
+            cursor.EmitDelegate(CheckProtectVarJumpTimer);
             cursor.Emit(OpCodes.Brtrue, label);
         }
         else {
             success = false;
         }
-        "Player.OnCollideV".LogHookData("Protect Jump Grace Timer", success);
+        "Player.OnCollideV".LogHookData("Protect Var Jump Timer", success);
     }
 
-    private static bool CheckProtectJumpGraceTimer() {
-        return CeilingTechMechanism.ProtectJumpGraceTimer > 0f;
+    private static bool CheckProtectVarJumpTimer() {
+        return CeilingTechMechanism.ProtectVarJumpTimer > 0f;
     }
 }
