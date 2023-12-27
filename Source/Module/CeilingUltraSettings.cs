@@ -54,6 +54,10 @@ public class CeilingUltraSettings : EverestModuleSettings {
     public bool WallRefillStamina { get; set; } = true;
 
     public bool WallRefillDash { get; set; } = true;
+
+    public bool HorizontalUltraIntoVerticalUltra { get; set; } = true;
+
+    public bool VerticalUltraIntoHorizontalUltra { get; set; } = true;
 }
 
 public static class LevelSettings {
@@ -148,6 +152,12 @@ public static class LevelSettings {
     public static bool VerticalHyperEnabled => MainEnabled && OverrideVerticalTech.GetValueOrDefault(ceilingUltraSetting.VerticalHyperEnabled);
 
     public static bool DashBeginNoVerticalSpeedLoss => MainEnabled && OverrideVerticalTech.GetValueOrDefault(ceilingUltraSetting.DashBeginNoVerticalSpeedLoss);
+
+    // DelayedUltra
+
+    public static bool HorizontalUltraIntoVerticalUltra => MainEnabled && ceilingUltraSetting.HorizontalUltraIntoVerticalUltra;
+
+    public static bool VerticalUltraIntoHorizontalUltra => MainEnabled && ceilingUltraSetting.VerticalUltraIntoHorizontalUltra;
 }
 
 public class CeilingUltraSession : EverestModuleSession {

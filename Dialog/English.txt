@@ -1,4 +1,6 @@
-﻿CEILING_ULTRA_ENABLED=                                        Enabled
+﻿
+#===========================================================================================================
+CEILING_ULTRA_ENABLED=                                        Enabled
 CEILING_ULTRA_CEILING_MECHANISMS=                             Ceiling Mechanisms
 CEILING_ULTRA_CEILING_ULTRA=                                  Ceiling Ultra
 CEILING_ULTRA_CEILING_REFILL_STAMINA=                         Ceiling Refill Stamina

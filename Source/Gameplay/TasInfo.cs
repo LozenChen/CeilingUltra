@@ -30,8 +30,9 @@ public static class TasInfo {
         }
     }
 
-    public static void GetStatuses(List<string> list, Level level, Player player) {
+    public static void GetStatuses(List<string> orig_list, Level level, Player player) {
         if (!level.Transitioning) {
+            List<string> list = new();
             if (player.IsSqueezed()) {
                 list.Add("Squeezed");
             }
@@ -45,8 +46,29 @@ public static class TasInfo {
                 if (CeilingTechMechanism.RightWallGraceTimer.ToFloorFrames() is var rightCoyote and > 0) {
                     list.Add($"RightWallCoyote({rightCoyote})");
                 }
+                if (CeilingTechMechanism.OverrideGroundUltraDir.HasValue) {
+                    list.Add($"OverrideUltra(Ground)");
+                }
+                if (CeilingTechMechanism.OverrideCeilingUltraDir.HasValue) {
+                    list.Add($"OverrideUltra(Ceiling)");
+                }
+                if (CeilingTechMechanism.OverrideLeftWallUltraDir.HasValue) {
+                    list.Add($"OverrideUltra(LeftWall)");
+                }
+                if (CeilingTechMechanism.OverrideRightWallUltraDir.HasValue) {
+                    list.Add($"OverrideUltra(RightWall)");
+                }
             }
 
+            if (list.Count > 0) {
+                if (orig_list.Count > 0) {
+                    orig_list.Add("\n" + list[0]);
+                    orig_list.AddRange(list.Skip(1));
+                }
+                else {
+                    orig_list.AddRange(list);
+                }
+            }
         }
     }
 

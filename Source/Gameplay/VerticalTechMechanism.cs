@@ -6,6 +6,7 @@ using Monocle;
 using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
 using MonoMod.Utils;
+using System.Runtime.CompilerServices;
 using CelesteInput = Celeste.Input;
 
 namespace Celeste.Mod.CeilingUltra.Gameplay;
@@ -17,6 +18,8 @@ public static class VerticalTechMechanism {
     public static bool VerticalHyperEnabled => LevelSettings.VerticalHyperEnabled;
 
     public static bool DashBeginDontLoseVerticalSpeed => LevelSettings.DashBeginNoVerticalSpeedLoss;
+
+    public static bool VerticalUltraIntoHorizontalUltra => LevelSettings.VerticalUltraIntoHorizontalUltra;
 
     [Load]
     public static void Load() {
@@ -76,7 +79,7 @@ public static class VerticalTechMechanism {
             offset = Vector2.Zero;
             return true;
         }
-        if (xDirection < 0 && yDirection < 0) {
+        if (xDirection < 0 && yDirection <= 0) {
             // upper-left dash: keep bottom left invariant
             Collider collider = player.Collider;
             Vector2 position = player.Position;
@@ -102,7 +105,7 @@ public static class VerticalTechMechanism {
             player.Collider = collider;
             return result;
         }
-        if (xDirection > 0 && yDirection < 0) {
+        if (xDirection > 0 && yDirection <= 0) {
             // upper-right dash: keep bottom right invariant
             Collider collider = player.Collider;
             Vector2 position = player.Position;
@@ -183,7 +186,65 @@ public static class VerticalTechMechanism {
     }
 
     public static bool TryVerticalUltraWithRetention(this Player player) {
-        if (Math.Sign(player.DashDir.X) is { } xSign && xSign != 0 && xSign == Math.Sign(player.Speed.X) && player.DashDir.Y != 0f && player.TrySqueezeHitbox(xSign, player.Speed.Y)) {
+        // return true if wallSpeedRetained is set
+
+        if (CeilingTechMechanism.OverrideLeftWallUltraDir.HasValue) {
+            if (-1 != Math.Sign(player.Speed.X)) {
+                return false;
+            }
+            if (player.TrySqueezeHitbox(-1, player.Speed.Y)) {
+                player.DashDir = CeilingTechMechanism.OverrideLeftWallUltraDir.Value;
+                CeilingTechMechanism.ClearOverrideUltraDir();
+                player.wallSpeedRetained = player.Speed.X;
+                player.wallSpeedRetentionTimer = 0.06f;
+                player.DashDir.Y = Math.Sign(player.DashDir.Y);
+                player.DashDir.X = 0f;
+                player.Speed.X = 0f;
+                player.Speed.Y *= 1.2f;
+                player.Sprite.Scale = new Vector2(0.5f, 1.5f);
+                return true;
+            }
+            else {
+                CeilingTechMechanism.ClearOverrideUltraDir();
+                return false;
+            }
+        }
+        else if (CeilingTechMechanism.OverrideRightWallUltraDir.HasValue) {
+            if (1 != Math.Sign(player.Speed.X)) {
+                return false;
+            }
+            if (player.TrySqueezeHitbox(1, player.Speed.Y)) {
+                player.DashDir = CeilingTechMechanism.OverrideRightWallUltraDir.Value;
+                CeilingTechMechanism.ClearOverrideUltraDir();
+                player.wallSpeedRetained = player.Speed.X;
+                player.wallSpeedRetentionTimer = 0.06f;
+                player.DashDir.Y = Math.Sign(player.DashDir.Y);
+                player.DashDir.X = 0f;
+                player.Speed.X = 0f;
+                player.Speed.Y *= 1.2f;
+                player.Sprite.Scale = new Vector2(0.5f, 1.5f);
+                return true;
+            }
+            else {
+                CeilingTechMechanism.ClearOverrideUltraDir();
+                return false;
+            }
+        }
+        else if (Math.Sign(player.DashDir.X) is { } xSign && xSign != 0 && xSign == Math.Sign(player.Speed.X) && player.DashDir.Y != 0f && player.TrySqueezeHitbox(xSign, player.Speed.Y)) {
+            if (VerticalUltraIntoHorizontalUltra) {
+                if (player.DashDir.Y < 0f) {
+                    if (CeilingTechMechanism.CeilingUltraEnabled) {
+                        CeilingTechMechanism.SetOverrideUltraDir(true, player.DashDir);
+                    }
+                    else {
+                        // don't set a meaningless override
+                    }
+                }
+                else {
+                    // it's grounded so it always make sense
+                    CeilingTechMechanism.SetOverrideUltraDir(true, player.DashDir);
+                }
+            }
             player.wallSpeedRetained = player.Speed.X;
             player.wallSpeedRetentionTimer = 0.06f;
             player.DashDir.Y = Math.Sign(player.DashDir.Y); // wow, this should allow you to super wall jump after an upward vertical ultra (if you manage to unsqueeze during your dash)(or if you dont enable vertical hyper)
@@ -395,6 +456,17 @@ public static class VerticalTechMechanism {
 
     private static bool TryVerticalHyper(Player player) {
         if (VerticalHyperEnabled && player.IsSqueezed() && CelesteInput.Jump.Pressed && Math.Abs(player.DashDir.X) < 0.1f && player.CanUnSqueezeInUnDuck()) {
+            if (CelesteInput.GrabCheck && player.Stamina > 0f && player.Holding == null) {
+                if (player.WallJumpCheck(1) && player.Facing == Facings.Right && !ClimbBlocker.Check(player.Scene, player, player.Position + Vector2.UnitX * 3f)) {
+                    player.ClimbJump();
+                    return true;
+                }
+                if (player.WallJumpCheck(-1) && player.Facing == Facings.Left && !ClimbBlocker.Check(player.Scene, player, player.Position - Vector2.UnitX * 3f)) {
+                    player.ClimbJump();
+                    return true;
+                }
+            }
+
             int yDirection = Math.Sign(CelesteInput.MoveY);
             if (yDirection == 0) {
                 yDirection = -1;

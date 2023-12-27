@@ -1,6 +1,7 @@
 ﻿# https://github.com/EverestAPI/Resources/wiki/Adding-Custom-Dialogue
 # https://maddie480.ovh/celeste/font-generator
 
+#===========================================================================================================
 CEILING_ULTRA_ENABLED=                                        总开关
 CEILING_ULTRA_CEILING_MECHANISMS=                             天花板机制
 CEILING_ULTRA_CEILING_ULTRA=                                  天花板 Ultra
@@ -9,9 +10,9 @@ CEILING_ULTRA_CEILING_REFILL_DASH=                            天花板恢复冲
 CEILING_ULTRA_CEILING_JUMP=                                   蹬天花板跳
 CEILING_ULTRA_CEILING_SUPER_HYPER=                            天花板 Super/Hyper
 CEILING_ULTRA_UPDIAG_DASH_END_NO_HORIZONTAL_SPEED_LOSS=       斜上冲结束时不丢失水平速度
-CEILING_ULTRA_VERTICAL_MECHANISMS=                            竖直机制
-CEILING_ULTRA_VERTICAL_ULTRA=                                 竖直 Ultra
-CEILING_ULTRA_VERTICAL_HYPER=                                 竖直 Hyper
+CEILING_ULTRA_VERTICAL_MECHANISMS=                            纵向机制
+CEILING_ULTRA_VERTICAL_ULTRA=                                 纵向 Ultra
+CEILING_ULTRA_VERTICAL_HYPER=                                 纵向 Hyper
 CEILING_ULTRA_WALL_REFILL_STAMINA=                            贴墙恢复体力
 CEILING_ULTRA_WALL_REFILL_DASH=                               贴墙恢复冲刺
 CEILING_ULTRA_DASH_BEGIN_NO_VERTICAL_SPEED_LOSS=              冲刺开始时不丢失竖直速度

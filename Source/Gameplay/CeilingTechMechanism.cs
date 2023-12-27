@@ -28,6 +28,8 @@ public static class CeilingTechMechanism {
 
     public static bool UpdiagDashDontLoseVerticalSpeed => LevelSettings.UpdiagDashEndNoVerticalSpeedLoss;
 
+    public static bool HorizontalUltraIntoVerticalUltra => LevelSettings.HorizontalUltraIntoVerticalUltra;
+
     [Load]
     public static void Load() {
         On.Celeste.Level.LoadNewPlayer += OnLoadNewPlayer;
@@ -53,6 +55,11 @@ public static class CeilingTechMechanism {
             typeof(Player).GetMethodInfo("RedDashUpdate").IlHook(CeilingHyperHookRedDashUpdate);
 
             new List<string> { "OnTransition", "Jump", "SuperJump", "SuperWallJump", "Bounce", "SuperBounce", "StarFlyBegin", "orig_WallJump", "SideBounce", "DreamDashEnd" }.Select(str => typeof(Player).GetMethodInfo(str)).ToList().ForEach(x => x.IlHook(SetExtendedJumpGraceTimerIL));
+            
+            new List<string> { "DashBegin", "RedDashBegin" }.Select(str => typeof(Player).GetMethodInfo(str)).ToList().ForEach(x => x.IlHook(ClearOverrideUltraDirHookDashBegin));
+
+            typeof(Player).GetMethodInfo("DashUpdate").IlHook(ClearOverrideUltraDirHookDashUpdate);
+            
         }
     }
 
@@ -64,9 +71,27 @@ public static class CeilingTechMechanism {
             cursor.EmitDelegate(ClearExtendedJumpGraceTimer);
             success = true;
         }
-        "SomeSetJumpGraceTimerMethod".LogHookData("Set Jump Grace Timer", success);
+        "Player.SomeSetJumpGraceTimerMethod".LogHookData("Set Jump Grace Timer", success);
 
     }
+
+    private static void ClearOverrideUltraDirHookDashBegin(ILContext il) {
+        ILCursor cursor = new ILCursor(il);
+        bool success = true;
+        cursor.EmitDelegate(ClearOverrideUltraDir);
+        "Player.(Red)DashBegin".LogHookData("Clear Override Ultra Dir", success);
+    }
+
+    private static void ClearOverrideUltraDirHookDashUpdate(ILContext il) {
+        ILCursor cursor = new ILCursor(il);
+        bool success = false;
+        while (cursor.TryGotoNext(MoveType.After, ins => ins.MatchStfld<Player>(nameof(Player.DashDir)))){
+            success = true;
+            cursor.EmitDelegate(ClearOverrideUltraDir);
+        }
+        "Player.DashUpdate".LogHookData("Clear Override Ultra Dir", success);
+    }
+
     public static void ClearExtendedJumpGraceTimer() {
         CeilingJumpGraceTimer = 0f;
         LeftWallGraceTimer = 0f;
@@ -76,12 +101,17 @@ public static class CeilingTechMechanism {
         LastFrameSetJumpTimerCalled = true;
     }
 
+
     private static Player OnLoadNewPlayer(On.Celeste.Level.orig_LoadNewPlayer orig, Vector2 Position, PlayerSpriteMode spriteMode) {
         Player player = orig(Position, spriteMode);
-        PlayerOnCeiling = false;
         ClearExtendedJumpGraceTimer();
+        PlayerOnCeiling = false;
+        LastFrameSetJumpTimerCalled = false;
         LastGroundJumpGraceTimer = 1f;
         NextMaxFall = 0f;
+        ClearOverrideUltraDir();
+        LastFrameWriteOverrideUltraDir = false;
+        LastFrameDashDir = Vector2.Zero;
         return player;
     }
 
@@ -189,8 +219,11 @@ public static class CeilingTechMechanism {
         return result;
     }
 
-    public static bool TryCeilingUltra(this Player player) {
+    public static bool TryCeilingUltra(this Player player, bool getOverrideVerticalUltra = false) {
         if (player.DashDir.X != 0f && player.DashDir.Y < 0f && player.Speed.Y < 0f && player.TryCeilingDuck(Math.Sign(player.Speed.X))) {
+            if (HorizontalUltraIntoVerticalUltra && VerticalTechMechanism.VerticalUltraEnabled && getOverrideVerticalUltra) {
+                SetOverrideUltraDir(false, player.DashDir);
+            }
             player.DashDir.X = Math.Sign(player.DashDir.X);
             player.DashDir.Y = 0f;
             player.Speed.Y = 0f;
@@ -202,23 +235,51 @@ public static class CeilingTechMechanism {
 
     private static void CeilingUltraHookOnCollideV(ILContext iLContext) {
         ILCursor cursor = new ILCursor(iLContext);
-        bool success = false;
-        if (cursor.TryGotoNext(ins => ins.MatchCallOrCallvirt<Player>(nameof(Player.DreamDashCheck)))) {
-            cursor.Index++;
+        bool success1 = false;
+        bool success2 = false;
+        if (cursor.TryGotoNext(ins => ins.MatchCallOrCallvirt<Player>(nameof(Player.DreamDashCheck)), ins => ins.OpCode == OpCodes.Brfalse_S)) {
+            success1 = true;
+            ILLabel label1 = (ILLabel)cursor.Next.Next.Operand;
+            cursor.GotoLabel(label1);
+            cursor.Emit(OpCodes.Ldarg_0);
+            cursor.EmitDelegate(TryGroundUltraWithOverride);
+
             if (cursor.TryGotoNext(ins => ins.MatchCallOrCallvirt<Player>(nameof(Player.DreamDashCheck)), ins => ins.OpCode == OpCodes.Brfalse_S)) {
-                success = true;
-                ILLabel label = (ILLabel)cursor.Next.Next.Operand;
-                cursor.GotoLabel(label);
+                success2 = true;
+                ILLabel label2 = (ILLabel)cursor.Next.Next.Operand;
+                cursor.GotoLabel(label2);
                 cursor.Emit(OpCodes.Ldarg_0);
                 cursor.EmitDelegate(CheckAndApplyCeilingUltra);
             }
         }
-        "OnCollideV".LogHookData("Ceiling Ultra", success);
+        "OnCollideV".LogHookData("Protect Delayed Ultra", success1);
+        "OnCollideV".LogHookData("Ceiling Ultra", success2);
+    }
+
+    private static void TryGroundUltraWithOverride(Player player) {
+        if (OverrideGroundUltraDir.HasValue) { // we are already in a Speed.Y > 0f branch, so ultra will succeed
+            player.DashDir = OverrideGroundUltraDir.Value;
+            ClearOverrideUltraDir();
+        }
+        else if (player.DashDir.X != 0f && player.DashDir.Y > 0f) {
+            if (HorizontalUltraIntoVerticalUltra && VerticalTechMechanism.VerticalUltraEnabled) {
+                SetOverrideUltraDir(false, player.DashDir);
+            }
+        }
     }
 
     private static void CheckAndApplyCeilingUltra(Player player) {
-        if (CeilingUltraEnabled) {
-            player.TryCeilingUltra();
+        if (CeilingUltraEnabled && player.Speed.Y < 0f) { // this does not lie in the Speed.Y < 0f branch, so we need to check here
+            if (OverrideCeilingUltraDir.HasValue) {
+                if (player.TryCeilingDuck(Math.Sign(player.Speed.X))){
+                    player.DashDir = OverrideCeilingUltraDir.Value;
+                    player.TryCeilingUltra();
+                }
+                ClearOverrideUltraDir();
+            }
+            else {
+                player.TryCeilingUltra(true);
+            }
         }
     }
 
@@ -253,6 +314,7 @@ public static class CeilingTechMechanism {
         }
         "Player.DashCoroutine".LogHookData("Updiag Dash End No Horizontal Speed Loss", success);
         "Player.DashCoroutine".LogHookData("Updiag Dash End No Vertical Speed Loss", success);
+        "Player.DashCoroutine".LogHookData("Clear Override Ultra Dir", success);
     }
 
     private static void CheckCeilingVerticalUltraInDashCoroutine(Player player) {
@@ -266,6 +328,10 @@ public static class CeilingTechMechanism {
         // try vertical ultra first, so it matchs the intuition that, first horizontal movement, then vertical
         // although that actually ground ultra > vertical ultra > ceiling ultra
         // ground ultra must be first so a grounded reverse hyper can be performed normally at a corner
+
+        ClearOverrideUltraDir();
+        // player.DashDir is created this frame, so we need to clear override ultra dir
+        // and such instant ultra should't produce override ultra dir, so we just clear override anyway
     }
 
     public static bool OnCeiling(this Player player, int upCheck = 1) {
@@ -288,8 +354,43 @@ public static class CeilingTechMechanism {
 
     public static bool LastFrameSetJumpTimerCalled = false;
 
+    public static Vector2? OverrideGroundUltraDir = null;
+
+    public static Vector2? OverrideCeilingUltraDir = null;
+
+    public static Vector2? OverrideLeftWallUltraDir = null;
+
+    public static Vector2? OverrideRightWallUltraDir = null;
+
+    public static bool LastFrameWriteOverrideUltraDir = false;
+
+    public static Vector2 LastFrameDashDir = Vector2.Zero;
+
     public static float NextMaxFall = 0f;
 
+    public static void SetOverrideUltraDir(bool isVerticalUltra, Vector2 dashDir) {
+        ClearOverrideUltraDir();
+        if (isVerticalUltra) {
+            if (dashDir.Y > 0) {
+                OverrideGroundUltraDir = dashDir;
+            }
+            else {
+                OverrideCeilingUltraDir = dashDir;
+            }
+        }
+        else {
+            if (dashDir.X > 0) {
+                OverrideRightWallUltraDir = dashDir;
+            }
+            else {
+                OverrideLeftWallUltraDir = dashDir;
+            }
+        }
+        LastFrameWriteOverrideUltraDir = true;
+    }
+    public static void ClearOverrideUltraDir() {
+        OverrideGroundUltraDir = OverrideCeilingUltraDir = OverrideLeftWallUltraDir = OverrideRightWallUltraDir = null;
+    }
     private static void UpdateMaxFallHook(ILContext il) {
         ILCursor cursor = new(il);
         bool success = false;
@@ -310,6 +411,11 @@ public static class CeilingTechMechanism {
     }
 
     public static void UpdateOnCeilingAndWall(Player player) {
+        if (!LastFrameWriteOverrideUltraDir && LastFrameDashDir != player.DashDir) {
+            ClearOverrideUltraDir();
+        }
+        LastFrameDashDir = player.DashDir;
+        LastFrameWriteOverrideUltraDir = false;
         if (LastGroundJumpGraceTimer > 0f && player.jumpGraceTimer <= 0f && !LastFrameSetJumpTimerCalled) { // so it's killed by something that maybe we have not hooked (e.g. a jump from other mods)
             ClearExtendedJumpGraceTimer();
         }
