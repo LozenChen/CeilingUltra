@@ -67,8 +67,6 @@ public static class VerticalTechMechanism {
     private const float upperWallJumpIncrement = -20f;
 
     private const float downwardWallJumpIncrement = 40f;
-
-    private const float upperLerpEndSpeed = -325f;
     private static Player OnLoadNewPlayer(On.Celeste.Level.orig_LoadNewPlayer orig, Vector2 Position, PlayerSpriteMode spriteMode) {
         Player player = orig(Position, spriteMode);
         squeezedHitbox = new Hitbox(6f, 11f, -3f, -11f);
@@ -78,7 +76,7 @@ public static class VerticalTechMechanism {
 
     private static void OnPlayerWallJump(On.Celeste.Player.orig_WallJump orig, Player player, int dir) {
         float origSpeedY = player.Speed.Y;
-        orig(player, dir);
+        orig(player, dir); // ExtendedJumpGraceTimer is cleared here
         if (player.StateMachine.State != 0 && player.StateMachine.State != 1) {
             return;
         }
@@ -86,7 +84,7 @@ public static class VerticalTechMechanism {
             player.Speed.Y = Math.Min(-105f, origSpeedY + upperWallJumpIncrement);
             player.Speed.Y += player.LiftBoost.Y;
             player.varJumpSpeed = player.Speed.Y;
-            player.varJumpTimer = Monocle.Calc.LerpClamp(0.2f, 0.1f, (player.Speed.Y - (-105f))/(upperLerpEndSpeed - (-105f - upperWallJumpIncrement)));
+            player.varJumpTimer = Monocle.Calc.LerpClamp(0.2f, 0.1f, (player.Speed.Y - (-105f))/(-325f - (-105f)));
         }
         else if (CelesteInput.MoveY > 0 && DownwardWallJumpAcceleration) {
             player.Speed.Y = Math.Max(40f, origSpeedY + downwardWallJumpIncrement);
@@ -432,9 +430,6 @@ public static class VerticalTechMechanism {
         // sadly, if you buffer a jump then you will get a wall jump instead of a vertical hyper
         // only hyper, no vertical super jump (which is replaced a super wall jump)
         Input.Jump.ConsumeBuffer();
-        if (yDirection > 0) {
-            CeilingTechMechanism.NextMaxFall = 320f;
-        }
         player.jumpGraceTimer = 0f;
         CeilingTechMechanism.ClearExtendedJumpGraceTimer();
         player.AutoJump = false;
@@ -467,6 +462,7 @@ public static class VerticalTechMechanism {
         else {
             player.varJumpTimer = 0f;
             player.varJumpSpeed = 0f;
+            CeilingTechMechanism.NextMaxFall = 350f;
         }
 
         player.launched = true;

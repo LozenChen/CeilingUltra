@@ -1,7 +1,7 @@
 return {
     name = "CeilingUltra/DownwardWallJumpAccelerationTrigger",
     placements = {
-        name = "Downward WallJump Acceleration Trigger",
+        name = "Downward Wall Kick Acceleration Trigger",
         data = {
             OneUse = true,
             Enable = true
