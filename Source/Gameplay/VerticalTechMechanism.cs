@@ -20,14 +20,20 @@ public static class VerticalTechMechanism {
 
     public static bool VerticalUltraIntoHorizontalUltra => LevelSettings.VerticalUltraIntoHorizontalUltra;
 
+    public static bool UpwardWallJumpAcceleration => LevelSettings.UpwardWallJumpAcceleration;
+
+    public static bool DownwardWallJumpAcceleration => LevelSettings.DownwardWallJumpAcceleration;
+
     [Load]
     public static void Load() {
         On.Celeste.Level.LoadNewPlayer += OnLoadNewPlayer;
+        On.Celeste.Player.WallJump += OnPlayerWallJump;
     }
 
     [Unload]
     public static void Unload() {
         On.Celeste.Level.LoadNewPlayer -= OnLoadNewPlayer;
+        On.Celeste.Player.WallJump -= OnPlayerWallJump;
     }
 
     [Initialize]
@@ -57,12 +63,43 @@ public static class VerticalTechMechanism {
     private static Hitbox squeezedHitbox = new Hitbox(6f, 11f, -3f, -11f);
 
     private static Hitbox squeezedHurtbox = new Hitbox(6f, 9f, -3f, -11f);
+
+    private const float upperWallJumpIncrement = -20f;
+
+    private const float downwardWallJumpIncrement = 40f;
+
+    private const float upperLerpEndSpeed = -325f;
     private static Player OnLoadNewPlayer(On.Celeste.Level.orig_LoadNewPlayer orig, Vector2 Position, PlayerSpriteMode spriteMode) {
         Player player = orig(Position, spriteMode);
         squeezedHitbox = new Hitbox(6f, 11f, -3f, -11f);
         squeezedHurtbox = new Hitbox(6f, 9f, -3f, -11f);
         return player;
     }
+
+    private static void OnPlayerWallJump(On.Celeste.Player.orig_WallJump orig, Player player, int dir) {
+        float origSpeedY = player.Speed.Y;
+        orig(player, dir);
+        if (player.StateMachine.State != 0 && player.StateMachine.State != 1) {
+            return;
+        }
+        else if (CelesteInput.MoveY < 0 && UpwardWallJumpAcceleration) {
+            player.Speed.Y = Math.Min(-105f, origSpeedY + upperWallJumpIncrement);
+            player.Speed.Y += player.LiftBoost.Y;
+            player.varJumpSpeed = player.Speed.Y;
+            player.varJumpTimer = Monocle.Calc.LerpClamp(0.2f, 0.1f, (player.Speed.Y - (-105f))/(upperLerpEndSpeed - (-105f - upperWallJumpIncrement)));
+        }
+        else if (CelesteInput.MoveY > 0 && DownwardWallJumpAcceleration) {
+            player.Speed.Y = Math.Max(40f, origSpeedY + downwardWallJumpIncrement);
+            CeilingTechMechanism.NextMaxFall = player.Speed.Y + 20f;
+            player.varJumpTimer = 0f;
+        }
+        else {
+            return;
+        }
+
+        player.LaunchedBoostCheck();
+    }
+
 
     public static bool IsSqueezed(this Player player) {
         return player.Collider == squeezedHitbox || player.Collider == squeezedHurtbox;

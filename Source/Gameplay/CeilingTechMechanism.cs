@@ -406,7 +406,7 @@ public static class CeilingTechMechanism {
     }
 
     private static void UpdateMaxFall(Player player) {
-        if (NextMaxFall > 160f && player.StateMachine.State == 0) { // NormalBegin resets maxFall to be 160f, so we need this for vertical hyper
+        if (NextMaxFall > player.maxFall && player.StateMachine.State == 0) { // NormalBegin resets maxFall to be 160f, so we need this for vertical hyper
             player.maxFall = NextMaxFall;
         }
         NextMaxFall = 0f;

@@ -16,3 +16,5 @@ CEILING_ULTRA_WALL_REFILL_DASH=                               Wall Refill Dash
 CEILING_ULTRA_DASH_BEGIN_NO_VERTICAL_SPEED_LOSS=              Dash Begin No Vertical Speed Loss
 CEILING_ULTRA_UPDIAG_DASH_END_NO_VERTICAL_SPEED_LOSS=         High Speed Updiag Dash End No Vertical Speed Loss
 CEILING_ULTRA_LOCK_BY_MAP=                                    Some Settings Locked By Map
+CEILING_ULTRA_UPWARD_WALL_JUMP_ACCELERATION=                  Upward Wall Jump Acceleration
+CEILING_ULTRA_DOWNWARD_WALL_JUMP_ACCELERATION=                Downward Wall Jump Acceleration

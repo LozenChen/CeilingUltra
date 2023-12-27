@@ -65,6 +65,8 @@ public class CeilingUltraModule : EverestModule {
         bool overrideUpdiagEnd = LevelSettings.OverrideBigInertiaUpdiagDash.HasValue;
         bool overrideWallRefill = LevelSettings.OverrideWallRefill.HasValue;
         bool overrideVertTech = LevelSettings.OverrideVerticalTech.HasValue;
+        bool overrideUpWallJumpAcc = LevelSettings.OverrideUpwardWallJumpAcceleration.HasValue;
+        bool overrideDownWallJumpAcc = LevelSettings.OverrideDownwardWallJumpAcceleration.HasValue;
 
         menu.Add(new OnOffExt("Enabled".ToDialogText(), LevelSettings.MainEnabled, overrideMain).Change(value => ceilingUltraSetting.Enabled = value));
 
@@ -96,7 +98,11 @@ public class CeilingUltraModule : EverestModule {
         menu.Add(new OnOffExt("Dash Begin No Vertical Speed Loss".ToDialogText(), LevelSettings.DashBeginNoVerticalSpeedLoss, overrideVertTech).Change(value => ceilingUltraSetting.DashBeginNoVerticalSpeedLoss = value));
         menu.Add(new OnOffExt("Updiag Dash End No Vertical Speed Loss".ToDialogText(), LevelSettings.UpdiagDashEndNoVerticalSpeedLoss, overrideVertTech).Change(value => ceilingUltraSetting.UpdiagDashEndNoVerticalSpeedLoss = value));
 
-        if (overrideMain || overrideCeilRefill || overrideCeilTech || overrideVertTech || overrideWallRefill || overrideUpdiagEnd) {
+
+        menu.Add(new OnOffExt("Upward Wall Jump Acceleration".ToDialogText(), LevelSettings.UpwardWallJumpAcceleration, overrideUpWallJumpAcc).Change(value => ceilingUltraSetting.UpwardWallJumpAcceleration = value));
+        menu.Add(new OnOffExt("Downward Wall Jump Acceleration".ToDialogText(), LevelSettings.DownwardWallJumpAcceleration, overrideDownWallJumpAcc).Change(value => ceilingUltraSetting.DownwardWallJumpAcceleration = value));
+
+        if (overrideMain || overrideCeilRefill || overrideCeilTech || overrideVertTech || overrideWallRefill || overrideUpdiagEnd || overrideUpWallJumpAcc || overrideDownWallJumpAcc) {
             menu.Add(new TextMenuExt.SubHeaderExt("Lock By Map".ToDialogText()) { TextColor = Color.Goldenrod, HeightExtra = 10f });
         }
     }

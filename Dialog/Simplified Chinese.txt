@@ -18,3 +18,5 @@ CEILING_ULTRA_WALL_REFILL_DASH=                               贴墙恢复冲刺
 CEILING_ULTRA_DASH_BEGIN_NO_VERTICAL_SPEED_LOSS=              冲刺开始时不丢失竖直速度
 CEILING_ULTRA_UPDIAG_DASH_END_NO_VERTICAL_SPEED_LOSS=         高速斜上冲结束时不丢失竖直速度
 CEILING_ULTRA_LOCK_BY_MAP=                                    部分设置被地图锁定
+CEILING_ULTRA_UPWARD_WALL_JUMP_ACCELERATION=                  向上踢墙加速
+CEILING_ULTRA_DOWNWARD_WALL_JUMP_ACCELERATION=                向下踢墙加速

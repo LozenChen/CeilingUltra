@@ -58,12 +58,16 @@ public class CeilingUltraSettings : EverestModuleSettings {
     public bool HorizontalUltraIntoVerticalUltra { get; set; } = true;
 
     public bool VerticalUltraIntoHorizontalUltra { get; set; } = true;
+
+    public bool UpwardWallJumpAcceleration { get; set; } = true;
+
+    public bool DownwardWallJumpAcceleration { get; set; } = true;
 }
 
 public static class LevelSettings {
 
     public static void ClearAllOverride() {
-        OverrideMainEnabled = OverrideCeilingTech = OverrideCeilingRefill = OverrideVerticalTech = OverrideWallRefill = OverrideBigInertiaUpdiagDash = null;
+        OverrideMainEnabled = OverrideCeilingTech = OverrideCeilingRefill = OverrideVerticalTech = OverrideWallRefill = OverrideBigInertiaUpdiagDash = OverrideUpwardWallJumpAcceleration = OverrideDownwardWallJumpAcceleration = null;
     }
 
     public static bool? OverrideMainEnabled {
@@ -158,6 +162,29 @@ public static class LevelSettings {
     public static bool HorizontalUltraIntoVerticalUltra => MainEnabled && ceilingUltraSetting.HorizontalUltraIntoVerticalUltra;
 
     public static bool VerticalUltraIntoHorizontalUltra => MainEnabled && ceilingUltraSetting.VerticalUltraIntoHorizontalUltra;
+
+    // WallJumpAcceleration
+
+    public static bool? OverrideUpwardWallJumpAcceleration {
+        get => CeilingUltraSession.Instance?.OverrideUpwardWallJumpAcceleration;
+        set {
+            if (CeilingUltraSession.Instance is { } instance) {
+                instance.OverrideUpwardWallJumpAcceleration = value;
+            }
+        }
+    }
+    public static bool UpwardWallJumpAcceleration => MainEnabled && OverrideUpwardWallJumpAcceleration.GetValueOrDefault(ceilingUltraSetting.UpwardWallJumpAcceleration);
+
+
+    public static bool? OverrideDownwardWallJumpAcceleration {
+        get => CeilingUltraSession.Instance?.OverrideDownwardWallJumpAcceleration;
+        set {
+            if (CeilingUltraSession.Instance is { } instance) {
+                instance.OverrideDownwardWallJumpAcceleration = value;
+            }
+        }
+    }
+    public static bool DownwardWallJumpAcceleration => MainEnabled && OverrideDownwardWallJumpAcceleration.GetValueOrDefault(ceilingUltraSetting.DownwardWallJumpAcceleration);
 }
 
 public class CeilingUltraSession : EverestModuleSession {
@@ -169,10 +196,13 @@ public class CeilingUltraSession : EverestModuleSession {
 
     public bool? OverrideBigInertiaUpdiagDash;
 
-
     public bool? OverrideCeilingRefill;
 
     public bool? OverrideWallRefill;
 
     public bool? OverrideVerticalTech;
+
+    public bool? OverrideUpwardWallJumpAcceleration;
+
+    public bool? OverrideDownwardWallJumpAcceleration;
 }

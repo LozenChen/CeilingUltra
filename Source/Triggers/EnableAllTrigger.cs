@@ -18,5 +18,7 @@ public class EnableAllTrigger : AbstractTrigger {
         LevelSettings.OverrideCeilingTech = Enable;
         LevelSettings.OverrideBigInertiaUpdiagDash = Enable;
         LevelSettings.OverrideVerticalTech = Enable;
+        LevelSettings.OverrideUpwardWallJumpAcceleration = Enable;
+        LevelSettings.OverrideDownwardWallJumpAcceleration = Enable;
     }
 }
