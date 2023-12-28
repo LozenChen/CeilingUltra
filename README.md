@@ -2,8 +2,6 @@
 
 https://gamebanana.com/mods/485472
 
-TODO: FUCK JUMPTHRU, FUCK ICEWALL
-
 本文档的最后更新时间: v1.1.10, 请自行留意这是否是最新版本.
 
 机制的一些细节:

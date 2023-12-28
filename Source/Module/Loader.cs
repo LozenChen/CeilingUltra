@@ -34,6 +34,7 @@ internal static class Loader {
         }
         if (CeilingUltraModule.Warnings.IsNotNullOrEmpty()) {
             Logger.Log(LogLevel.Warn, "CeilingUltra", CeilingUltraModule.Warnings);
+            Celeste.Commands.Log(CeilingUltraModule.Warnings, Microsoft.Xna.Framework.Color.Goldenrod);
         }
         else {
             Logger.Log(LogLevel.Info, "CeilingUltra", "All Hooks Succeed!");

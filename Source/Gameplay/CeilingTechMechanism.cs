@@ -1,5 +1,6 @@
 using Celeste.Mod.CeilingUltra.Module;
 using Celeste.Mod.CeilingUltra.Utils;
+using FMOD;
 using Microsoft.Xna.Framework;
 using Mono.Cecil.Cil;
 using Monocle;
@@ -44,7 +45,7 @@ public static class CeilingTechMechanism {
     public static void Initialize() {
         using (new DetourContext { Before = new List<string> { "*" }, ID = "Ceiling Tech Mechanism" }) {
             typeof(Player).GetMethodInfo("orig_Update").IlHook(HookPlayerUpdate);
-            typeof(Player).GetMethodInfo("orig_Update").IlHook(UpdateMaxFallHook);
+            typeof(Player).GetMethodInfo("orig_Update").IlHook(UpdateOnEnd);
             typeof(Player).GetMethodInfo("OnCollideV").IlHook(CeilingUltraHookOnCollideV);
             typeof(Player).GetMethodInfo("DashCoroutine").GetStateMachineTarget().IlHook(CeilingVerticalUltraHookDashCoroutine);
             typeof(Player).GetMethodInfo("NormalUpdate").IlHook(CeilingJumpHookNormalUpdate);
@@ -55,13 +56,96 @@ public static class CeilingTechMechanism {
             typeof(Player).GetMethodInfo("RedDashUpdate").IlHook(CeilingHyperHookRedDashUpdate);
 
             new List<string> { "OnTransition", "Jump", "SuperJump", "SuperWallJump", "Bounce", "SuperBounce", "StarFlyBegin", "orig_WallJump", "SideBounce", "DreamDashEnd" }.Select(str => typeof(Player).GetMethodInfo(str)).ToList().ForEach(x => x.IlHook(SetExtendedJumpGraceTimerIL));
-            
+
             new List<string> { "DashBegin", "RedDashBegin" }.Select(str => typeof(Player).GetMethodInfo(str)).ToList().ForEach(x => x.IlHook(ClearOverrideUltraDirHookDashBegin));
 
             typeof(Player).GetMethodInfo("DashUpdate").IlHook(ClearOverrideUltraDirHookDashUpdate);
-            
+
         }
     }
+
+    public static void UpdateOnCeilingAndWall(Player player) {
+        if (!LastFrameWriteOverrideUltraDir && LastFrameDashDir != player.DashDir) {
+            ClearOverrideUltraDir();
+        }
+        LastFrameDashDir = player.DashDir;
+        LastFrameWriteOverrideUltraDir = false;
+
+        if (LastGroundJumpGraceTimer > 0f && player.jumpGraceTimer <= 0f && !LastFrameSetJumpTimerCalled) {
+            // so it's killed by something that maybe we have not hooked (e.g. a jump from other mods)
+            // but if that's during a protect jump grace time, i will not care you mods (e.g. MaxHelpingHand.UpsideDownJumpThru hook OnCollideV)
+            ClearExtendedJumpGraceTimer();
+        }
+        LastFrameSetJumpTimerCalled = false;
+
+        if (player.StateMachine.State == 9) {
+            PlayerOnCeiling = false;
+            PlayerOnLeftWall = false;
+            PlayerOnRightWall = false;
+        }
+        else {
+            PlayerOnCeiling = player.OnCeiling();
+            PlayerOnLeftWall = player.CanStand(-Vector2.UnitX);
+            PlayerOnRightWall = player.CanStand(Vector2.UnitX);
+        }
+
+        if (PlayerOnCeiling) {
+            if (CeilingRefillStamina) {
+                player.Stamina = 110f;
+                player.wallSlideTimer = 1.2f;
+            }
+            CeilingJumpGraceTimer = 0.1f;
+        }
+        else if (CeilingJumpGraceTimer > 0f) {
+            CeilingJumpGraceTimer -= Engine.DeltaTime;
+        }
+
+        if (WallRefillStamina && (PlayerOnLeftWall || PlayerOnRightWall)) {
+            player.Stamina = 110f;
+            player.wallSlideTimer = 1.2f;
+        }
+        if (PlayerOnLeftWall) {
+            LeftWallGraceTimer = 0.1f;
+        }
+        else if (LeftWallGraceTimer > 0f) {
+            LeftWallGraceTimer -= Engine.DeltaTime;
+        }
+        if (PlayerOnRightWall) {
+            RightWallGraceTimer = 0.1f;
+        }
+        else if (RightWallGraceTimer > 0f) {
+            RightWallGraceTimer -= Engine.DeltaTime;
+        }
+        if (!CelesteInput.Jump.Check && !player.AutoJump) {
+            ProtectVarJumpTimer = 0f;
+        }
+        if (ProtectVarJumpTimer > 0f) {
+            ProtectVarJumpTimer -= Engine.DeltaTime;
+        }
+    }
+
+    private static void HookPlayerUpdate(ILContext il) {
+        ILCursor cursor = new(il);
+        cursor.Emit(OpCodes.Ldarg_0);
+        cursor.EmitDelegate(UpdateOnCeilingAndWall); // only hiccup jump will affect this, so i dont insert this after onground evaluation
+        "Player.orig_Update".LogHookData("Ceiling Jump", true);
+        "Player.orig_Update".LogHookData("Ceiling/Wall RefillStamina", true);
+
+        bool success = true;
+        if (cursor.TryGotoNext(MoveType.AfterLabel, ins => ins.OpCode == OpCodes.Ldarg_0, ins => ins.MatchLdfld<Player>(nameof(Player.dashRefillCooldownTimer)), ins => ins.MatchLdcR4(0f), ins => ins.OpCode == OpCodes.Ble_Un_S)) {
+            cursor.Emit(OpCodes.Ldarg_0);
+            cursor.EmitDelegate(RecordGroundJumpGraceTimer);
+            ILLabel target = (ILLabel)cursor.Next.Next.Next.Next.Operand;
+            cursor.GotoLabel(target);
+            cursor.Emit(OpCodes.Ldarg_0);
+            cursor.EmitDelegate(ExtendedRefillDash);
+        }
+        else {
+            success = false;
+        }
+        "Player.orig_Update".LogHookData("Ceiling/Wall RefillDash", success);
+    }
+
 
     private static void SetExtendedJumpGraceTimerIL(ILContext il) {
         ILCursor cursor = new ILCursor(il);
@@ -85,7 +169,7 @@ public static class CeilingTechMechanism {
     private static void ClearOverrideUltraDirHookDashUpdate(ILContext il) {
         ILCursor cursor = new ILCursor(il);
         bool success = false;
-        while (cursor.TryGotoNext(MoveType.After, ins => ins.MatchStfld<Player>(nameof(Player.DashDir)))){
+        while (cursor.TryGotoNext(MoveType.After, ins => ins.MatchStfld<Player>(nameof(Player.DashDir)))) {
             success = true;
             cursor.EmitDelegate(ClearOverrideUltraDir);
         }
@@ -124,35 +208,11 @@ public static class CeilingTechMechanism {
 
     public static bool TryCeilingDuck(this Player player, int priorDirection = 1) {
         if (player.IsSqueezed()) {
-            Collider collider = player.Collider;
-            Vector2 position = player.Position;
-            bool result = false;
-            float origTop = player.Collider.Top;
-            player.Collider = player.duckHitbox;
-            float offset = origTop - player.Collider.Top;
-            player.Y += offset;
-            if (!player.CollideCheck<Solid>()) {
-                result = true;
-            }
-            else {
-                int direction = priorDirection >= 0 ? 1 : -1;
-                player.X += direction;
-                if (!player.CollideCheck<Solid>()) {
-                    result = true;
-                }
-                else {
-                    player.X -= 2 * direction;
-                    if (!player.CollideCheck<Solid>()) {
-                        result = true;
-                    }
-                }
-            }
+            int direction = priorDirection >= 0 ? 1 : -1;
+            List<Vector2> wiggle = new List<Vector2>() { Vector2.Zero, direction * Vector2.UnitX, -direction * Vector2.UnitX };
+            bool result = player.TryTransform(player.duckHitbox, Alignment.Top, wiggle);
             if (result) {
                 player.hurtbox = player.duckHurtbox;
-            }
-            else {
-                player.Collider = collider;
-                player.Position = position;
             }
             return result;
         }
@@ -172,55 +232,27 @@ public static class CeilingTechMechanism {
     public static bool TryCeilingUnduck(this Player player, out bool wasDuck, int priorDirection = 1) {
         wasDuck = player.Ducking;
         if (player.IsSqueezed()) {
-            Collider collider2 = player.Collider;
-            Vector2 position2 = player.Position;
-            bool result2 = false;
-            float origTop = player.Collider.Top;
-            player.Collider = player.normalHitbox;
-            float offset = origTop - player.Collider.Top;
-            player.Y += offset;
-            if (!player.CollideCheck<Solid>()) {
-                result2 = true;
-            }
-            else {
-                player.X += priorDirection;
-                if (!player.CollideCheck<Solid>()) {
-                    result2 = true;
-                }
-                else {
-                    player.X -= 2 * priorDirection;
-                    if (!player.CollideCheck<Solid>()) {
-                        result2 = true;
-                    }
-                }
-            }
+            List<Vector2> wiggle = new List<Vector2>() { Vector2.Zero, priorDirection * Vector2.UnitX, -priorDirection * Vector2.UnitX };
+            bool result2 = player.TryTransform(player.normalHitbox, Alignment.Top, wiggle);
             if (result2) {
                 player.hurtbox = player.normalHurtbox;
-            }
-            else {
-                player.Collider = collider2;
-                player.Position = position2;
             }
             return result2;
         }
         if (!player.Ducking) {
             return true;
         }
-        Collider collider = player.Collider;
-        Hitbox hurtbox = player.hurtbox;
-        Vector2 position = player.Position;
-        CeilingUnduck_Normal(player);
-        bool result = !player.CollideCheck<Solid>();
-        if (!result) {
-            player.Position = position;
-            player.Collider = collider;
-            player.hurtbox = hurtbox;
+        bool result = player.TryTransform(player.normalHitbox, Alignment.Top, new List<Vector2>() { Vector2.Zero});
+        if (result) {
+            player.hurtbox = player.normalHurtbox;
         }
+
         return result;
     }
 
     public static bool TryCeilingUltra(this Player player, bool getOverrideVerticalUltra = false) {
-        if (player.DashDir.X != 0f && player.DashDir.Y < 0f && player.Speed.Y < 0f && player.TryCeilingDuck(Math.Sign(player.Speed.X))) {
+        // why do we check Speed.Y <= 0f instead of < 0f here: coz MaxHelpingHand.UpsideDownJumpThru kills Speed.Y on the start of collision
+        if (player.DashDir.X != 0f && player.DashDir.Y < 0f && player.Speed.Y <= 0f && player.TryCeilingDuck(Math.Sign(player.Speed.X))) {
             if (HorizontalUltraIntoVerticalUltra && VerticalTechMechanism.VerticalUltraEnabled && getOverrideVerticalUltra) {
                 SetOverrideUltraDir(false, player.DashDir);
             }
@@ -271,9 +303,11 @@ public static class CeilingTechMechanism {
     }
 
     private static void CheckAndApplyCeilingUltra(Player player) {
-        if (CeilingUltraEnabled && player.Speed.Y < 0f) { // this does not lie in the Speed.Y < 0f branch, so we need to check here
+        // why do we check Speed.Y <= 0f instead of < 0f here: coz MaxHelpingHand.UpsideDownJumpThru kills Speed.Y on the start of collision
+        // fuck
+        if (CeilingUltraEnabled && player.Speed.Y <= 0f) { // this does not lie in the Speed.Y < 0f branch, so we need to check here
             if (OverrideCeilingUltraDir.HasValue) {
-                if (LeftWallGraceTimer <= 0f && RightWallGraceTimer <= 0f && (ProtectVarJumpTimer <= 0f || player.varJumpTimer <= 0f) && player.TryCeilingDuck(Math.Sign(player.Speed.X))){
+                if (LeftWallGraceTimer <= 0f && RightWallGraceTimer <= 0f && (ProtectVarJumpTimer <= 0f || player.varJumpTimer <= 0f) && player.TryCeilingDuck(Math.Sign(player.Speed.X))) {
                     player.DashDir = OverrideCeilingUltraDir.Value;
                     player.TryCeilingUltra();
                 }
@@ -320,7 +354,7 @@ public static class CeilingTechMechanism {
     }
 
     private static void CheckCeilingVerticalUltraInDashCoroutine(Player player) {
-        if (VerticalTechMechanism.VerticalUltraEnabled && player.Speed.X != 0f && player.CollideCheck<Solid>(player.Position + Vector2.UnitX * Math.Sign(player.Speed.X)) && (!player.Inventory.DreamDash || !player.CollideCheck<DreamBlock>(player.Position + Vector2.UnitX * Math.Sign(player.Speed.X))) && player.TryVerticalUltra()) {
+        if (VerticalTechMechanism.VerticalUltraEnabled && (PlayerOnRightWall && player.Speed.X > 0f || PlayerOnLeftWall && player.Speed.X < 0f) && (!player.Inventory.DreamDash || !player.CollideCheck<DreamBlock>(player.Position + Vector2.UnitX * Math.Sign(player.Speed.X))) && player.TryVerticalUltra()) {
             // already applied as a side effect of TryVerticalUltra
             // we put TryVerticalUltra inside conditions coz if all other conditions are satisfied but can't vertical ultra (e.g. Can't Squeeze Hitbox), then still need to try Ceiling Ultra
         }
@@ -337,7 +371,7 @@ public static class CeilingTechMechanism {
     }
 
     public static bool OnCeiling(this Player player, int upCheck = 1) {
-        return player.CollideCheck<Solid>(player.Position - upCheck * Vector2.UnitY);
+        return player.CanStand(-upCheck * Vector2.UnitY);
     }
 
     public static bool PlayerOnCeiling = false;
@@ -399,103 +433,31 @@ public static class CeilingTechMechanism {
     public static void ClearOverrideUltraDir() {
         OverrideGroundUltraDir = OverrideCeilingUltraDir = OverrideLeftWallUltraDir = OverrideRightWallUltraDir = null;
     }
-    private static void UpdateMaxFallHook(ILContext il) {
+    private static void UpdateOnEnd(ILContext il) {
         ILCursor cursor = new(il);
         bool success = false;
         while (cursor.TryGotoNext(MoveType.AfterLabel, i => i.OpCode == OpCodes.Ret)) {
             success = true;
             cursor.Emit(OpCodes.Ldarg_0);
-            cursor.EmitDelegate(UpdateMaxFall);
+            cursor.EmitDelegate(UpdateMaxFallAndJumpGrace);
             cursor.Index++;
         }
         "Player.orig_Update".LogHookData("Set MaxFall Helper", success);
     }
 
-    private static void UpdateMaxFall(Player player) {
+    private static void UpdateMaxFallAndJumpGrace(Player player) {
         if (NextMaxFall > player.maxFall && player.StateMachine.State == 0) { // NormalBegin resets maxFall to be 160f, so we need this for vertical hyper
             player.maxFall = NextMaxFall;
         }
         NextMaxFall = 0f;
-    }
-
-    public static void UpdateOnCeilingAndWall(Player player) {
-        if (!LastFrameWriteOverrideUltraDir && LastFrameDashDir != player.DashDir) {
-            ClearOverrideUltraDir();
-        }
-        LastFrameDashDir = player.DashDir;
-        LastFrameWriteOverrideUltraDir = false;
-        if (LastGroundJumpGraceTimer > 0f && player.jumpGraceTimer <= 0f && !LastFrameSetJumpTimerCalled) { // so it's killed by something that maybe we have not hooked (e.g. a jump from other mods)
-            ClearExtendedJumpGraceTimer();
-        }
-        LastFrameSetJumpTimerCalled = false;
-
-        if (player.StateMachine.State == 9) {
-            PlayerOnCeiling = false;
-            PlayerOnLeftWall = false;
-            PlayerOnRightWall = false;
-        }
-        else { 
-            PlayerOnCeiling = player.OnCeiling();
-            PlayerOnLeftWall = player.CollideCheck<Solid>(player.Position - Vector2.UnitX);
-            PlayerOnRightWall = player.CollideCheck<Solid>(player.Position + Vector2.UnitX);
-        }
-
-        if (PlayerOnCeiling) {
-            if (CeilingRefillStamina) {
-                player.Stamina = 110f;
-                player.wallSlideTimer = 1.2f;
-            }
-            CeilingJumpGraceTimer = 0.1f;
-        }
-        else if (CeilingJumpGraceTimer > 0f) {
-            CeilingJumpGraceTimer -= Engine.DeltaTime;
-        }
-
-        if (WallRefillStamina && (PlayerOnLeftWall || PlayerOnRightWall)) {
-            player.Stamina = 110f;
-            player.wallSlideTimer = 1.2f;
-        }
-        if (PlayerOnLeftWall) {
-            LeftWallGraceTimer = 0.1f;
-        }
-        else if (LeftWallGraceTimer > 0f) {
-            LeftWallGraceTimer -= Engine.DeltaTime;
-        }
-        if (PlayerOnRightWall) {
-            RightWallGraceTimer = 0.1f;
-        }
-        else if (RightWallGraceTimer > 0f) {
-            RightWallGraceTimer -= Engine.DeltaTime;
-        }
-        if (ProtectVarJumpTimer > 0f) {
-            ProtectVarJumpTimer -= Engine.DeltaTime;
+        if (!LastFrameSetJumpTimerCalled && ProtectVarJumpTimer > player.varJumpTimer) {
+            player.varJumpTimer = ProtectVarJumpTimer;
         }
     }
+
 
     private static void RecordGroundJumpGraceTimer(Player player) {
         LastGroundJumpGraceTimer = player.jumpGraceTimer;
-    }
-
-    private static void HookPlayerUpdate(ILContext il) {
-        ILCursor cursor = new(il);
-        cursor.Emit(OpCodes.Ldarg_0);
-        cursor.EmitDelegate(UpdateOnCeilingAndWall); // only hiccup jump will affect this, so i dont insert this after onground evaluation
-        "Player.orig_Update".LogHookData("Ceiling Jump", true);
-        "Player.orig_Update".LogHookData("Ceiling/Wall RefillStamina", true);
-
-        bool success = true;
-        if (cursor.TryGotoNext(MoveType.AfterLabel, ins => ins.OpCode == OpCodes.Ldarg_0, ins => ins.MatchLdfld<Player>(nameof(Player.dashRefillCooldownTimer)), ins => ins.MatchLdcR4(0f), ins => ins.OpCode == OpCodes.Ble_Un_S)) {
-            cursor.Emit(OpCodes.Ldarg_0);
-            cursor.EmitDelegate(RecordGroundJumpGraceTimer);
-            ILLabel target = (ILLabel)cursor.Next.Next.Next.Next.Operand;
-            cursor.GotoLabel(target);
-            cursor.Emit(OpCodes.Ldarg_0);
-            cursor.EmitDelegate(ExtendedRefillDash);
-        }
-        else {
-            success = false;
-        }
-        "Player.orig_Update".LogHookData("Ceiling/Wall RefillDash", success);
     }
 
     public static void ExtendedRefillDash(Player player) {

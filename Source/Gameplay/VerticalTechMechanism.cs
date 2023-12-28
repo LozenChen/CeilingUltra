@@ -50,12 +50,10 @@ public static class VerticalTechMechanism {
         }
 
         int[] xOffsets = { 0, 1, -1 };
-        int count = 0;
-        wiggleList = new Vector2[18];
+        UnSqueezeToDuckWiggle = new List<Vector2>();
         for (int yOffset = 0; yOffset <= 5; yOffset++) {
             foreach (int xOffset in xOffsets) {
-                wiggleList[count] = new Vector2(xOffset, yOffset);
-                count++;
+                UnSqueezeToDuckWiggle.Add(new Vector2(xOffset, yOffset));
             }
         }
     }
@@ -84,7 +82,7 @@ public static class VerticalTechMechanism {
             player.Speed.Y = Math.Min(-105f, origSpeedY + upperWallJumpIncrement);
             player.Speed.Y += player.LiftBoost.Y;
             player.varJumpSpeed = player.Speed.Y;
-            player.varJumpTimer = Monocle.Calc.LerpClamp(0.2f, 0.1f, (player.Speed.Y - (-105f))/(-325f - (-105f)));
+            player.varJumpTimer = Monocle.Calc.LerpClamp(0.2f, 0.1f, (player.Speed.Y - (-105f)) / (-325f - (-105f)));
         }
         else if (CelesteInput.MoveY > 0 && DownwardWallJumpAcceleration) {
             player.Speed.Y = Math.Max(40f, origSpeedY + downwardWallJumpIncrement);
@@ -113,60 +111,22 @@ public static class VerticalTechMechanism {
             offset = Vector2.Zero;
             return true;
         }
+        Alignment alignment = Alignment.TopLeft;
+
         if (xDirection < 0 && yDirection <= 0) {
-            // upper-left dash: keep bottom left invariant
-            Collider collider = player.Collider;
-            Vector2 position = player.Position;
-            Vector2 orig = player.Collider.BottomLeft;
-            player.Collider = squeezedHitbox;
-            offset = orig - player.Collider.BottomLeft; // we didn't use player.BottomLeft, so we can avoid possible float position and related issues. offset will always be integer
-            player.Position += offset;
-            bool result = !player.CollideCheck<Solid>();
-            player.Position = position;
-            player.Collider = collider;
-            return result;
+            alignment = Alignment.BottomLeft;
+        } else if (xDirection < 0 && yDirection > 0) {
+            alignment = Alignment.TopLeft;
+        } else if (xDirection > 0 && yDirection <= 0) {
+            alignment = Alignment.BottomRight;
+        } else if (xDirection > 0 && yDirection > 0) {
+            alignment = Alignment.TopRight;
         }
-        if (xDirection < 0 && yDirection > 0) {
-            // lower-left dash: keep top left invariant
-            Collider collider = player.Collider;
-            Vector2 position = player.Position;
-            Vector2 orig = player.Collider.TopLeft;
-            player.Collider = squeezedHitbox;
-            offset = orig - player.Collider.TopLeft;
-            player.Position += offset;
-            bool result = !player.CollideCheck<Solid>();
-            player.Position = position;
-            player.Collider = collider;
-            return result;
+        else {
+            throw new Exception($"[CeilingUltra] Unexcepted Parameters In {nameof(VerticalTechMechanism)}.{nameof(CanSqueezeHitbox)}");
         }
-        if (xDirection > 0 && yDirection <= 0) {
-            // upper-right dash: keep bottom right invariant
-            Collider collider = player.Collider;
-            Vector2 position = player.Position;
-            Vector2 orig = player.Collider.BottomRight;
-            player.Collider = squeezedHitbox;
-            offset = orig - player.Collider.BottomRight;
-            player.Position += offset;
-            bool result = !player.CollideCheck<Solid>();
-            player.Position = position;
-            player.Collider = collider;
-            return result;
-        }
-        if (xDirection > 0 && yDirection > 0) {
-            // lower-right dash: keep top right variant
-            Collider collider = player.Collider;
-            Vector2 position = player.Position;
-            Vector2 orig = player.Collider.TopRight;
-            player.Collider = squeezedHitbox;
-            offset = orig - player.Collider.TopRight;
-            player.Position += offset;
-            bool result = !player.CollideCheck<Solid>();
-            player.Position = position;
-            player.Collider = collider;
-            return result;
-        }
-        offset = Vector2.Zero;
-        return false;
+
+        return player.CanTransform(squeezedHitbox, alignment, out offset);
     }
 
     public static bool TrySqueezeHitbox(this Player player, float xDirection, float yDirection) {
@@ -225,7 +185,7 @@ public static class VerticalTechMechanism {
             if (-1 != Math.Sign(player.Speed.X)) {
                 return false;
             }
-            else if (player.jumpGraceTimer > 0f || CeilingTechMechanism.CeilingJumpGraceTimer > 0f) { 
+            else if (player.jumpGraceTimer > 0f || CeilingTechMechanism.CeilingJumpGraceTimer > 0f) {
                 CeilingTechMechanism.ClearOverrideUltraDir();
                 return false;
             }
@@ -271,7 +231,7 @@ public static class VerticalTechMechanism {
                 return false;
             }
         }
-        
+
         if (Math.Sign(player.DashDir.X) is { } xSign && xSign != 0 && xSign == Math.Sign(player.Speed.X) && player.DashDir.Y != 0f && player.TrySqueezeHitbox(xSign, player.Speed.Y)) {
             if (VerticalUltraIntoHorizontalUltra) {
                 if (player.DashDir.Y < 0f) {
@@ -306,73 +266,34 @@ public static class VerticalTechMechanism {
         cursor.EmitDelegate(IsSqueezed);
         cursor.Emit(OpCodes.Brfalse, target);
         cursor.Emit(OpCodes.Ldarg_0);
-        cursor.EmitDelegate(CanUnSqueezeInUnDuck);
+        cursor.EmitDelegate(CanUnSqueezeToUnDuck);
         cursor.Emit(OpCodes.Ret);
         "Player.get_CanUnDuck".LogHookData("Compatiblity with SqueezedHitbox", true);
     }
 
-    private static bool CanUnSqueezeInUnDuck(this Player player) {
-        Collider collider = player.Collider;
-        player.Collider = player.normalHitbox;
-        bool result = !player.CollideCheck<Solid>() || !player.CollideCheck<Solid>(player.Position + Vector2.UnitX) || !player.CollideCheck<Solid>(player.Position - Vector2.UnitX);
-        player.Collider = collider;
-        return result;
+    private static bool CanUnSqueezeToUnDuck(this Player player) {
+        return player.CanTransform(player.normalHitbox, Alignment.No, UnsqueezeToUnDuckWiggle, out _);
     }
+
+    private static readonly List<Vector2> UnsqueezeToUnDuckWiggle = new List<Vector2>(){ Vector2.Zero, Vector2.UnitX, -Vector2.UnitX };
+
+    private static List<Vector2> UnSqueezeToDuckWiggle;
 
     private static void UnSqueeze(this Player player, bool duck = false) {
         if (!duck) {
             // in most cases, Ducking = false goes with a CanUnDuck check
-            Collider collider = player.Collider;
-            Vector2 position = player.Position;
-            bool result = false;
-            player.Collider = player.normalHitbox;
-            if (!player.CollideCheck<Solid>()) {
-                result = true;
-            }
-            else {
-                player.Position = position + Vector2.UnitX;
-                if (!player.CollideCheck<Solid>()) {
-                    result = true;
-                }
-                else {
-                    player.Position = position - Vector2.UnitX;
-                    if (!player.CollideCheck<Solid>()) {
-                        result = true;
-                    }
-                }
-            }
-            if (result) {
+            if (player.TryTransform(player.normalHitbox, UnsqueezeToUnDuckWiggle)) {
                 player.hurtbox = player.normalHurtbox;
-            }
-            else {
-                player.Collider = collider;
-                player.Position = position;
             }
         }
         else {
             // however, Ducking = true almost has no check
-            Collider collider = player.Collider;
-            Vector2 position = player.Position;
-            bool result = false;
-            player.Collider = player.duckHitbox;
-            foreach (Vector2 offset in wiggleList) {
-                player.Position = position + offset;
-                if (!player.CollideCheck<Solid>()) {
-                    result = true;
-                    break;
-                }
-            }
-            if (result) {
+            if (player.TryTransform(player.duckHitbox, UnSqueezeToDuckWiggle)) {
                 player.hurtbox = player.duckHurtbox;
-            }
-            else {
-                player.Collider = collider;
-                player.Position = position;
             }
         }
     }
 
-    private static Vector2[] wiggleList;
 
     private static void ModifySetDucking(ILContext il) {
         ILCursor cursor = new ILCursor(il);
@@ -457,7 +378,7 @@ public static class VerticalTechMechanism {
             player.varJumpTimer = 0.1f; // 12 frames is a bit too long so i cut it half (although it's already a crazy mod)
             // bad news: in this case, OnCollideV will immediately kill varJumpTimer since varJumpTimer < 0.15f
             player.varJumpSpeed = player.Speed.Y;
-            CeilingTechMechanism.ProtectVarJumpTimer = 0.1f; // so we invent this to protect varJumpTimer, this will be enough to go around a 1px corner
+            CeilingTechMechanism.ProtectVarJumpTimer = player.varJumpTimer; // so we invent this to protect varJumpTimer, this will be enough to go around a 1px corner
         }
         else {
             player.varJumpTimer = 0f;
@@ -495,7 +416,7 @@ public static class VerticalTechMechanism {
     }
 
     private static bool TryVerticalHyper(Player player) {
-        if (VerticalHyperEnabled && player.IsSqueezed() && CelesteInput.Jump.Pressed && Math.Abs(player.DashDir.X) < 0.1f && player.CanUnSqueezeInUnDuck()) {
+        if (VerticalHyperEnabled && player.IsSqueezed() && CelesteInput.Jump.Pressed && Math.Abs(player.DashDir.X) < 0.1f && player.CanUnSqueezeToUnDuck()) {
             if (CelesteInput.GrabCheck && player.Stamina > 0f && player.Holding == null) {
                 if (player.WallJumpCheck(1) && player.Facing == Facings.Right && !ClimbBlocker.Check(player.Scene, player, player.Position + Vector2.UnitX * 3f)) {
                     player.ClimbJump();
@@ -512,11 +433,11 @@ public static class VerticalTechMechanism {
                 yDirection = -1;
             }
             int wantedDirection = CelesteInput.MoveX != 0f ? CelesteInput.MoveX : (int)player.Facing; // we dont use player.moveX so forceMoveX is ignored lol
-            if (player.CollideCheck<Solid>(player.Position - wantedDirection * Vector2.UnitX)) {
+            if (player.CanStand(-wantedDirection * Vector2.UnitX)) {
                 player.VerticalHyper(wantedDirection, yDirection);
                 return true;
             }
-            if (player.CollideCheck<Solid>(player.Position + wantedDirection * Vector2.UnitX)) {
+            if (player.CanStand(wantedDirection * Vector2.UnitX)){
                 player.VerticalHyper(-wantedDirection, yDirection);
                 return true;
             }
