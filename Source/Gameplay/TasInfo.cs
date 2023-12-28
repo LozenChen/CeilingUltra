@@ -1,3 +1,4 @@
+using Celeste.Mod.CeilingUltra.Module;
 using Celeste.Mod.CeilingUltra.Utils;
 using Mono.Cecil.Cil;
 using Monocle;
@@ -31,6 +32,9 @@ public static class TasInfo {
     }
 
     public static void GetStatuses(List<string> orig_list, Level level, Player player) {
+        if (!LevelSettings.MainEnabled) {
+            return;
+        }
         if (!level.Transitioning) {
             List<string> list = new();
             if (player.IsSqueezed()) {

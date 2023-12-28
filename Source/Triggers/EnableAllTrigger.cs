@@ -13,6 +13,7 @@ public class EnableAllTrigger : AbstractTrigger {
 
     public override void OnEnter(Player player) {
         base.OnEnter(player);
+        LevelSettings.OverrideMainEnabled = Enable;
         LevelSettings.OverrideWallRefill = Enable;
         LevelSettings.OverrideCeilingRefill = Enable;
         LevelSettings.OverrideCeilingTech = Enable;

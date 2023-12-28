@@ -105,7 +105,7 @@ public static class CeilingTechMechanism {
     private static Player OnLoadNewPlayer(On.Celeste.Level.orig_LoadNewPlayer orig, Vector2 Position, PlayerSpriteMode spriteMode) {
         Player player = orig(Position, spriteMode);
         ClearExtendedJumpGraceTimer();
-        PlayerOnCeiling = false;
+        PlayerOnCeiling = PlayerOnLeftWall = PlayerOnRightWall = false;
         LastFrameSetJumpTimerCalled = false;
         LastGroundJumpGraceTimer = 1f;
         NextMaxFall = 0f;
@@ -342,6 +342,12 @@ public static class CeilingTechMechanism {
 
     public static bool PlayerOnCeiling = false;
 
+    public static bool PlayerOnLeftWall = false;
+
+    public static bool PlayerOnRightWall = false;
+
+    public static bool PlayerOnWall => PlayerOnLeftWall || PlayerOnRightWall;
+
     public static float CeilingJumpGraceTimer = 0f;
 
     public static float LeftWallGraceTimer = 0f;
@@ -425,12 +431,13 @@ public static class CeilingTechMechanism {
 
         if (player.StateMachine.State == 9) {
             PlayerOnCeiling = false;
+            PlayerOnLeftWall = false;
+            PlayerOnRightWall = false;
         }
-        else if (player.Speed.Y <= 0f) {
-            PlayerOnCeiling = OnCeiling(player);
-        }
-        else {
-            PlayerOnCeiling = false;
+        else { 
+            PlayerOnCeiling = player.OnCeiling();
+            PlayerOnLeftWall = player.CollideCheck<Solid>(player.Position - Vector2.UnitX);
+            PlayerOnRightWall = player.CollideCheck<Solid>(player.Position + Vector2.UnitX);
         }
 
         if (PlayerOnCeiling) {
@@ -444,17 +451,17 @@ public static class CeilingTechMechanism {
             CeilingJumpGraceTimer -= Engine.DeltaTime;
         }
 
-        if (WallRefillStamina && player.PlayerOnWall()) {
+        if (WallRefillStamina && (PlayerOnLeftWall || PlayerOnRightWall)) {
             player.Stamina = 110f;
             player.wallSlideTimer = 1.2f;
         }
-        if (player.CollideCheck<Solid>(player.Position - Vector2.UnitX)) {
+        if (PlayerOnLeftWall) {
             LeftWallGraceTimer = 0.1f;
         }
         else if (LeftWallGraceTimer > 0f) {
             LeftWallGraceTimer -= Engine.DeltaTime;
         }
-        if (player.CollideCheck<Solid>(player.Position + Vector2.UnitX)) {
+        if (PlayerOnRightWall) {
             RightWallGraceTimer = 0.1f;
         }
         else if (RightWallGraceTimer > 0f) {
@@ -467,10 +474,6 @@ public static class CeilingTechMechanism {
 
     private static void RecordGroundJumpGraceTimer(Player player) {
         LastGroundJumpGraceTimer = player.jumpGraceTimer;
-    }
-
-    public static bool PlayerOnWall(this Player player) {
-        return player.CollideCheck<Solid>(player.Position + Vector2.UnitX) || player.CollideCheck<Solid>(player.Position - Vector2.UnitX);
     }
 
     private static void HookPlayerUpdate(ILContext il) {
@@ -499,7 +502,7 @@ public static class CeilingTechMechanism {
         if (!player.Inventory.NoRefills
             && (
                 (CeilingRefillDash && PlayerOnCeiling) ||
-                (WallRefillDash && player.PlayerOnWall())
+                (WallRefillDash && PlayerOnWall)
             )
             && (!player.CollideCheck<Spikes>() || SaveData.Instance.Assists.Invincible)) {
             player.RefillDash();

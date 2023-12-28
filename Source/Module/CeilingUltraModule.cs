@@ -1,5 +1,6 @@
 ﻿using FMOD.Studio;
 using Microsoft.Xna.Framework;
+using Monocle;
 using static Celeste.TextMenu;
 
 namespace Celeste.Mod.CeilingUltra.Module;
@@ -54,58 +55,98 @@ public class CeilingUltraModule : EverestModule {
         CreateMenu(this, menu, inGame);
     }
 
+    internal static TextMenu.Item mainItem;
     public static void CreateMenu(EverestModule everestModule, TextMenu menu, bool inGame) {
         if (!inGame) {
             // if you dont exit map normally (e.g. use a titlescreen command, then session still exists)
             LevelSettings.ClearAllOverride();
         }
         bool overrideMain = LevelSettings.OverrideMainEnabled.HasValue;
-        bool overrideCeilTech = LevelSettings.OverrideCeilingTech.HasValue;
-        bool overrideCeilRefill = LevelSettings.OverrideCeilingRefill.HasValue;
-        bool overrideUpdiagEnd = LevelSettings.OverrideBigInertiaUpdiagDash.HasValue;
-        bool overrideWallRefill = LevelSettings.OverrideWallRefill.HasValue;
-        bool overrideVertTech = LevelSettings.OverrideVerticalTech.HasValue;
-        bool overrideUpWallJumpAcc = LevelSettings.OverrideUpwardWallJumpAcceleration.HasValue;
-        bool overrideDownWallJumpAcc = LevelSettings.OverrideDownwardWallJumpAcceleration.HasValue;
+        menu.Add(mainItem = new OnOffExt("Enabled".ToDialogText(), LevelSettings.MainEnabled, overrideMain).Change(value => { ceilingUltraSetting.Enabled = value; UpdateEnableItems(value, true, everestModule, menu, inGame); }));
+        UpdateEnableItems(LevelSettings.MainEnabled, false, everestModule, menu, inGame);
+        menu.OnClose += () => disabledItems.Clear();
+    }
 
-        menu.Add(new OnOffExt("Enabled".ToDialogText(), LevelSettings.MainEnabled, overrideMain).Change(value => ceilingUltraSetting.Enabled = value));
+    private static void UpdateEnableItems(bool enable, bool fromChange, EverestModule everestModule, TextMenu menu, bool inGame) {
+        if (enable) {
+            foreach (TextMenu.Item item in disabledItems) {
+                menu.Remove(item);
+            }
+            disabledItems = new List<TextMenu.Item>();
 
-
-        menu.Add(new TextMenuExt.SubHeaderExt("Ceiling Mechanisms".ToDialogText()) { HeightExtra = 10f });
-
-
-        menu.Add(new OnOffExt("Ceiling Refill Stamina".ToDialogText(), LevelSettings.CeilingRefillStamina, overrideCeilRefill).Change(value => ceilingUltraSetting.CeilingRefillStamina = value));
-        menu.Add(new OnOffExt("Ceiling Refill Dash".ToDialogText(), LevelSettings.CeilingRefillDash, overrideCeilRefill).Change(value => ceilingUltraSetting.CeilingRefillDash = value));
-
-
-        menu.Add(new OnOffExt("Ceiling Jump".ToDialogText(), LevelSettings.CeilingJumpEnabled, overrideCeilTech).Change(value => ceilingUltraSetting.CeilingJumpEnabled = value));
-        menu.Add(new OnOffExt("Ceiling Super Hyper".ToDialogText(), LevelSettings.CeilingHyperEnabled, overrideCeilTech).Change(value => ceilingUltraSetting.CeilingHyperEnabled = value));
-        menu.Add(new OnOffExt("Ceiling Ultra".ToDialogText(), LevelSettings.CeilingUltraEnabled, overrideCeilTech).Change(value => ceilingUltraSetting.CeilingUltraEnabled = value));
-
-
-        menu.Add(new OnOffExt("Updiag Dash End No Horizontal Speed Loss".ToDialogText(), LevelSettings.UpdiagDashEndNoHorizontalSpeedLoss, overrideUpdiagEnd).Change(value => ceilingUltraSetting.UpdiagDashEndNoHorizontalSpeedLoss = value));
+            bool overrideMain = LevelSettings.OverrideMainEnabled.HasValue;
+            bool overrideCeilTech = LevelSettings.OverrideCeilingTech.HasValue;
+            bool overrideCeilRefill = LevelSettings.OverrideCeilingRefill.HasValue;
+            bool overrideUpdiagEnd = LevelSettings.OverrideBigInertiaUpdiagDash.HasValue;
+            bool overrideWallRefill = LevelSettings.OverrideWallRefill.HasValue;
+            bool overrideVertTech = LevelSettings.OverrideVerticalTech.HasValue;
+            bool overrideUpWallJumpAcc = LevelSettings.OverrideUpwardWallJumpAcceleration.HasValue;
+            bool overrideDownWallJumpAcc = LevelSettings.OverrideDownwardWallJumpAcceleration.HasValue;
 
 
-        menu.Add(new TextMenuExt.SubHeaderExt("Vertical Mechanisms".ToDialogText()) { HeightExtra = 10f });
+            Add(new EaseInSubHeader("Ceiling Mechanisms".ToDialogText()) { HeightExtra = 10f });
 
 
-        menu.Add(new OnOffExt("Wall Refill Stamina".ToDialogText(), LevelSettings.WallRefillStamina, overrideWallRefill).Change(value => ceilingUltraSetting.WallRefillStamina = value));
-        menu.Add(new OnOffExt("Wall Refill Dash".ToDialogText(), LevelSettings.WallRefillDash, overrideWallRefill).Change(value => ceilingUltraSetting.WallRefillDash = value));
+            Add(new EaseInOnOffExt("Ceiling Refill Stamina".ToDialogText(), LevelSettings.CeilingRefillStamina, overrideCeilRefill).Change(value => ceilingUltraSetting.CeilingRefillStamina = value));
+            Add(new EaseInOnOffExt("Ceiling Refill Dash".ToDialogText(), LevelSettings.CeilingRefillDash, overrideCeilRefill).Change(value => ceilingUltraSetting.CeilingRefillDash = value));
 
 
-        menu.Add(new OnOffExt("Vertical Hyper".ToDialogText(), LevelSettings.VerticalHyperEnabled, overrideVertTech).Change(value => ceilingUltraSetting.VerticalHyperEnabled = value));
-        menu.Add(new OnOffExt("Vertical Ultra".ToDialogText(), LevelSettings.VerticalUltraEnabled, overrideVertTech).Change(value => ceilingUltraSetting.VerticalUltraEnabled = value));
-        menu.Add(new OnOffExt("Dash Begin No Vertical Speed Loss".ToDialogText(), LevelSettings.DashBeginNoVerticalSpeedLoss, overrideVertTech).Change(value => ceilingUltraSetting.DashBeginNoVerticalSpeedLoss = value));
-        menu.Add(new OnOffExt("Updiag Dash End No Vertical Speed Loss".ToDialogText(), LevelSettings.UpdiagDashEndNoVerticalSpeedLoss, overrideVertTech).Change(value => ceilingUltraSetting.UpdiagDashEndNoVerticalSpeedLoss = value));
+            Add(new EaseInOnOffExt("Ceiling Jump".ToDialogText(), LevelSettings.CeilingJumpEnabled, overrideCeilTech).Change(value => ceilingUltraSetting.CeilingJumpEnabled = value));
+            Add(new EaseInOnOffExt("Ceiling Super Hyper".ToDialogText(), LevelSettings.CeilingHyperEnabled, overrideCeilTech).Change(value => ceilingUltraSetting.CeilingHyperEnabled = value));
+            Add(new EaseInOnOffExt("Ceiling Ultra".ToDialogText(), LevelSettings.CeilingUltraEnabled, overrideCeilTech).Change(value => ceilingUltraSetting.CeilingUltraEnabled = value));
 
 
-        menu.Add(new OnOffExt("Upward Wall Jump Acceleration".ToDialogText(), LevelSettings.UpwardWallJumpAcceleration, overrideUpWallJumpAcc).Change(value => ceilingUltraSetting.UpwardWallJumpAcceleration = value));
-        menu.Add(new OnOffExt("Downward Wall Jump Acceleration".ToDialogText(), LevelSettings.DownwardWallJumpAcceleration, overrideDownWallJumpAcc).Change(value => ceilingUltraSetting.DownwardWallJumpAcceleration = value));
+            Add(new EaseInOnOffExt("Updiag Dash End No Horizontal Speed Loss".ToDialogText(), LevelSettings.UpdiagDashEndNoHorizontalSpeedLoss, overrideUpdiagEnd).Change(value => ceilingUltraSetting.UpdiagDashEndNoHorizontalSpeedLoss = value));
 
-        if (overrideMain || overrideCeilRefill || overrideCeilTech || overrideVertTech || overrideWallRefill || overrideUpdiagEnd || overrideUpWallJumpAcc || overrideDownWallJumpAcc) {
-            menu.Add(new TextMenuExt.SubHeaderExt("Lock By Map".ToDialogText()) { TextColor = Color.Goldenrod, HeightExtra = 10f });
+
+            Add(new EaseInSubHeader("Vertical Mechanisms".ToDialogText()) { HeightExtra = 10f });
+
+
+            Add(new EaseInOnOffExt("Wall Refill Stamina".ToDialogText(), LevelSettings.WallRefillStamina, overrideWallRefill).Change(value => ceilingUltraSetting.WallRefillStamina = value));
+            Add(new EaseInOnOffExt("Wall Refill Dash".ToDialogText(), LevelSettings.WallRefillDash, overrideWallRefill).Change(value => ceilingUltraSetting.WallRefillDash = value));
+
+
+            Add(new EaseInOnOffExt("Vertical Hyper".ToDialogText(), LevelSettings.VerticalHyperEnabled, overrideVertTech).Change(value => ceilingUltraSetting.VerticalHyperEnabled = value));
+            Add(new EaseInOnOffExt("Vertical Ultra".ToDialogText(), LevelSettings.VerticalUltraEnabled, overrideVertTech).Change(value => ceilingUltraSetting.VerticalUltraEnabled = value));
+            Add(new EaseInOnOffExt("Dash Begin No Vertical Speed Loss".ToDialogText(), LevelSettings.DashBeginNoVerticalSpeedLoss, overrideVertTech).Change(value => ceilingUltraSetting.DashBeginNoVerticalSpeedLoss = value));
+            Add(new EaseInOnOffExt("Updiag Dash End No Vertical Speed Loss".ToDialogText(), LevelSettings.UpdiagDashEndNoVerticalSpeedLoss, overrideVertTech).Change(value => ceilingUltraSetting.UpdiagDashEndNoVerticalSpeedLoss = value));
+
+
+            Add(new EaseInOnOffExt("Upward Wall Jump Acceleration".ToDialogText(), LevelSettings.UpwardWallJumpAcceleration, overrideUpWallJumpAcc).Change(value => ceilingUltraSetting.UpwardWallJumpAcceleration = value));
+            Add(new EaseInOnOffExt("Downward Wall Jump Acceleration".ToDialogText(), LevelSettings.DownwardWallJumpAcceleration, overrideDownWallJumpAcc).Change(value => ceilingUltraSetting.DownwardWallJumpAcceleration = value));
+
+            if (overrideMain || overrideCeilRefill || overrideCeilTech || overrideVertTech || overrideWallRefill || overrideUpdiagEnd || overrideUpWallJumpAcc || overrideDownWallJumpAcc) {
+                Add(new EaseInSubHeader("Lock By Map".ToDialogText()) { TextColor = Color.Goldenrod, HeightExtra = 10f });
+            }
+
+            int index = menu.IndexOf(mainItem);
+
+            foreach (TextMenu.Item item in disabledItems) {
+                index++;
+                menu.Insert(index, item);
+            }
+
+            foreach (IEaseInItem item in disabledItems) {
+                item.Initialize();
+            }
+        }
+        else {
+            foreach (IEaseInItem item in disabledItems) {
+                item.FadeVisible = false;
+            }
+            if (!fromChange && LevelSettings.OverrideMainEnabled.HasValue) {
+                TextMenu.Item item = new EaseInSubHeader("Lock By Map".ToDialogText()) { TextColor = Color.Goldenrod, HeightExtra = 10f };
+                disabledItems.Add(item);
+                menu.Insert(menu.IndexOf(mainItem) + 1, item);
+            }
+        }
+
+        void Add(TextMenu.Item item) {
+            disabledItems.Add(item);
         }
     }
+
+    private static List<TextMenu.Item> disabledItems = new();
 }
 
 
@@ -113,6 +154,85 @@ public class CeilingUltraModule : EverestModule {
 public static class DialogExtension {
 
     internal static string ToDialogText(this string input) => Dialog.Clean("CEILING_ULTRA_" + input.ToUpper().Replace(" ", "_"));
+}
+
+
+
+public interface IEaseInItem {
+    public void Initialize();
+    public bool FadeVisible { get; set; }
+}
+
+
+public class EaseInSubHeader : TextMenuExt.SubHeaderExt, IEaseInItem {
+    private float alpha;
+    private float unEasedAlpha;
+
+    public void Initialize() {
+        alpha = unEasedAlpha = 0f;
+        Visible = FadeVisible = true;
+    }
+    public bool FadeVisible { get; set; }
+    public EaseInSubHeader(string label) : base(label) {
+        alpha = unEasedAlpha = 1f;
+        FadeVisible = Visible = true;
+    }
+
+    public override float Height() => MathHelper.Lerp(-Container.ItemSpacing, base.Height(), alpha);
+
+    public override void Update() {
+        base.Update();
+
+        float targetAlpha = FadeVisible ? 1 : 0;
+        if (Math.Abs(unEasedAlpha - targetAlpha) > 0.001f) {
+            unEasedAlpha = Calc.Approach(unEasedAlpha, targetAlpha, Engine.RawDeltaTime * 3f);
+            alpha = FadeVisible ? Ease.SineOut(unEasedAlpha) : Ease.SineIn(unEasedAlpha);
+        }
+
+        Visible = alpha != 0;
+    }
+
+    public override void Render(Vector2 position, bool highlighted) {
+        float c = Container.Alpha;
+        Container.Alpha = alpha;
+        base.Render(position, highlighted);
+        Container.Alpha = c;
+    }
+}
+public class EaseInOnOffExt : OnOffExt, IEaseInItem {
+    private float alpha;
+    private float unEasedAlpha;
+
+    public void Initialize() {
+        alpha = unEasedAlpha = 0f;
+        Visible = FadeVisible = true;
+    }
+    public bool FadeVisible { get; set; }
+    public EaseInOnOffExt(string label, bool on, bool disabled) : base(label, on, disabled) {
+        alpha = unEasedAlpha = 1f;
+        FadeVisible = Visible = true;
+    }
+
+    public override float Height() => MathHelper.Lerp(-Container.ItemSpacing, base.Height(), alpha);
+
+    public override void Update() {
+        base.Update();
+
+        float targetAlpha = FadeVisible ? 1 : 0;
+        if (Math.Abs(unEasedAlpha - targetAlpha) > 0.001f) {
+            unEasedAlpha = Calc.Approach(unEasedAlpha, targetAlpha, Engine.RawDeltaTime * 3f);
+            alpha = FadeVisible ? Ease.SineOut(unEasedAlpha) : Ease.SineIn(unEasedAlpha);
+        }
+
+        Visible = alpha != 0;
+    }
+
+    public override void Render(Vector2 position, bool highlighted) {
+        float c = Container.Alpha;
+        Container.Alpha = alpha;
+        base.Render(position, highlighted);
+        Container.Alpha = c;
+    }
 }
 
 public class OnOffExt : Item {

@@ -2,9 +2,13 @@
 
 https://gamebanana.com/mods/485472
 
-本文档的最后更新时间: v1.1.9, 请自行留意这是否是最新版本.
+TODO: FUCK JUMPTHRU, FUCK ICEWALL
+
+本文档的最后更新时间: v1.1.10, 请自行留意这是否是最新版本.
 
 机制的一些细节:
+
+你只需要紧挨着天花板/左墙/右墙即可获得对应的狼时间, 没有速度要求. 不过 StDreamDash 中照例无法获得这些狼时间. 在 DreamDashEnd 你也无法获得地面狼跳时间以外的狼跳时间.
 
 你可以反向天花板 super/hyper, 反向竖直 hyper.
 

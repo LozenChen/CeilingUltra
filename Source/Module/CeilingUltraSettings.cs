@@ -22,12 +22,13 @@ public class CeilingUltraSettings : EverestModuleSettings {
     public bool Enabled {
         get => enabled;
         set {
-            SetAllSettings(value);
+            enabled = value;
         }
     }
 
+    [Obsolete]
     public void SetAllSettings(bool value) {
-        enabled = CeilingUltraEnabled = CeilingRefillStamina = CeilingRefillDash = CeilingJumpEnabled = CeilingHyperEnabled = UpdiagDashEndNoHorizontalSpeedLoss = VerticalHyperEnabled = VerticalUltraEnabled = DashBeginNoVerticalSpeedLoss = UpdiagDashEndNoVerticalSpeedLoss = WallRefillStamina = WallRefillDash = value;
+        enabled = CeilingUltraEnabled = CeilingRefillStamina = CeilingRefillDash = CeilingJumpEnabled = CeilingHyperEnabled = UpdiagDashEndNoHorizontalSpeedLoss = VerticalHyperEnabled = VerticalUltraEnabled = DashBeginNoVerticalSpeedLoss = UpdiagDashEndNoVerticalSpeedLoss = WallRefillStamina = WallRefillDash = HorizontalUltraIntoVerticalUltra = VerticalUltraIntoHorizontalUltra = UpwardWallJumpAcceleration = DownwardWallJumpAcceleration = value;
         LevelSettings.ClearAllOverride();
     }
 
