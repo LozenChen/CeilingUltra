@@ -71,15 +71,11 @@ public class IceCeiling : Entity {
         foreach (Sprite sprite in tiles) {
             sprite.Play("ice");
         }
-
     }
 
     [LoadContent]
     private static void LoadContent() {
         IceCeilingSpriteBank = new SpriteBank(GFX.Game, "Graphics/IceCeilingSprites.xml");
-        typeof(Level).GetMethodInfo("LoadLevel").HookAfter<Level>(level => {
-            level.Add(new IceCeiling(new Vector2(-90, 140), 32, true));
-        });
     }
 
     public static SpriteBank IceCeilingSpriteBank;
