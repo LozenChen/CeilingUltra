@@ -87,13 +87,13 @@ public static class CeilingTechMechanism {
             // there's no speed check coz:
             // it's easier to be on ground than on ceiling due to gravity
             // due to nature of a corner, it's hard to corner slip and wall refill at same time if there's a speed check
-            PlayerOnCeiling = player.OnCeiling();
+            PlayerOnCeiling = !ClimbBlocker.Check(player.Scene, player, player.Position - Vector2.UnitY) && player.OnCeiling();
             PlayerOnLeftWall = player.CanStand(-Vector2.UnitX);
             PlayerOnRightWall = player.CanStand(Vector2.UnitX);
         }
 
         if (PlayerOnCeiling) {
-            if (CeilingRefillStamina) {
+            if (CeilingRefillStamina && !ClimbBlocker.Check(player.Scene, player, player.Position - Vector2.UnitY)) {
                 player.Stamina = 110f;
                 player.wallSlideTimer = 1.2f;
             }
@@ -103,7 +103,7 @@ public static class CeilingTechMechanism {
             CeilingJumpGraceTimer -= Engine.DeltaTime;
         }
 
-        if (WallRefillStamina && (PlayerOnLeftWall || PlayerOnRightWall)) {
+        if (WallRefillStamina && (PlayerOnLeftWall && !ClimbBlocker.Check(player.Scene, player, player.Position - Vector2.UnitX) || PlayerOnRightWall && !ClimbBlocker.Check(player.Scene, player, player.Position + Vector2.UnitX))) {
             player.Stamina = 110f;
             player.wallSlideTimer = 1.2f;
         }
@@ -377,40 +377,57 @@ public static class CeilingTechMechanism {
         return player.CanStand(-upCheck * Vector2.UnitY);
     }
 
+    [SaveLoad]
     public static bool PlayerOnCeiling = false;
 
+    [SaveLoad]
     public static bool PlayerOnLeftWall = false;
 
+    [SaveLoad]
     public static bool PlayerOnRightWall = false;
 
     public static bool PlayerOnWall => PlayerOnLeftWall || PlayerOnRightWall;
 
+    [SaveLoad]
     public static float CeilingJumpGraceTimer = 0f;
 
+    [SaveLoad]
     public static float LeftWallGraceTimer = 0f;
 
+    [SaveLoad]
     public static float RightWallGraceTimer = 0f;
 
+    [SaveLoad]
     public static float ProtectVarJumpTimer = 0f;
 
+    [SaveLoad]
     public static float ProtectGroundSqueezeTimer = 0f;
 
+    [SaveLoad]
     public static float LastGroundJumpGraceTimer = 1f;
 
+    [SaveLoad]
     public static bool LastFrameSetJumpTimerCalled = false;
 
+    [SaveLoad]
     public static Vector2? OverrideGroundUltraDir = null;
 
+    [SaveLoad]
     public static Vector2? OverrideCeilingUltraDir = null;
 
+    [SaveLoad]
     public static Vector2? OverrideLeftWallUltraDir = null;
 
+    [SaveLoad]
     public static Vector2? OverrideRightWallUltraDir = null;
 
+    [SaveLoad]
     public static bool LastFrameWriteOverrideUltraDir = false;
 
+    [SaveLoad]
     public static Vector2 LastFrameDashDir = Vector2.Zero;
 
+    [SaveLoad]
     public static float NextMaxFall = 0f;
 
     public static void SetOverrideUltraDir(bool isVerticalUltra, Vector2 dashDir) {
@@ -466,8 +483,8 @@ public static class CeilingTechMechanism {
     public static void ExtendedRefillDash(Player player) {
         if (!player.Inventory.NoRefills
             && (
-                (CeilingRefillDash && PlayerOnCeiling) ||
-                (WallRefillDash && PlayerOnWall)
+                (CeilingRefillDash && PlayerOnCeiling && !ClimbBlocker.Check(player.Scene, player, player.Position - Vector2.UnitY)) ||
+                (WallRefillDash && (PlayerOnLeftWall && !ClimbBlocker.Check(player.Scene, player, player.Position - Vector2.UnitX) || PlayerOnRightWall && !ClimbBlocker.Check(player.Scene, player, player.Position + Vector2.UnitX)))
             )
             && (!player.CollideCheck<Spikes>() || SaveData.Instance.Assists.Invincible)) {
             player.RefillDash();
