@@ -36,9 +36,7 @@ public class CeilingUltraModule : EverestModule {
     }
 
     public override void LoadContent(bool firstLoad) {
-        if (firstLoad) {
-            Loader.LoadContent();
-        }
+        Loader.LoadContent();
     }
 
     public override void LoadSettings() {

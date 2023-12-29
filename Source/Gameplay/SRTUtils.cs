@@ -1,16 +1,10 @@
-using Celeste.Mod.CeilingUltra.Module;
 using Celeste.Mod.CeilingUltra.Utils;
-using Mono.Cecil.Cil;
-using Monocle;
-using MonoMod.Cil;
-using System.Xml;
 using System.Reflection;
-using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.CeilingUltra.Gameplay;
 
 [AttributeUsage(AttributeTargets.Field)]
-internal class SaveLoadAttribute : Attribute { 
+internal class SaveLoadAttribute : Attribute {
     // tell SRT to save this field
 }
 internal static class SRTUtils {
@@ -24,7 +18,7 @@ internal static class SRTUtils {
             foreach (Type type in types) {
                 List<FieldInfo> type_staticFields = new();
                 FieldInfo[] fieldInfos = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
-                foreach (FieldInfo fieldInfo in fieldInfos.Where(info => info.IsStatic && info.GetCustomAttribute<SaveLoadAttribute>()!= null)) {
+                foreach (FieldInfo fieldInfo in fieldInfos.Where(info => info.IsStatic && info.GetCustomAttribute<SaveLoadAttribute>() != null)) {
                     type_staticFields.Add(fieldInfo);
                 }
                 if (type_staticFields.IsNotNullOrEmpty()) {
@@ -33,7 +27,7 @@ internal static class SRTUtils {
             }
         }
 
-        if (ModUtils.GetType("SpeedrunTool", "Celeste.Mod.SpeedrunTool.SaveLoad.SaveLoadAction")?.GetMethodInfo("SafeAdd", new Type[] { typeof(Action < Dictionary<Type, Dictionary<string, object>>, Level >), typeof(Action < Dictionary<Type, Dictionary<string, object>>, Level >), typeof(Action), typeof(Action < Level >), typeof(Action < Level >), typeof(Action)}) is { } safeAddMethod) {
+        if (ModUtils.GetType("SpeedrunTool", "Celeste.Mod.SpeedrunTool.SaveLoad.SaveLoadAction")?.GetMethodInfo("SafeAdd", new Type[] { typeof(Action<Dictionary<Type, Dictionary<string, object>>, Level>), typeof(Action<Dictionary<Type, Dictionary<string, object>>, Level>), typeof(Action), typeof(Action<Level>), typeof(Action<Level>), typeof(Action) }) is { } safeAddMethod) {
             safeAddMethod.Invoke(null, new object[] { saveState, loadState, clearState, beforeSaveState, beforeLoadState, preCloneEntities });
         }
 
@@ -62,7 +56,7 @@ internal static class SRTUtils {
         }
     };
 
-    private static readonly Action<Dictionary<Type, Dictionary<string, object>>, Level> loadState = (_, level) => { 
+    private static readonly Action<Dictionary<Type, Dictionary<string, object>>, Level> loadState = (_, level) => {
         if (isSqueezed && level.GetPlayer() is { } player) {
             player.SetSqueezedHitbox();
         }

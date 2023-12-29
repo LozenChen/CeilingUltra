@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+
+<Sprites>
+
+  <IceCeilingLeft path="CeilingUltra/IceCeiling/" start="ice">
+    <Anim id="ice" path="iceLeft" frames="0*10" delay="0.08" goto="ice,ice,ice,ice,ice,iceShine"/>
+    <Anim id="iceShine" path="iceLeft" frames="0-4" delay="0.08" goto="ice"/>
+  </IceCeilingLeft>
+  <IceCeilingMid path="CeilingUltra/IceCeiling/" start="ice">
+    <Anim id="ice" path="iceMid" frames="0*10" delay="0.08" goto="ice,ice,ice,ice,ice,iceShine"/>
+    <Anim id="iceShine" path="iceMid" frames="0-4" delay="0.08" goto="ice"/>
+  </IceCeilingMid>
+  <IceCeilingRight path="CeilingUltra/IceCeiling/" start="ice">
+    <Anim id="ice" path="iceRight" frames="0*10" delay="0.08" goto="ice,ice,ice,ice,ice,iceShine"/>
+    <Anim id="iceShine" path="iceRight" frames="0-4" delay="0.08" goto="ice"/>
+  </IceCeilingRight>
+
+</Sprites>

@@ -206,14 +206,14 @@ public static class CollideCheckHelper {
 
     internal static List<Entity> GetJumpThrus() {
         // why we need this: SideWaysJumpThru is not a JumpThru, nor a Solid, not even a Platform
-        
+
         if (Engine.Scene is not Level level) {
             return new List<Entity>();
         }
 
         List<Entity> results = new List<Entity>();
         results.AddRange(level.Tracker.GetEntities<JumpThru>());
-        
+
         foreach (Type type in JumpThruIsNotJumpThruTypes) {
             if (level.Tracker.Entities.TryGetValue(type, out List<Entity> otherJumpthrus)) {
                 results.AddRange(otherJumpthrus);
@@ -253,7 +253,7 @@ public static class CollideCheckHelper {
             // maddie hooks Tracker.GetEntities<JumpThru>() so you can't get UpsideDownJumpThru when searching JumpThru
             // even though UpsideDownJumpThru is Tracked(false), "Celeste.Mod.MaxHelpingHand.Entities.UpsideDownMovingPlatform" is tracked as UpsideDownJumpThru, so everything is ok
         }
-        if (ModUtils.GetType("VivHelper", "VivHelper.Entities.HoldableBarrierJumpThru")is { } viv){
+        if (ModUtils.GetType("VivHelper", "VivHelper.Entities.HoldableBarrierJumpThru") is { } viv) {
             jumpThruTypeDirections[viv] = Direction.Zero;
         }
         if (ModUtils.GetType("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Entities.SidewaysJumpThru") is { } sideways) {
@@ -269,7 +269,7 @@ public static class CollideCheckHelper {
             foreach (Entity jumpthru in GetJumpThrus()) {
                 Type type = jumpthru.GetType();
                 bool success = false;
-                foreach (Type key in jumpThruTypeDirections.Keys) { 
+                foreach (Type key in jumpThruTypeDirections.Keys) {
                     if (type.IsSameOrSubclassOf(key)) {
                         success = true;
                         Direction dir = jumpThruTypeDirections[key];

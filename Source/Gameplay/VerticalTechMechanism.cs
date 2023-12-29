@@ -115,11 +115,14 @@ public static class VerticalTechMechanism {
 
         if (xDirection < 0 && yDirection <= 0) {
             alignment = Alignment.BottomLeft;
-        } else if (xDirection < 0 && yDirection > 0) {
+        }
+        else if (xDirection < 0 && yDirection > 0) {
             alignment = Alignment.TopLeft;
-        } else if (xDirection > 0 && yDirection <= 0) {
+        }
+        else if (xDirection > 0 && yDirection <= 0) {
             alignment = Alignment.BottomRight;
-        } else if (xDirection > 0 && yDirection > 0) {
+        }
+        else if (xDirection > 0 && yDirection > 0) {
             alignment = Alignment.TopRight;
         }
         else {
@@ -275,7 +278,7 @@ public static class VerticalTechMechanism {
         return player.CanTransform(player.normalHitbox, Alignment.No, UnsqueezeToUnDuckWiggle, out _);
     }
 
-    private static readonly List<Vector2> UnsqueezeToUnDuckWiggle = new List<Vector2>(){ Vector2.Zero, Vector2.UnitX, -Vector2.UnitX };
+    private static readonly List<Vector2> UnsqueezeToUnDuckWiggle = new List<Vector2>() { Vector2.Zero, Vector2.UnitX, -Vector2.UnitX };
 
     private static List<Vector2> UnSqueezeToDuckWiggle;
 
@@ -437,7 +440,7 @@ public static class VerticalTechMechanism {
                 player.VerticalHyper(wantedDirection, yDirection);
                 return true;
             }
-            if (player.CanStand(wantedDirection * Vector2.UnitX)){
+            if (player.CanStand(wantedDirection * Vector2.UnitX)) {
                 player.VerticalHyper(-wantedDirection, yDirection);
                 return true;
             }

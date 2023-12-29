@@ -1,6 +1,6 @@
+using Celeste.Mod.CeilingUltra.Entities;
 using Celeste.Mod.CeilingUltra.Module;
 using Celeste.Mod.CeilingUltra.Utils;
-using FMOD;
 using Microsoft.Xna.Framework;
 using Mono.Cecil.Cil;
 using Monocle;
@@ -87,13 +87,13 @@ public static class CeilingTechMechanism {
             // there's no speed check coz:
             // it's easier to be on ground than on ceiling due to gravity
             // due to nature of a corner, it's hard to corner slip and wall refill at same time if there's a speed check
-            PlayerOnCeiling = !ClimbBlocker.Check(player.Scene, player, player.Position - Vector2.UnitY) && player.OnCeiling();
+            PlayerOnCeiling = player.OnCeiling();
             PlayerOnLeftWall = player.CanStand(-Vector2.UnitX);
             PlayerOnRightWall = player.CanStand(Vector2.UnitX);
         }
 
         if (PlayerOnCeiling) {
-            if (CeilingRefillStamina && !ClimbBlocker.Check(player.Scene, player, player.Position - Vector2.UnitY)) {
+            if (CeilingRefillStamina && !player.CollideCheck<IceCeiling>()) {
                 player.Stamina = 110f;
                 player.wallSlideTimer = 1.2f;
             }
@@ -245,7 +245,7 @@ public static class CeilingTechMechanism {
         if (!player.Ducking) {
             return true;
         }
-        bool result = player.TryTransform(player.normalHitbox, Alignment.Top, new List<Vector2>() { Vector2.Zero});
+        bool result = player.TryTransform(player.normalHitbox, Alignment.Top, new List<Vector2>() { Vector2.Zero });
         if (result) {
             player.hurtbox = player.normalHurtbox;
         }
@@ -483,7 +483,7 @@ public static class CeilingTechMechanism {
     public static void ExtendedRefillDash(Player player) {
         if (!player.Inventory.NoRefills
             && (
-                (CeilingRefillDash && PlayerOnCeiling && !ClimbBlocker.Check(player.Scene, player, player.Position - Vector2.UnitY)) ||
+                (CeilingRefillDash && PlayerOnCeiling && !player.CollideCheck<IceCeiling>()) ||
                 (WallRefillDash && (PlayerOnLeftWall && !ClimbBlocker.Check(player.Scene, player, player.Position - Vector2.UnitX) || PlayerOnRightWall && !ClimbBlocker.Check(player.Scene, player, player.Position + Vector2.UnitX)))
             )
             && (!player.CollideCheck<Spikes>() || SaveData.Instance.Assists.Invincible)) {
