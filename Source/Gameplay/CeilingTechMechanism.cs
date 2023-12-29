@@ -84,6 +84,9 @@ public static class CeilingTechMechanism {
             PlayerOnRightWall = false;
         }
         else {
+            // there's no speed check coz:
+            // it's easier to be on ground than on ceiling due to gravity
+            // due to nature of a corner, it's hard to corner slip and wall refill at same time if there's a speed check
             PlayerOnCeiling = player.OnCeiling();
             PlayerOnLeftWall = player.CanStand(-Vector2.UnitX);
             PlayerOnRightWall = player.CanStand(Vector2.UnitX);
