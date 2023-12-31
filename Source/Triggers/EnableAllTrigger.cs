@@ -9,17 +9,39 @@ namespace Celeste.Mod.Entities.CeilingUltra.Triggers;
 public class EnableAllTrigger : AbstractTrigger {
 
     public EnableAllTrigger(EntityData data, Vector2 offset) : base(data, offset) {
+        Enable = data.Bool("ModEnable", true);
+        WallRefill = data.Bool("WallRefill", true);
+        CeilingRefill = data.Bool("CeilingRefill", true);
+        CeilingTech = data.Bool("CeilingTech", true);
+        BigInertiaUpdiagDash = data.Bool("BigInertiaUpdiagDash", true);
+        VerticalTech = data.Bool("VerticalTech", true);
+        UpwardWallJumpAcceleration = data.Bool("UpwardWallJumpAcceleration", true);
+        DownwardWallJumpAcceleration = data.Bool("DownwardWallJumpAcceleration", true);
     }
+
+    public bool WallRefill;
+
+    public bool CeilingRefill;
+
+    public bool CeilingTech;
+
+    public bool BigInertiaUpdiagDash;
+
+    public bool VerticalTech;
+
+    public bool UpwardWallJumpAcceleration;
+
+    public bool DownwardWallJumpAcceleration;
 
     public override void OnEnter(Player player) {
         base.OnEnter(player);
         LevelSettings.OverrideMainEnabled = Enable;
-        LevelSettings.OverrideWallRefill = Enable;
-        LevelSettings.OverrideCeilingRefill = Enable;
-        LevelSettings.OverrideCeilingTech = Enable;
-        LevelSettings.OverrideBigInertiaUpdiagDash = Enable;
-        LevelSettings.OverrideVerticalTech = Enable;
-        LevelSettings.OverrideUpwardWallJumpAcceleration = Enable;
-        LevelSettings.OverrideDownwardWallJumpAcceleration = Enable;
+        LevelSettings.OverrideWallRefill = WallRefill;
+        LevelSettings.OverrideCeilingRefill = CeilingRefill;
+        LevelSettings.OverrideCeilingTech = CeilingTech;
+        LevelSettings.OverrideBigInertiaUpdiagDash = BigInertiaUpdiagDash;
+        LevelSettings.OverrideVerticalTech = VerticalTech;
+        LevelSettings.OverrideUpwardWallJumpAcceleration = UpwardWallJumpAcceleration;
+        LevelSettings.OverrideDownwardWallJumpAcceleration = DownwardWallJumpAcceleration;
     }
 }

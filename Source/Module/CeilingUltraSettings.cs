@@ -16,7 +16,7 @@ public class CeilingUltraSettings : EverestModuleSettings {
 
     [YamlMember(Alias = "Enabled")]
 
-    public bool enabled = true;
+    public bool enabled = false;
 
     [YamlIgnore]
     public bool Enabled {
@@ -186,24 +186,4 @@ public static class LevelSettings {
         }
     }
     public static bool DownwardWallJumpAcceleration => MainEnabled && OverrideDownwardWallJumpAcceleration.GetValueOrDefault(ceilingUltraSetting.DownwardWallJumpAcceleration);
-}
-
-public class CeilingUltraSession : EverestModuleSession {
-    public static CeilingUltraSession Instance => (CeilingUltraSession)CeilingUltraModule.Instance._Session;
-
-    public bool? OverrideMainEnabled;
-
-    public bool? OverrideCeilingTech;
-
-    public bool? OverrideBigInertiaUpdiagDash;
-
-    public bool? OverrideCeilingRefill;
-
-    public bool? OverrideWallRefill;
-
-    public bool? OverrideVerticalTech;
-
-    public bool? OverrideUpwardWallJumpAcceleration;
-
-    public bool? OverrideDownwardWallJumpAcceleration;
 }
