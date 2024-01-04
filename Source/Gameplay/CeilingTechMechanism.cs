@@ -703,10 +703,23 @@ public static class CeilingTechMechanism {
     }
     private const float startRemainFullVerticalSpeed = -325f;
     private static void SkipDashEndLoseSpeed(Player player) {
-        if (player.DashDir.Y == 0f || player.DashDir.X == 0f) {
+        // we are inside "if (DashDir.Y <= 0f)"
+        if (player.DashDir.Y == 0f) {
             player.Speed = player.DashDir * 160f;
             return;
         }
+
+        if (player.DashDir.X == 0f) {
+            if (OverrideCeilingUltraDir.HasValue) {
+                player.Speed = OverrideCeilingUltraDir.Value * 160f;
+            }
+            // if you updiag dash into a wall and vertical ultra makes your dashdir = (0, -1), we make dash end as if your dash dir is not changed
+            else {
+                player.Speed = player.DashDir * 160f;
+            }
+            return;
+        }
+
         // now DashDir.Y < 0f && DashDir.X != 0f
 
         if (UpdiagDashDontLoseHorizontalSpeed) {
