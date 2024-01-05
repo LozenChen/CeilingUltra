@@ -186,6 +186,7 @@ public static class CeilingTechMechanism {
         ProtectVarJumpTimer = 0f;
         ProtectGroundSqueezeTimer = 0f;
         LastFrameSetJumpTimerCalled = true;
+        jumpFlag = true;
     }
 
 
@@ -409,6 +410,8 @@ public static class CeilingTechMechanism {
     [SaveLoad]
     public static bool LastFrameSetJumpTimerCalled = false;
 
+    private static bool jumpFlag = false; // no need to save load as its "lifetime" is inside Player.NormalUpdate
+
     [SaveLoad]
     public static Vector2? OverrideGroundUltraDir = null;
 
@@ -545,27 +548,29 @@ public static class CeilingTechMechanism {
 
     private static void CeilingJumpHookNormalUpdate(ILContext il) {
         ILCursor cursor = new ILCursor(il);
-        bool success = true;
-        if (cursor.TryGotoNext(ins => ins.MatchCallOrCallvirt<Player>(nameof(Player.Jump)), ins => ins.OpCode == OpCodes.Br)) {
-            cursor.Index += 2;
-            ILLabel endTarget = (ILLabel)cursor.Prev.Operand;
+        bool success = false;
+        if (cursor.TryGotoNext(ins => ins.OpCode == OpCodes.Ldarg_0, ins => ins.MatchLdfld<Player>(nameof(Player.jumpGraceTimer)), ins => ins.MatchLdcR4(0f))) {
             cursor.MoveAfterLabels();
-            cursor.Emit(OpCodes.Ldarg_0);
-            cursor.EmitDelegate(CheckAndApplyCeilingJump);
-            cursor.Emit(OpCodes.Brtrue, endTarget);
-        }
-        else {
-            success = false;
+            cursor.EmitDelegate(InitializeJumpFlag);
+            if (cursor.TryGotoNext(ins => ins.OpCode == OpCodes.Ldc_I4_0, ins => ins.OpCode == OpCodes.Ret)) {
+                cursor.MoveAfterLabels();
+                cursor.Emit(OpCodes.Ldarg_0);
+                cursor.EmitDelegate(CheckAndApplyCeilingJumpInNormal);
+                success = true;
+            }
         }
         "Player.NormalUpdate".LogHookData("Ceiling Jump", success);
+        // let ceiling jump has lowest priority
+        // since in most cases we dont expect a ceiling jump
     }
 
-    private static bool CheckAndApplyCeilingJump(Player player) {
-        if (CeilingJumpEnabled && CeilingJumpGraceTimer > 0f) {
+    private static void InitializeJumpFlag() {
+        jumpFlag = false;
+    }
+    private static void CheckAndApplyCeilingJumpInNormal(Player player) {
+        if (CeilingJumpEnabled && CeilingJumpGraceTimer > 0f && CelesteInput.Jump.Pressed && !jumpFlag && (TalkComponent.PlayerOver == null || !CelesteInput.Talk.Pressed)) {
             player.CeilingJump();
-            return true;
         }
-        return false;
     }
 
     private static void CeilingJumpHookSwimUpdate(ILContext il) {
