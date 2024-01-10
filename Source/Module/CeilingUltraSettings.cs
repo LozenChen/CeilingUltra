@@ -14,17 +14,8 @@ public class CeilingUltraSettings : EverestModuleSettings {
     internal void OnLoadSettings() {
     }
 
-    [YamlMember(Alias = "Enabled")]
 
-    public bool enabled = false;
-
-    [YamlIgnore]
-    public bool Enabled {
-        get => enabled;
-        set {
-            enabled = value;
-        }
-    }
+    public bool Enabled = false;
 
     public bool EnableAll{ // we provide this property for tas set command
         get => Enabled;

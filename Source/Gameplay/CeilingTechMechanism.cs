@@ -34,11 +34,14 @@ public static class CeilingTechMechanism {
     [Load]
     public static void Load() {
         On.Celeste.Level.LoadNewPlayer += OnLoadNewPlayer;
+        On.Celeste.FloatySpaceBlock.OnDash += FloatySpaceBlockOnDash;
     }
+
 
     [Unload]
     public static void Unload() {
         On.Celeste.Level.LoadNewPlayer -= OnLoadNewPlayer;
+        On.Celeste.FloatySpaceBlock.OnDash -= FloatySpaceBlockOnDash;
     }
 
     [Initialize]
@@ -60,7 +63,6 @@ public static class CeilingTechMechanism {
             new List<string> { "DashBegin", "RedDashBegin" }.Select(str => typeof(Player).GetMethodInfo(str)).ToList().ForEach(x => x.IlHook(ClearOverrideUltraDirHookDashBegin));
 
             typeof(Player).GetMethodInfo("DashUpdate").IlHook(ClearOverrideUltraDirHookDashUpdate);
-
         }
     }
 
@@ -91,6 +93,24 @@ public static class CeilingTechMechanism {
             PlayerOnLeftWall = player.CanStand(-Vector2.UnitX);
             PlayerOnRightWall = player.CanStand(Vector2.UnitX);
         }
+        switch (FloatySpaceBlockDirection) {
+            case 1: {
+                PlayerOnRightWall = true;
+                break;
+            }
+            case 2: {
+                PlayerOnCeiling = true;
+                break;
+            }
+            case 3: {
+                PlayerOnLeftWall = true;
+                break;
+            }
+            default: {
+                break;
+            }
+        }
+        FloatySpaceBlockDirection = 0;
 
         if (PlayerOnCeiling) {
             if (CeilingRefillStamina && !player.CollideCheck<IceCeiling>()) {
@@ -200,6 +220,7 @@ public static class CeilingTechMechanism {
         ClearOverrideUltraDir();
         LastFrameWriteOverrideUltraDir = false;
         LastFrameDashDir = Vector2.Zero;
+        FloatySpaceBlockDirection = 0;
         return player;
     }
 
@@ -387,6 +408,10 @@ public static class CeilingTechMechanism {
     [SaveLoad]
     public static bool PlayerOnRightWall = false;
 
+    [SaveLoad]
+
+    public static int FloatySpaceBlockDirection = 0;
+
     public static bool PlayerOnWall => PlayerOnLeftWall || PlayerOnRightWall;
 
     [SaveLoad]
@@ -432,6 +457,7 @@ public static class CeilingTechMechanism {
 
     [SaveLoad]
     public static float NextMaxFall = 0f;
+
 
     public static void SetOverrideUltraDir(bool isVerticalUltra, Vector2 dashDir) {
         ClearOverrideUltraDir();
@@ -551,7 +577,7 @@ public static class CeilingTechMechanism {
         bool success = false;
         if (cursor.TryGotoNext(ins => ins.OpCode == OpCodes.Ldarg_0, ins => ins.MatchLdfld<Player>(nameof(Player.jumpGraceTimer)), ins => ins.MatchLdcR4(0f))) {
             cursor.MoveAfterLabels();
-            cursor.EmitDelegate(InitializeJumpFlag);
+            cursor.EmitDelegate(ResetJumpFlag);
             if (cursor.TryGotoNext(ins => ins.OpCode == OpCodes.Ldc_I4_0, ins => ins.OpCode == OpCodes.Ret)) {
                 cursor.MoveAfterLabels();
                 cursor.Emit(OpCodes.Ldarg_0);
@@ -564,7 +590,7 @@ public static class CeilingTechMechanism {
         // since in most cases we dont expect a ceiling jump
     }
 
-    private static void InitializeJumpFlag() {
+    private static void ResetJumpFlag() {
         jumpFlag = false;
     }
     private static void CheckAndApplyCeilingJumpInNormal(Player player) {
@@ -791,5 +817,26 @@ public static class CeilingTechMechanism {
             return true;
         }
         return false;
+    }
+
+    private static DashCollisionResults FloatySpaceBlockOnDash(On.Celeste.FloatySpaceBlock.orig_OnDash orig, FloatySpaceBlock self, Player player, Vector2 direction) {
+        // floaty space block will only carry player riding it to move, but not under/besides
+        // so it will be a bit inconvient for us
+
+        if (self.MasterOfGroup && self.dashEase <= 0.2f && player != null) {
+            if (direction.X > 0) {
+                FloatySpaceBlockDirection = 1;
+            }
+            else if (direction.X < 0) {
+                FloatySpaceBlockDirection = 3;
+            }
+            else if (direction.Y < 0) {
+                FloatySpaceBlockDirection = 2;
+            }
+            else {
+                FloatySpaceBlockDirection = 0;
+            }
+        }
+        return orig(self, player, direction);
     }
 }
