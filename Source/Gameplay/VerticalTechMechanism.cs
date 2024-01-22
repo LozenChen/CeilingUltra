@@ -24,6 +24,8 @@ public static class VerticalTechMechanism {
 
     public static bool DownwardWallJumpAcceleration => LevelSettings.DownwardWallJumpAcceleration;
 
+    private static readonly Vector2 squeezedSpriteScale = new Vector2(0.5f, 1.5f);
+
     [Load]
     public static void Load() {
         On.Celeste.Level.LoadNewPlayer += OnLoadNewPlayer;
@@ -57,6 +59,7 @@ public static class VerticalTechMechanism {
             }
         }
     }
+
 
     private static Hitbox squeezedHitbox = new Hitbox(6f, 11f, -3f, -11f);
 
@@ -169,7 +172,7 @@ public static class VerticalTechMechanism {
             player.DashDir.X = 0f;
             player.Speed.X = 0f;
             player.Speed.Y *= 1.2f;
-            player.Sprite.Scale = new Vector2(0.5f, 1.5f);
+            player.Sprite.Scale = squeezedSpriteScale;
             return true;
         }
         return false;
@@ -201,7 +204,7 @@ public static class VerticalTechMechanism {
                 player.DashDir.X = 0f;
                 player.Speed.X = 0f;
                 player.Speed.Y *= 1.2f;
-                player.Sprite.Scale = new Vector2(0.5f, 1.5f);
+                player.Sprite.Scale = squeezedSpriteScale;
                 return true;
             }
             else {
@@ -226,7 +229,7 @@ public static class VerticalTechMechanism {
                 player.DashDir.X = 0f;
                 player.Speed.X = 0f;
                 player.Speed.Y *= 1.2f;
-                player.Sprite.Scale = new Vector2(0.5f, 1.5f);
+                player.Sprite.Scale = squeezedSpriteScale;
                 return true;
             }
             else {
@@ -256,7 +259,7 @@ public static class VerticalTechMechanism {
             player.DashDir.X = 0f;
             player.Speed.X = 0f;
             player.Speed.Y *= 1.2f;
-            player.Sprite.Scale = new Vector2(0.5f, 1.5f);
+            player.Sprite.Scale = squeezedSpriteScale;
             return true;
         }
         return false;

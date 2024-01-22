@@ -2,13 +2,17 @@
 
 https://gamebanana.com/mods/485472
 
-本文档的最后更新时间: v1.2.3, 请自行留意这是否是最新版本.
+本文档的最后更新时间: v1.2.5, 请自行留意这是否是最新版本.
 
 Mod 兼容性:
 
 与 Mod 的各向 JumpThru 兼容.
 
 与 GravityHelper 的重力反转内容不兼容, 但你仍然可以在常规重力下正确使用 GravityHelper.UpsideDownJumpThru.
+
+机制:
+
+Mod 的设置界面足以说明其大概.
 
 机制的一些细节:
 
@@ -46,9 +50,11 @@ NormalUpdate 中蹬天花板跳的优先级: 最低.
 
 冲刺第 5 帧的几种 ultra 的优先级: 地面 ultra > 竖直 ultra > 天花板 ultra. 这保证你在地面靠墙时能顺利做出 reverse hyper.
 
+DashUpdate 中几种动作的优先级: Super Jump > Vertical Hyper > Super WallJump > ClimbJump > WallJump. 向上/下蹬墙加速视为变种的 WallJump.
+
 不同于竖直上冲无法抓跳, 在冲刺并进入挤压态的情况下, 你依然可以抓跳.
 
-我们有特殊的机制保护你仍然能做 delayed ultra: 当一个横向/纵向 ultra 产生时, 玩家会得到一个 OverrideUltra 量, 当你沿 OverrideUltra 所指墙面的法向撞击墙面时, 你的 DashDir 以 OverrideUltra 中记录的方向计算, 并因此能做出一个纵向/横向 ultra. 概况来说就是, (原生的) 横向 ultra 只能转化出纵向 ultra, 纵向 ultra 只能转化出横向 ultra, 转化出的 ultra 无法再次转化. 举例: 斜右下撞地面后, 获得 OverrideUltra(RightWall), 再撞右墙即可做出纵向 ultra. 斜右下撞右墙, 获得 OverrideUltra(Ground), 再撞地即可地面 ultra. 斜右上撞右墙, 获得 OverrideUltra(Ceiling), 再撞天花板即可天花板 ultra. 在所有会重置 DashDir 的值的场合 (e.g. 冲刺开始, ultra 产生), 这些 OverrideUltra 值都会消失, 正如同原版中你无法在这些情形下再次用原先的 DashDir 来获得 ultra. 碰撞墙面/地面/天花板时如果有法向的 CoyoteTime, 或者撞天花板时在 VerticalHyper 的 VarJumpTime 期间, 也会使得 OverrideUltra 值消失而不产生 Ultra (这也是为了增加墙角 reverse hyper 等的容错).
+我们有特殊的机制保护你仍然能做 delayed ultra: 当一个横向/纵向 ultra 产生时, 玩家会得到一个 OverrideUltra 量, 当你沿 OverrideUltra 所指墙面的法向撞击墙面时, 你的 DashDir 以 OverrideUltra 中记录的方向计算, 并因此能做出一个纵向/横向 ultra. 概况来说就是, (原生的) 横向 ultra 只能转化出纵向 ultra, 纵向 ultra 只能转化出横向 ultra, 转化出的 ultra 无法再次转化. 举例: 斜右下撞地面后, 获得 OverrideUltra(RightWall), 再撞右墙即可做出纵向 ultra. 斜右下撞右墙, 获得 OverrideUltra(Ground), 再撞地即可地面 ultra. 斜右上撞右墙, 获得 OverrideUltra(Ceiling), 再撞天花板即可天花板 ultra. 在所有会重置 DashDir 的值的场合 (e.g. 冲刺开始, ultra 产生), 这些 OverrideUltra 值都会消失, 正如同原版中你无法在这些情形下再次用原先的 DashDir 来获得 ultra. 碰撞墙面/地面/天花板时如果有法向的 CoyoteTime, 也会使得 OverrideUltra 值消失而不产生 Ultra (这是为了增加墙角 reverse hyper 等的容错).
 
 向上蹬墙加速: 仅在 StNormal 与 StClimb 起效, 当触发 WallJump 时, 如果按着上, 那么速度为 -105 与 (原先速度 - 20) 中的最小值再加上 LiftBoost.Y. 当得出的速度大于等于 -105 时, VarJumpTimer = 0.2f. 当速度小于等于 -325 时, VarJumpTimer = 0.1f. 之间则线性插值.
 
@@ -67,3 +73,7 @@ NormalUpdate 中蹬天花板跳的优先级: 最低.
 在调整好亚像素之后, 天花板 hyper 可以立即接一个蹬天花板跳.
 
 在你撞击到 FloatySpaceBlock 后, 由于运算顺序的问题, 下一帧的开始你并不紧贴着 FloatySpaceBlock, "按理" 也就无法从中恢复冲刺与获得狼跳帧. 但是这让人很不舒服, 于是我们特别地有规则: 在这种情况下, 下一帧可以无条件地获得对应方向上的狼跳时间与恢复冲刺 (如果恢复冲刺 CD 已过). 不过由于撞击之后的时间内此规则不再生效, 因此要是你在恢复冲刺 CD 结束以前撞击了 FloatySpaceBlock, 那么你还是无法获得冲刺.
+
+由于挤压态贴着墙边且不碰地的情况下, 挤压态不会自动解除. 你此时甚至可以上/下冲一段时间后 (下冲需要写成 4X 1D), 再做出 Vertical Hyper. 当然直接 4X 1J 也是可以的. 不过由于 Vertical Hyper 和 Hyper 类似, 要求法向的 DashDir 大小不超过 0.1f, 所以即使你通过这个手法获得了挤压态, 你还是没法在斜冲的状态下进入 Vertical Hyper. 除非你有超冲或 360度冲刺...
+
+组合技巧: 竖直 hyper 撞头并不取消跳跃 + Override Ultra 机制 => 斜上冲撞墙后, 竖直 hyper 撞天花板, 进入蹲姿, 如果你能在跳跃时间结束前离开天花板, 那么这就组成了一个具有蹲姿的竖直 hyper.

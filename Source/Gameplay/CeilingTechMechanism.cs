@@ -332,7 +332,7 @@ public static class CeilingTechMechanism {
         // fuck
         if (CeilingUltraEnabled && player.Speed.Y <= 0f) { // this does not lie in the Speed.Y < 0f branch, so we need to check here
             if (OverrideCeilingUltraDir.HasValue) {
-                if (LeftWallGraceTimer <= 0f && RightWallGraceTimer <= 0f && (ProtectVarJumpTimer <= 0f || player.varJumpTimer <= 0f) && player.TryCeilingDuck(Math.Sign(player.Speed.X))) {
+                if (LeftWallGraceTimer <= 0f && RightWallGraceTimer <= 0f && player.TryCeilingDuck(Math.Sign(player.Speed.X))) {
                     player.DashDir = OverrideCeilingUltraDir.Value;
                     player.TryCeilingUltra();
                 }

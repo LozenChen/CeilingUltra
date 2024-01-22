@@ -1,5 +1,3 @@
-using YamlDotNet.Serialization;
-
 namespace Celeste.Mod.CeilingUltra.Module;
 
 [SettingName("Ceiling Ultra")]
@@ -17,7 +15,7 @@ public class CeilingUltraSettings : EverestModuleSettings {
 
     public bool Enabled = false;
 
-    public bool EnableAll{ // we provide this property for tas set command
+    public bool EnableAll { // we provide this property for tas set command
         get => Enabled;
         set {
             Enabled = CeilingUltraEnabled = CeilingRefillStamina = CeilingRefillDash = CeilingJumpEnabled = CeilingHyperEnabled = UpdiagDashEndNoHorizontalSpeedLoss = VerticalHyperEnabled = VerticalUltraEnabled = DashBeginNoVerticalSpeedLoss = UpdiagDashEndNoVerticalSpeedLoss = WallRefillStamina = WallRefillDash = HorizontalUltraIntoVerticalUltra = VerticalUltraIntoHorizontalUltra = UpwardWallJumpAcceleration = DownwardWallJumpAcceleration = value;
