@@ -321,7 +321,7 @@ public static class VerticalTechMechanism {
         if (cursor.TryGotoNext(ins => ins.OpCode == OpCodes.Ldarg_0, ins => ins.OpCode == OpCodes.Ldc_I4_0, ins => ins.MatchCallOrCallvirt<Player>("set_Ducking"))) {
             ILLabel label = (ILLabel)cursor.Prev.Operand;
             cursor.Emit(OpCodes.Ldarg_0);
-            cursor.EmitDelegate(SkipUnSqueezeInOrigUpdate);
+            cursor.EmitDelegate(SkipSetDuckingFalseInOrigUpdate);
             cursor.Emit(OpCodes.Brtrue, label);
             cursor.GotoLabel(label);
             cursor.Emit(OpCodes.Ldarg_0);
@@ -333,12 +333,13 @@ public static class VerticalTechMechanism {
         "Player.orig_Update".LogHookData("Auto Unsqueeze", success);
     }
 
-    private static bool SkipUnSqueezeInOrigUpdate(Player player) {
-        return CeilingTechMechanism.InstantUltraLeaveGround || player.IsSqueezed() && (CeilingTechMechanism.LeftWallGraceTimer > 0f || CeilingTechMechanism.RightWallGraceTimer > 0f);
+    private static bool SkipSetDuckingFalseInOrigUpdate(Player player) {
+        // originally all set ducking false conditions are checked ok and is to set ducking false, but now we want it to use unsqueeze on ground instead
+        return player.IsSqueezed() && (CeilingTechMechanism.LeftWallGraceTimer > 0f || CeilingTechMechanism.RightWallGraceTimer > 0f);
     }
 
     private static void UnsqueezeOnGround(Player player) {
-        if (player.IsSqueezed()) {
+        if (player.IsSqueezed() && !CeilingTechMechanism.InstantUltraLeaveGround) {
             if (!player.onGround) {
                 CeilingTechMechanism.ProtectGroundSqueezeTimer = 0.06f; // gives an extra 4f window if you down diag dash to a corner and want to vertical hyper
             }
