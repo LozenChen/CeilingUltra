@@ -334,7 +334,7 @@ public static class VerticalTechMechanism {
     }
 
     private static bool SkipUnSqueezeInOrigUpdate(Player player) {
-        return player.IsSqueezed() && (CeilingTechMechanism.LeftWallGraceTimer > 0f || CeilingTechMechanism.RightWallGraceTimer > 0f);
+        return CeilingTechMechanism.InstantUltraLeaveGround || player.IsSqueezed() && (CeilingTechMechanism.LeftWallGraceTimer > 0f || CeilingTechMechanism.RightWallGraceTimer > 0f);
     }
 
     private static void UnsqueezeOnGround(Player player) {

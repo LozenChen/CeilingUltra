@@ -145,6 +145,8 @@ public static class CeilingTechMechanism {
         if (ProtectVarJumpTimer > 0f) {
             ProtectVarJumpTimer -= Engine.DeltaTime;
         }
+
+        InstantUltraLeaveGround = false;
     }
 
     private static void HookPlayerUpdate(ILContext il) {
@@ -221,6 +223,7 @@ public static class CeilingTechMechanism {
         LastFrameWriteOverrideUltraDir = false;
         LastFrameDashDir = Vector2.Zero;
         FloatySpaceBlockDirection = 0;
+        InstantUltraLeaveGround = false;
         return player;
     }
 
@@ -382,6 +385,9 @@ public static class CeilingTechMechanism {
         if (VerticalTechMechanism.VerticalUltraEnabled && (PlayerOnRightWall && player.Speed.X > 0f || PlayerOnLeftWall && player.Speed.X < 0f) && (!player.Inventory.DreamDash || !player.CollideCheck<DreamBlock>(player.Position + Vector2.UnitX * Math.Sign(player.Speed.X))) && player.TryVerticalUltra()) {
             // already applied as a side effect of TryVerticalUltra
             // we put TryVerticalUltra inside conditions coz if all other conditions are satisfied but can't vertical ultra (e.g. Can't Squeeze Hitbox), then still need to try Ceiling Ultra
+            if (player.DashDir.Y < 0f) {
+                InstantUltraLeaveGround = true; // in this case, we dont auto unsqueeze in this frame (although we may be on ground)
+            }
         }
         else if (CeilingUltraEnabled && PlayerOnCeiling && (!player.Inventory.DreamDash || !player.CollideCheck<DreamBlock>(player.Position - Vector2.UnitY)) && player.TryCeilingUltra()) {
             // already applied
@@ -458,6 +464,8 @@ public static class CeilingTechMechanism {
     [SaveLoad]
     public static float NextMaxFall = 0f;
 
+    [SaveLoad]
+    public static bool InstantUltraLeaveGround = false;
 
     public static void SetOverrideUltraDir(bool isVerticalUltra, Vector2 dashDir) {
         ClearOverrideUltraDir();
