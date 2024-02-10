@@ -1,20 +1,23 @@
 ﻿
 #===========================================================================================================
 CEILING_ULTRA_ENABLED=                                        Enabled
-CEILING_ULTRA_CEILING_MECHANISMS=                             Ceiling Mechanisms
+CEILING_ULTRA_CEILING_MECHANISMS=                             > Ceiling Mechanisms
 CEILING_ULTRA_CEILING_ULTRA=                                  Ceiling Ultra
 CEILING_ULTRA_CEILING_REFILL_STAMINA=                         Ceiling Refill Stamina
 CEILING_ULTRA_CEILING_REFILL_DASH=                            Ceiling Refill Dash
 CEILING_ULTRA_CEILING_JUMP=                                   Ceiling Jump
 CEILING_ULTRA_CEILING_SUPER_HYPER=                            Ceiling Super/Hyper
 CEILING_ULTRA_UPDIAG_DASH_END_NO_HORIZONTAL_SPEED_LOSS=       Updiag Dash End No Horizontal Speed Loss
-CEILING_ULTRA_VERTICAL_MECHANISMS=                            Vertical Mechanisms
+CEILING_ULTRA_VERTICAL_MECHANISMS=                            > Vertical Mechanisms
 CEILING_ULTRA_VERTICAL_ULTRA=                                 Vertical Ultra
 CEILING_ULTRA_VERTICAL_HYPER=                                 Vertical Hyper
 CEILING_ULTRA_WALL_REFILL_STAMINA=                            Wall Refill Stamina
 CEILING_ULTRA_WALL_REFILL_DASH=                               Wall Refill Dash
 CEILING_ULTRA_DASH_BEGIN_NO_VERTICAL_SPEED_LOSS=              Dash Begin No Vertical Speed Loss
 CEILING_ULTRA_UPDIAG_DASH_END_NO_VERTICAL_SPEED_LOSS=         High Speed Updiag Dash End No Vertical Speed Loss
-CEILING_ULTRA_LOCK_BY_MAP=                                    Some Settings Locked By Map
+CEILING_ULTRA_LOCK_BY_MAP=                                    Some settings are locked by map
 CEILING_ULTRA_UPWARD_WALL_JUMP_ACCELERATION=                  Upward Wall Kick Acceleration
 CEILING_ULTRA_DOWNWARD_WALL_JUMP_ACCELERATION=                Downward Wall Kick Acceleration
+CEILING_ULTRA_PAUSEMENU_CU_VARIANT=                           Ceiling Ultra Variants
+CEILING_ULTRA_CU_VARIANT_TITLE=                               CEILING ULTRA
+CEILING_ULTRA_SHOW_IN_PAUSE_MENU=                             Show in Pause Menu

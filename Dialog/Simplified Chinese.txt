@@ -3,14 +3,14 @@
 
 #===========================================================================================================
 CEILING_ULTRA_ENABLED=                                        总开关
-CEILING_ULTRA_CEILING_MECHANISMS=                             天花板机制
+CEILING_ULTRA_CEILING_MECHANISMS=                             > 天花板机制
 CEILING_ULTRA_CEILING_ULTRA=                                  天花板 Ultra
 CEILING_ULTRA_CEILING_REFILL_STAMINA=                         天花板恢复体力
 CEILING_ULTRA_CEILING_REFILL_DASH=                            天花板恢复冲刺
 CEILING_ULTRA_CEILING_JUMP=                                   蹬天花板跳
 CEILING_ULTRA_CEILING_SUPER_HYPER=                            天花板 Super/Hyper
 CEILING_ULTRA_UPDIAG_DASH_END_NO_HORIZONTAL_SPEED_LOSS=       斜上冲结束时不丢失水平速度
-CEILING_ULTRA_VERTICAL_MECHANISMS=                            纵向机制
+CEILING_ULTRA_VERTICAL_MECHANISMS=                            > 纵向机制
 CEILING_ULTRA_VERTICAL_ULTRA=                                 纵向 Ultra
 CEILING_ULTRA_VERTICAL_HYPER=                                 纵向 Hyper
 CEILING_ULTRA_WALL_REFILL_STAMINA=                            贴墙恢复体力
@@ -20,3 +20,6 @@ CEILING_ULTRA_UPDIAG_DASH_END_NO_VERTICAL_SPEED_LOSS=         高速斜上冲结
 CEILING_ULTRA_LOCK_BY_MAP=                                    部分设置被地图锁定
 CEILING_ULTRA_UPWARD_WALL_JUMP_ACCELERATION=                  向上踢墙加速
 CEILING_ULTRA_DOWNWARD_WALL_JUMP_ACCELERATION=                向下踢墙加速
+CEILING_ULTRA_PAUSEMENU_CU_VARIANT=                           Ceiling Ultra 异变
+CEILING_ULTRA_CU_VARIANT_TITLE=                               Ceiling Ultra
+CEILING_ULTRA_SHOW_IN_PAUSE_MENU=                             在暂停界面中显示

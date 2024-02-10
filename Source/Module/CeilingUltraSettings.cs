@@ -54,6 +54,8 @@ public class CeilingUltraSettings : EverestModuleSettings {
     public bool UpwardWallJumpAcceleration { get; set; } = true;
 
     public bool DownwardWallJumpAcceleration { get; set; } = true;
+
+    public bool ShowInPauseMenu { get; set; } = true;
 }
 
 public static class LevelSettings {

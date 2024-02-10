@@ -95,20 +95,20 @@ public static class CeilingTechMechanism {
         }
         switch (FloatySpaceBlockDirection) {
             case 1: {
-                PlayerOnRightWall = true;
-                break;
-            }
+                    PlayerOnRightWall = true;
+                    break;
+                }
             case 2: {
-                PlayerOnCeiling = true;
-                break;
-            }
+                    PlayerOnCeiling = true;
+                    break;
+                }
             case 3: {
-                PlayerOnLeftWall = true;
-                break;
-            }
+                    PlayerOnLeftWall = true;
+                    break;
+                }
             default: {
-                break;
-            }
+                    break;
+                }
         }
         FloatySpaceBlockDirection = 0;
 
