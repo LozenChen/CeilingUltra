@@ -486,6 +486,7 @@ public static class CeilingTechMechanism {
             }
         }
         LastFrameWriteOverrideUltraDir = true;
+
     }
     public static void ClearOverrideUltraDir() {
         OverrideGroundUltraDir = OverrideCeilingUltraDir = OverrideLeftWallUltraDir = OverrideRightWallUltraDir = null;
