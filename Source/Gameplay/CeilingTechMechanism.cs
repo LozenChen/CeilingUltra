@@ -218,7 +218,7 @@ public static class CeilingTechMechanism {
         PlayerOnCeiling = PlayerOnLeftWall = PlayerOnRightWall = false;
         LastFrameSetJumpTimerCalled = false;
         LastGroundJumpGraceTimer = 1f;
-        NextMaxFall = 0f;
+        NextMaxFall = float.MinValue;
         ClearOverrideUltraDir();
         LastFrameWriteOverrideUltraDir = false;
         LastFrameDashDir = Vector2.Zero;
@@ -462,7 +462,7 @@ public static class CeilingTechMechanism {
     public static Vector2 LastFrameDashDir = Vector2.Zero;
 
     [SaveLoad]
-    public static float NextMaxFall = 0f;
+    public static float NextMaxFall = float.MinValue;
 
     [SaveLoad]
     public static bool InstantUltraLeaveGround = false;
@@ -506,7 +506,7 @@ public static class CeilingTechMechanism {
         if (NextMaxFall > player.maxFall && player.StateMachine.State == 0) { // NormalBegin resets maxFall to be 160f, so we need this for vertical hyper
             player.maxFall = NextMaxFall;
         }
-        NextMaxFall = 0f;
+        NextMaxFall = float.MinValue;
         if (!LastFrameSetJumpTimerCalled && ProtectVarJumpTimer > player.varJumpTimer) {
             player.varJumpTimer = ProtectVarJumpTimer;
         }

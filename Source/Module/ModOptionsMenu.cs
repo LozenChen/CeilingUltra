@@ -6,6 +6,7 @@ using Microsoft.Xna.Framework;
 using Mono.Cecil.Cil;
 using Monocle;
 using MonoMod.Cil;
+using MonoMod.RuntimeDetour;
 using static Celeste.TextMenu;
 
 internal static class ModOptionsMenu {
@@ -127,17 +128,25 @@ internal static class HookPauseMenu {
 
     [Initialize]
     private static void Initialize() {
-        typeof(Everest.Events.Level).GetMethodInfo("CreatePauseMenuButtons").IlHook(il => {
-            ILCursor cursor = new ILCursor(il);
-            cursor.Goto(-1);
-            cursor.Emit(OpCodes.Ldarg_0);
-            cursor.Emit(OpCodes.Ldarg_1);
-            cursor.Emit(OpCodes.Ldarg_2);
-            cursor.EmitDelegate(TryAddButton);
-        });
+        using (new DetourContext() { Before = new List<string>() { "*" } }) {
+            typeof(Level).GetMethodInfo("Pause").IlHook(il => {
+                ILCursor cursor = new ILCursor(il);
+                if (cursor.TryGotoNext(ins => ins.MatchCall(typeof(Everest.Events.Level), "CreatePauseMenuButtons"))) {
+                    cursor.Index++;
+                    cursor.Emit(OpCodes.Ldarg_0);
+                    cursor.Emit(OpCodes.Ldloc_0);
+                    cursor.Emit(OpCodes.Ldarg_2);
+                    cursor.EmitDelegate(TryAddButton);
+                }
+            });
+        }
         // idk, if using Everest.Events.Level.OnCreatePauseMenuButtons, first i will encounter CS0229, after resolving this i find that my function adds to this event but nothing happens
         // so i go back to ilhook
+        // previously i just hook into Celeste.Mod.Everest/Events/Level::CreatePauseMenuButtons
+        // but it conflicts with XaphanHelper's on hook on Level.Pause (i.e. my hook just disappear), i've checked that mod's code and found no issue
+        // even if i tell the publicizer not to publicize Everest.Events.Level.OnCreatePauseMenuButtons, it does not work, unless i don't publicize Celeste
     }
+
 
     private static void TryAddButton(Level level, TextMenu menu, bool minimal) {
         if (minimal || !ceilingUltraSetting.ShowInPauseMenu) {
