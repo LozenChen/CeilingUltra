@@ -27,6 +27,9 @@
     <Reference Include="Celeste">
       <HintPath>..\..\legacyRef\Celeste.exe</HintPath>
     </Reference>
+    <Reference Include="ExtendedVariantMode">
+      <HintPath>Libs\ExtendedVariantMode.dll</HintPath>
+    </Reference>
     <Reference Include="FNA">
       <HintPath>Libs\FNA.dll</HintPath>
     </Reference>
@@ -62,6 +65,8 @@
 	<ItemGroup>
 		<Publicize Include="Celeste" />
 		<Publicize Include="MonoMod.Utils" />
+		<Publicize Include="ExtendedVariantMode"/>
+		<Publicize Include="GravityHelper"/>
 	</ItemGroup>
 	
   <ItemGroup>

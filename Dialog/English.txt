@@ -21,3 +21,7 @@ CEILING_ULTRA_DOWNWARD_WALL_JUMP_ACCELERATION=                Downward Wall Kick
 CEILING_ULTRA_PAUSEMENU_CU_VARIANT=                           Ceiling Ultra Variants
 CEILING_ULTRA_CU_VARIANT_TITLE=                               CEILING ULTRA
 CEILING_ULTRA_SHOW_IN_PAUSE_MENU=                             Show in Pause Menu
+CEILING_ULTRA_GROUND_MECHANISMS=                              > Ground Mechanisms
+CEILING_ULTRA_GROUND_JUMP=								      Ground Jump
+CEILING_ULTRA_GROUND_SUPER_HYPER=                             Ground Super/Hyper
+CEILING_ULTRA_GROUND_ULTRA=                                   Ground Ultra

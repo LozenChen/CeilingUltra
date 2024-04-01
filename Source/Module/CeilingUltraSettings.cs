@@ -19,6 +19,7 @@ public class CeilingUltraSettings : EverestModuleSettings {
         get => Enabled;
         set {
             Enabled = CeilingUltraEnabled = CeilingRefillStamina = CeilingRefillDash = CeilingJumpEnabled = CeilingHyperEnabled = UpdiagDashEndNoHorizontalSpeedLoss = VerticalHyperEnabled = VerticalUltraEnabled = DashBeginNoVerticalSpeedLoss = UpdiagDashEndNoVerticalSpeedLoss = WallRefillStamina = WallRefillDash = HorizontalUltraIntoVerticalUltra = VerticalUltraIntoHorizontalUltra = UpwardWallJumpAcceleration = DownwardWallJumpAcceleration = value;
+            GroundJumpEnabled = GroundHyperEnabled = GroundUltraEnabled = true;
             LevelSettings.ClearAllOverride();
         }
     }
@@ -32,6 +33,12 @@ public class CeilingUltraSettings : EverestModuleSettings {
     public bool CeilingJumpEnabled { get; set; } = true;
 
     public bool CeilingHyperEnabled { get; set; } = true;
+
+    public bool GroundJumpEnabled { get; set; } = true;
+
+    public bool GroundUltraEnabled { get; set; } = true;
+
+    public bool GroundHyperEnabled { get; set; } = true;
 
     public bool UpdiagDashEndNoHorizontalSpeedLoss { get; set; } = true;
 
@@ -61,7 +68,7 @@ public class CeilingUltraSettings : EverestModuleSettings {
 public static class LevelSettings {
 
     public static void ClearAllOverride() {
-        OverrideMainEnabled = OverrideCeilingTech = OverrideCeilingRefill = OverrideVerticalTech = OverrideWallRefill = OverrideBigInertiaUpdiagDash = OverrideUpwardWallJumpAcceleration = OverrideDownwardWallJumpAcceleration = null;
+        OverrideMainEnabled = OverrideCeilingTech = OverrideCeilingRefill = OverrideVerticalTech = OverrideWallRefill = OverrideBigInertiaUpdiagDash = OverrideUpwardWallJumpAcceleration = OverrideDownwardWallJumpAcceleration = OverrideGroundTech = null;
     }
 
     public static bool? OverrideMainEnabled {
@@ -179,4 +186,21 @@ public static class LevelSettings {
         }
     }
     public static bool DownwardWallJumpAcceleration => MainEnabled && OverrideDownwardWallJumpAcceleration.GetValueOrDefault(ceilingUltraSetting.DownwardWallJumpAcceleration);
+
+
+    // GroundTech
+
+    public static bool? OverrideGroundTech {
+        get => CeilingUltraSession.Instance?.OverrideGroundTech;
+        set {
+            if (CeilingUltraSession.Instance is { } instance) {
+                instance.OverrideGroundTech = value;
+            }
+        }
+    }
+    public static bool GroundJumpEnabled => MainEnabled && OverrideGroundTech.GetValueOrDefault(ceilingUltraSetting.GroundJumpEnabled);
+
+    public static bool GroundHyperEnabled => MainEnabled && OverrideGroundTech.GetValueOrDefault(ceilingUltraSetting.GroundHyperEnabled);
+
+    public static bool GroundUltraEnabled => MainEnabled && OverrideGroundTech.GetValueOrDefault(ceilingUltraSetting.GroundUltraEnabled);
 }

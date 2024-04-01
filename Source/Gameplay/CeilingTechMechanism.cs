@@ -15,6 +15,8 @@ public static class CeilingTechMechanism {
 
     public static bool CeilingUltraEnabled => LevelSettings.CeilingUltraEnabled;
 
+    public static bool GroundUltraEnabled => LevelSettings.GroundUltraEnabled;
+
     public static bool CeilingRefillStamina => LevelSettings.CeilingRefillStamina;
 
     public static bool WallRefillStamina => LevelSettings.WallRefillStamina;
@@ -23,7 +25,10 @@ public static class CeilingTechMechanism {
     public static bool WallRefillDash => LevelSettings.WallRefillDash;
     public static bool CeilingJumpEnabled => LevelSettings.CeilingJumpEnabled;
 
+    public static bool GroundJumpEnabled => LevelSettings.GroundJumpEnabled;
     public static bool CeilingHyperEnabled => LevelSettings.CeilingHyperEnabled;
+
+    public static bool GroundHyperEnabled => LevelSettings.GroundHyperEnabled;
 
     public static bool UpdiagDashDontLoseHorizontalSpeed => LevelSettings.UpdiagDashEndNoHorizontalSpeedLoss;
 
@@ -47,6 +52,7 @@ public static class CeilingTechMechanism {
     [Initialize]
     public static void Initialize() {
         using (new DetourContext { Before = new List<string> { "*" }, ID = "Ceiling Tech Mechanism" }) {
+
             typeof(Player).GetMethodInfo("orig_Update").IlHook(HookPlayerUpdate);
             typeof(Player).GetMethodInfo("orig_Update").IlHook(UpdateOnEnd);
             typeof(Player).GetMethodInfo("OnCollideV").IlHook(CeilingUltraHookOnCollideV);
@@ -258,6 +264,22 @@ public static class CeilingTechMechanism {
         }
     }
 
+    public static bool TryGroundDuck(this Player player, int priorDirection = 1) {
+        if (player.IsSqueezed()) {
+            int direction = priorDirection >= 0 ? 1 : -1;
+            List<Vector2> wiggle = new List<Vector2>() { Vector2.Zero, direction * Vector2.UnitX, -direction * Vector2.UnitX };
+            bool result = player.TryTransform(player.duckHitbox, Alignment.Bottom, wiggle);
+            if (result) {
+                player.hurtbox = player.duckHurtbox;
+            }
+            return result;
+        }
+        else {
+            player.Ducking = true;
+            return true;
+        }
+    }
+
     public static bool TryCeilingUnduck(this Player player, out bool wasDuck, int priorDirection = 1) {
         wasDuck = player.Ducking;
         if (player.IsSqueezed()) {
@@ -295,16 +317,37 @@ public static class CeilingTechMechanism {
         return false;
     }
 
+    public static bool TryGroundUltra(this Player player, bool getOverrideVerticalUltra = false) {
+
+        if (player.DashDir.X != 0f && player.DashDir.Y > 0f && player.Speed.Y >= 0f && player.TryGroundDuck(Math.Sign(player.Speed.X))) {
+            if (HorizontalUltraIntoVerticalUltra && VerticalTechMechanism.VerticalUltraEnabled && getOverrideVerticalUltra) {
+                SetOverrideUltraDir(false, player.DashDir);
+            }
+            player.DashDir.X = Math.Sign(player.DashDir.X);
+            player.DashDir.Y = 0f;
+            player.Speed.Y = 0f;
+            player.Speed.X *= 1.2f;
+            return true;
+        }
+        return false;
+    }
+
     private static void CeilingUltraHookOnCollideV(ILContext iLContext) {
         ILCursor cursor = new ILCursor(iLContext);
         bool success1 = false;
         bool success2 = false;
         if (cursor.TryGotoNext(ins => ins.MatchCallOrCallvirt<Player>(nameof(Player.DreamDashCheck)), ins => ins.OpCode == OpCodes.Brfalse_S)) {
-            success1 = true;
+
             ILLabel label1 = (ILLabel)cursor.Next.Next.Operand;
             cursor.GotoLabel(label1);
-            cursor.Emit(OpCodes.Ldarg_0);
-            cursor.EmitDelegate(TryGroundUltraWithOverride);
+            if (cursor.TryGotoNext(ins => ins.OpCode == OpCodes.Beq)) {
+                success1 = true;
+                ILLabel target = (ILLabel)cursor.Next.Operand;
+                cursor.GotoLabel(label1);
+                cursor.Emit(OpCodes.Ldarg_0);
+                cursor.EmitDelegate(CheckAndApplyGroundUltra);
+                cursor.Emit(OpCodes.Brtrue, target);
+            }
 
             if (cursor.TryGotoNext(ins => ins.MatchCallOrCallvirt<Player>(nameof(Player.DreamDashCheck)), ins => ins.OpCode == OpCodes.Brfalse_S)) {
                 success2 = true;
@@ -314,22 +357,32 @@ public static class CeilingTechMechanism {
                 cursor.EmitDelegate(CheckAndApplyCeilingUltra);
             }
         }
-        "OnCollideV".LogHookData("Protect Delayed Ultra", success1);
+        "OnCollideV".LogHookData("Ground Ultra", success1);
         "OnCollideV".LogHookData("Ceiling Ultra", success2);
     }
 
-    private static void TryGroundUltraWithOverride(Player player) {
-        if (OverrideGroundUltraDir.HasValue) { // we are already in a Speed.Y > 0f branch, so ultra will succeed
-            if (LeftWallGraceTimer <= 0f && RightWallGraceTimer <= 0f) {
-                player.DashDir = OverrideGroundUltraDir.Value;
-            }
-            ClearOverrideUltraDir();
+    private static bool CheckAndApplyGroundUltra(Player player) {
+        // return a value indicating whether we should go to the original ultra sentences
+        if (!LevelSettings.MainEnabled) {
+            return false;
         }
-        else if (player.DashDir.X != 0f && player.DashDir.Y > 0f) {
-            if (HorizontalUltraIntoVerticalUltra && VerticalTechMechanism.VerticalUltraEnabled) {
-                SetOverrideUltraDir(false, player.DashDir);
+
+        if (GroundUltraEnabled) {
+            if (OverrideGroundUltraDir.HasValue) {
+                if (LeftWallGraceTimer <= 0f && RightWallGraceTimer <= 0f && player.TryGroundDuck(Math.Sign(player.Speed.X))) {
+                    player.DashDir = OverrideGroundUltraDir.Value;
+                    player.TryGroundUltra();
+                }
+                ClearOverrideUltraDir();
+            }
+            else {
+                player.TryGroundUltra(true);
             }
         }
+
+        // WARNING: we use our own ground ultra here, so other hooks on ultra will do nothing
+        // so we don't do this unless our mod is enabled
+        return true;
     }
 
     private static void CheckAndApplyCeilingUltra(Player player) {
@@ -351,18 +404,24 @@ public static class CeilingTechMechanism {
 
     private static void CeilingVerticalUltraHookDashCoroutine(ILContext iLContext) {
         ILCursor cursor = new ILCursor(iLContext);
-        bool success = true;
+        bool success = false;
+
         if (cursor.TryGotoNext(
             ins => ins.OpCode == OpCodes.Ldloc_1,
-            ins => ins.OpCode == OpCodes.Ldfld,
+            ins => ins.MatchLdfld<Player>(nameof(Player.onGround)),
             ins => ins.OpCode == OpCodes.Brfalse
-            )) {
-            cursor.GotoLabel((ILLabel)cursor.Next.Next.Next.Operand);
-            cursor.Emit(OpCodes.Ldloc_1);
-            cursor.EmitDelegate(CheckCeilingVerticalUltraInDashCoroutine);
-        }
-        else {
-            success = false;
+            )) { // communal helper also hooks nearby (and will hard crash if hook fails), so we don't hook here, but move to next suitable place
+            cursor.Index += 2;
+            ILLabel target = (ILLabel)cursor.Next.Operand;
+            if (cursor.TryGotoNext(ins => ins.OpCode == OpCodes.Beq)) {
+                cursor.Index++;
+                cursor.EmitDelegate(CanGroundUltra);
+                cursor.Emit(OpCodes.Brfalse, target);
+                cursor.GotoLabel(target);
+                cursor.Emit(OpCodes.Ldloc_1);
+                cursor.EmitDelegate(CheckCeilingVerticalUltraInDashCoroutine);
+                success = true;
+            }
         }
         "Player.DashCoroutine".LogHookData("Ceiling/Vertical Ultra", success);
 
@@ -443,7 +502,9 @@ public static class CeilingTechMechanism {
     [SaveLoad]
     public static bool LastFrameSetJumpTimerCalled = false;
 
-    private static bool jumpFlag = false; // no need to save load as its "lifetime" is inside Player.NormalUpdate
+    private static bool jumpFlag = false;
+    // used to detect if any jump is performed (so we shouldn't perform a ceiling jump in this case)
+    // no need to save load as its "lifetime" is inside Player.NormalUpdate
 
     [SaveLoad]
     public static Vector2? OverrideGroundUltraDir = null;
@@ -589,17 +650,24 @@ public static class CeilingTechMechanism {
         if (cursor.TryGotoNext(ins => ins.OpCode == OpCodes.Ldarg_0, ins => ins.MatchLdfld<Player>(nameof(Player.jumpGraceTimer)), ins => ins.MatchLdcR4(0f))) {
             cursor.MoveAfterLabels();
             cursor.EmitDelegate(ResetJumpFlag);
-            if (cursor.TryGotoNext(ins => ins.OpCode == OpCodes.Ldc_I4_0, ins => ins.OpCode == OpCodes.Ret)) {
-                cursor.MoveAfterLabels();
-                cursor.Emit(OpCodes.Ldarg_0);
-                cursor.EmitDelegate(CheckAndApplyCeilingJumpInNormal);
-                success = true;
+            if (cursor.TryGotoNext(ins => ins.OpCode == OpCodes.Ble_Un_S)) {
+                ILLabel target = (ILLabel)cursor.Next.Operand;
+                cursor.Index++;
+                cursor.EmitDelegate(CanGroundJump_Parameter0);
+                cursor.Emit(OpCodes.Brfalse, target);
+                if (cursor.TryGotoNext(ins => ins.OpCode == OpCodes.Ldc_I4_0, ins => ins.OpCode == OpCodes.Ret)) {
+                    cursor.MoveAfterLabels();
+                    cursor.Emit(OpCodes.Ldarg_0);
+                    cursor.EmitDelegate(CheckAndApplyCeilingJumpInNormal);
+                    success = true;
+                }
             }
         }
         "Player.NormalUpdate".LogHookData("Ceiling Jump", success);
         // let ceiling jump has lowest priority
         // since in most cases we dont expect a ceiling jump
     }
+
 
     private static void ResetJumpFlag() {
         jumpFlag = false;
@@ -649,6 +717,13 @@ public static class CeilingTechMechanism {
         else {
             success = false;
         }
+        if (cursor.TryGotoNext(ins => ins.MatchCall<Actor>(nameof(Actor.OnGround)))) {
+            cursor.Index++;
+            cursor.EmitDelegate(CanGroundJump_Parameter1);
+        }
+        else {
+            success = false;
+        }
         "Player.StarFlyUpdate".LogHookData("Ceiling Jump", success);
     }
 
@@ -671,6 +746,13 @@ public static class CeilingTechMechanism {
             cursor.Emit(OpCodes.Brfalse, nextIns);
             cursor.Emit(OpCodes.Ldc_I4_0);
             cursor.Emit(OpCodes.Ret);
+        }
+        else {
+            success = false;
+        }
+        if (cursor.TryGotoNext(ins => ins.MatchLdfld<Player>(nameof(Player.onGround)))) {
+            cursor.Index++;
+            cursor.EmitDelegate(CanGroundJump_Parameter1);
         }
         else {
             success = false;
@@ -728,6 +810,13 @@ public static class CeilingTechMechanism {
     private static void CeilingHyperHookDashUpdate(ILContext il) {
         ILCursor cursor = new(il);
         bool success = true;
+        if (cursor.TryGotoNext(ins => ins.MatchLdsfld(typeof(CelesteInput).FullName, nameof(CelesteInput.Jump)), ins => ins.MatchCallvirt<VirtualButton>("get_Pressed"))) {
+            cursor.Index += 2;
+            cursor.EmitDelegate(CanGroundHyper);
+        }
+        else {
+            success = false;
+        }
         if (cursor.TryGotoNext(ins => ins.MatchCallOrCallvirt<Player>(nameof(Player.SuperJump)))) {
             cursor.Index += 3;
             Instruction next = cursor.Next;
@@ -797,6 +886,13 @@ public static class CeilingTechMechanism {
     private static void CeilingHyperHookRedDashUpdate(ILContext il) {
         ILCursor cursor = new(il);
         bool success = true;
+        if (cursor.TryGotoNext(ins => ins.MatchLdsfld(typeof(CelesteInput).FullName, nameof(CelesteInput.Jump)), ins => ins.MatchCallvirt<VirtualButton>("get_Pressed"))) {
+            cursor.Index += 2;
+            cursor.EmitDelegate(CanGroundHyper);
+        }
+        else {
+            success = false;
+        }
         if (cursor.TryGotoNext(ins => ins.MatchCallOrCallvirt<Player>(nameof(Player.SuperJump)))) {
             cursor.Index += 3;
             Instruction next = cursor.Next;
@@ -846,5 +942,21 @@ public static class CeilingTechMechanism {
             }
         }
         return orig(self, player, direction);
+    }
+
+    private static bool CanGroundJump_Parameter0() {
+        return GroundJumpEnabled;
+
+    }
+    private static bool CanGroundJump_Parameter1(bool origValue) {
+        return origValue && GroundJumpEnabled;
+    }
+
+    private static bool CanGroundHyper(bool origValue) {
+        return origValue && GroundHyperEnabled;
+    }
+
+    private static bool CanGroundUltra() {
+        return GroundUltraEnabled;
     }
 }

@@ -17,6 +17,7 @@ public class EnableAllTrigger : AbstractTrigger {
         VerticalTech = data.Bool("VerticalTech", true);
         UpwardWallJumpAcceleration = data.Bool("UpwardWallJumpAcceleration", true);
         DownwardWallJumpAcceleration = data.Bool("DownwardWallJumpAcceleration", true);
+        GroundTech = data.Bool("GroundTech", true);
     }
 
     public bool WallRefill;
@@ -33,6 +34,8 @@ public class EnableAllTrigger : AbstractTrigger {
 
     public bool DownwardWallJumpAcceleration;
 
+    public bool GroundTech;
+
     public override void OnEnter(Player player) {
         base.OnEnter(player);
         LevelSettings.OverrideMainEnabled = Enable;
@@ -43,5 +46,6 @@ public class EnableAllTrigger : AbstractTrigger {
         LevelSettings.OverrideVerticalTech = VerticalTech;
         LevelSettings.OverrideUpwardWallJumpAcceleration = UpwardWallJumpAcceleration;
         LevelSettings.OverrideDownwardWallJumpAcceleration = DownwardWallJumpAcceleration;
+        LevelSettings.OverrideGroundTech = GroundTech;
     }
 }

@@ -263,8 +263,12 @@ public static class VerticalTechMechanism {
                     }
                 }
                 else {
-                    // it's grounded so it always make sense
-                    CeilingTechMechanism.SetOverrideUltraDir(true, player.DashDir);
+                    if (CeilingTechMechanism.GroundUltraEnabled) {
+                        CeilingTechMechanism.SetOverrideUltraDir(true, player.DashDir);
+                    }
+                    else {
+                        // don't set a meaningless override
+                    }
                 }
             }
             player.wallSpeedRetained = player.Speed.X;

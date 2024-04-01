@@ -52,6 +52,7 @@ internal static class ModOptionsMenu {
             bool overrideVertTech = LevelSettings.OverrideVerticalTech.HasValue;
             bool overrideUpWallJumpAcc = LevelSettings.OverrideUpwardWallJumpAcceleration.HasValue;
             bool overrideDownWallJumpAcc = LevelSettings.OverrideDownwardWallJumpAcceleration.HasValue;
+            bool overrideGroundTech = LevelSettings.OverrideGroundTech.HasValue;
 
 
             Add(new EaseInSubHeader("Ceiling Mechanisms".ToDialogText()) { HeightExtra = 30f });
@@ -85,7 +86,15 @@ internal static class ModOptionsMenu {
             Add(new EaseInOnOffExt("Upward Wall Jump Acceleration".ToDialogText(), LevelSettings.UpwardWallJumpAcceleration, overrideUpWallJumpAcc).Change(value => ceilingUltraSetting.UpwardWallJumpAcceleration = value));
             Add(new EaseInOnOffExt("Downward Wall Jump Acceleration".ToDialogText(), LevelSettings.DownwardWallJumpAcceleration, overrideDownWallJumpAcc).Change(value => ceilingUltraSetting.DownwardWallJumpAcceleration = value));
 
-            if (overrideMain || overrideCeilRefill || overrideCeilTech || overrideVertTech || overrideWallRefill || overrideUpdiagEnd || overrideUpWallJumpAcc || overrideDownWallJumpAcc) {
+
+            Add(new EaseInSubHeader("Ground Mechanisms".ToDialogText()) { HeightExtra = 30f });
+
+            Add(new EaseInOnOffExt("Ground Jump".ToDialogText(), LevelSettings.GroundJumpEnabled, overrideGroundTech).Change(value => ceilingUltraSetting.GroundJumpEnabled = value));
+            Add(new EaseInOnOffExt("Ground Super Hyper".ToDialogText(), LevelSettings.GroundHyperEnabled, overrideGroundTech).Change(value => ceilingUltraSetting.GroundHyperEnabled = value));
+            Add(new EaseInOnOffExt("Ground Ultra".ToDialogText(), LevelSettings.GroundUltraEnabled, overrideGroundTech).Change(value => ceilingUltraSetting.GroundUltraEnabled = value));
+
+
+            if (overrideMain || overrideCeilRefill || overrideCeilTech || overrideVertTech || overrideWallRefill || overrideUpdiagEnd || overrideUpWallJumpAcc || overrideDownWallJumpAcc || overrideGroundTech) {
                 Add(new EaseInSubHeader("Lock By Map".ToDialogText()) { TextColor = Color.Goldenrod, HeightExtra = 10f });
             }
 
