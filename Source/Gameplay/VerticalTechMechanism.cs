@@ -1,5 +1,6 @@
 using Celeste.Mod.CeilingUltra.Module;
 using Celeste.Mod.CeilingUltra.Utils;
+using Celeste.Mod.GravityHelper.Components;
 using Microsoft.Xna.Framework;
 using Mono.Cecil.Cil;
 using Monocle;
@@ -72,8 +73,21 @@ public static class VerticalTechMechanism {
         Player player = orig(Position, spriteMode);
         squeezedHitbox = new Hitbox(6f, 11f, -3f, -11f);
         squeezedHurtbox = new Hitbox(6f, 9f, -3f, -11f);
+        if (ModUtils.GravityHelperInstalled) {
+            HandleGravity(player);
+        }
         return player;
     }
+
+    private static void HandleGravity(Player player) {
+        PlayerGravityListener listener = new((self, args) => {
+            if (!args.Changed || self.Scene == null) return;
+            invertHitbox(squeezedHitbox);
+            invertHitbox(squeezedHurtbox);
+        });
+        player.Add(listener);
+    }
+    private static void invertHitbox(Hitbox hitbox) => hitbox.Position.Y = -hitbox.Position.Y - hitbox.Height;
 
     private static void OnPlayerWallJump(On.Celeste.Player.orig_WallJump orig, Player player, int dir) {
         float origSpeedY = player.Speed.Y;

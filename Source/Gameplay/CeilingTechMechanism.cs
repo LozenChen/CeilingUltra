@@ -228,10 +228,18 @@ public static class CeilingTechMechanism {
     }
 
     public static void CeilingDuck(this Player player) {
-        float origTop = player.Collider.Top;
-        player.Ducking = true;
-        float offset = origTop - player.Collider.Top;
-        player.Y += offset;
+        if (ModImports.IsPlayerInverted) {
+            float origBottom = player.Collider.Bottom;
+            player.Ducking = true;
+            float offset = origBottom - player.Collider.Bottom;
+            player.Y += offset;
+        }
+        else {
+            float origTop = player.Collider.Top;
+            player.Ducking = true;
+            float offset = origTop - player.Collider.Top;
+            player.Y += offset;
+        }
     }
 
     public static bool TryCeilingDuck(this Player player, int priorDirection = 1) {
@@ -248,13 +256,6 @@ public static class CeilingTechMechanism {
             CeilingDuck(player);
             return true;
         }
-    }
-
-    public static void CeilingUnduck_Normal(this Player player) {
-        float origTop = player.Collider.Top;
-        player.Ducking = false;
-        float offset = origTop - player.Collider.Top;
-        player.Y += offset;
     }
 
     public static bool TryCeilingUnduck(this Player player, out bool wasDuck, int priorDirection = 1) {
@@ -280,6 +281,7 @@ public static class CeilingTechMechanism {
 
     public static bool TryCeilingUltra(this Player player, bool getOverrideVerticalUltra = false) {
         // why do we check Speed.Y <= 0f instead of < 0f here: coz MaxHelpingHand.UpsideDownJumpThru kills Speed.Y on the start of collision
+
         if (player.DashDir.X != 0f && player.DashDir.Y < 0f && player.Speed.Y <= 0f && player.TryCeilingDuck(Math.Sign(player.Speed.X))) {
             if (HorizontalUltraIntoVerticalUltra && VerticalTechMechanism.VerticalUltraEnabled && getOverrideVerticalUltra) {
                 SetOverrideUltraDir(false, player.DashDir);
@@ -389,7 +391,7 @@ public static class CeilingTechMechanism {
                 InstantUltraLeaveGround = true; // in this case, we dont auto unsqueeze in this frame (although we may be on ground)
             }
         }
-        else if (CeilingUltraEnabled && PlayerOnCeiling && (!player.Inventory.DreamDash || !player.CollideCheck<DreamBlock>(player.Position - Vector2.UnitY)) && player.TryCeilingUltra()) {
+        else if (CeilingUltraEnabled && PlayerOnCeiling && (!player.Inventory.DreamDash || !player.CollideCheck<DreamBlock>(player.Position - Vector2.UnitY * ModImports.InvertY)) && player.TryCeilingUltra()) {
             // already applied
         }
         // try vertical ultra first, so it matchs the intuition that, first horizontal movement, then vertical
@@ -402,7 +404,7 @@ public static class CeilingTechMechanism {
     }
 
     public static bool OnCeiling(this Player player, int upCheck = 1) {
-        return player.CanStand(-upCheck * Vector2.UnitY);
+        return player.CanStand(-upCheck * Vector2.UnitY * ModImports.InvertY);
     }
 
     [SaveLoad]
@@ -572,11 +574,11 @@ public static class CeilingTechMechanism {
         }
         if (particles) {
             int index = -1;
-            Platform platformByPriority = SurfaceIndex.GetPlatformByPriority(player.CollideAll<Platform>(player.Position - Vector2.UnitY, player.temp));
+            Platform platformByPriority = SurfaceIndex.GetPlatformByPriority(player.CollideAll<Platform>(player.Position - Vector2.UnitY * ModImports.InvertY, player.temp));
             if (platformByPriority != null) {
                 index = platformByPriority.GetLandSoundIndex(player);
             }
-            Dust.BurstFG(player.TopCenter, (float)Math.PI / 2f, downPressed ? 8 : 4, downPressed ? 8f : 4f, player.DustParticleFromSurfaceIndex(index));
+            Dust.BurstFG(ModImports.IsPlayerInverted ? player.BottomCenter : player.TopCenter, (float)Math.PI / 2f * ModImports.InvertY, downPressed ? 8 : 4, downPressed ? 8f : 4f, player.DustParticleFromSurfaceIndex(index));
         }
         SaveData.Instance.TotalJumps++;
     }
@@ -715,11 +717,11 @@ public static class CeilingTechMechanism {
         player.launched = true;
         player.Sprite.Scale = new Vector2(0.6f, 1.4f);
         int index = -1;
-        Platform platformByPriority = SurfaceIndex.GetPlatformByPriority(player.CollideAll<Platform>(player.Position - Vector2.UnitY, player.temp));
+        Platform platformByPriority = SurfaceIndex.GetPlatformByPriority(player.CollideAll<Platform>(player.Position - Vector2.UnitY * ModImports.InvertY, player.temp));
         if (platformByPriority != null) {
             index = platformByPriority.GetLandSoundIndex(player);
         }
-        Dust.Burst(player.TopCenter, (float)Math.PI / 2f, 4, player.DustParticleFromSurfaceIndex(index));
+        Dust.Burst(ModImports.IsPlayerInverted ? player.BottomCenter : player.TopCenter, (float)Math.PI / 2f * ModImports.InvertY, 4, player.DustParticleFromSurfaceIndex(index));
         SaveData.Instance.TotalJumps++;
     }
 
@@ -839,11 +841,8 @@ public static class CeilingTechMechanism {
             else if (direction.X < 0) {
                 FloatySpaceBlockDirection = 3;
             }
-            else if (direction.Y < 0) {
-                FloatySpaceBlockDirection = 2;
-            }
             else {
-                FloatySpaceBlockDirection = 0;
+                FloatySpaceBlockDirection = direction.Y * ModImports.InvertY < 0 ? 2 : 0;
             }
         }
         return orig(self, player, direction);

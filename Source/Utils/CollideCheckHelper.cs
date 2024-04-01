@@ -64,6 +64,11 @@ public static class CollideCheckHelper {
             offset = Vector2.Zero;
             return true;
         }
+        if (ModImports.IsPlayerInverted) { // well we should use IsEntityInverted here, but ...
+            alignment = InvertY(alignment);
+        }
+        List<Vector2> local_wigglelist = ModImports.IsPlayerInverted ? wiggleList.Select(vec => new Vector2(vec.X, -vec.Y)).ToList() : wiggleList;
+
         Vector2 orig_Position = entity.Position;
         Collider orig_Collider = entity.Collider;
         float orig_Top = entity.Top;
@@ -75,11 +80,11 @@ public static class CollideCheckHelper {
         entity.Transform(targetHitbox, out Vector2 trans_offset, alignment);
         Vector2 origin = entity.Position;
         Vector2 wiggle_offset = Vector2.Zero;
-        if (wiggleList.IsNullOrEmpty()) {
-            wiggleList = new List<Vector2>() { Vector2.Zero };
+        if (local_wigglelist.IsNullOrEmpty()) {
+            local_wigglelist = new List<Vector2>() { Vector2.Zero };
         }
         bool success = false;
-        foreach (Vector2 wiggle in wiggleList) {
+        foreach (Vector2 wiggle in local_wigglelist) {
             entity.Position = origin + wiggle;
             bool solid_loop_break = false;
             foreach (Entity solid in solids) {
@@ -294,6 +299,20 @@ public static class CollideCheckHelper {
     private static Dictionary<Entity, Direction> jumpThruDirections = new();
 
     private static List<Type> JumpThruIsNotJumpThruTypes = new();
+
+    public static Alignment InvertY(Alignment align) {
+        return align switch {
+            Alignment.Top => Alignment.Bottom,
+            Alignment.Bottom => Alignment.Top,
+            Alignment.TopLeft => Alignment.BottomLeft,
+            Alignment.TopCenter => Alignment.BottomCenter,
+            Alignment.TopRight => Alignment.BottomRight,
+            Alignment.BottomLeft => Alignment.TopLeft,
+            Alignment.BottomCenter => Alignment.TopCenter,
+            Alignment.BottomRight => Alignment.TopRight,
+            _ => align
+        };
+    }
 }
 
 

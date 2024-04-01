@@ -1,6 +1,3 @@
-using Celeste;
-using Celeste.Mod;
-using Celeste.Mod.CeilingUltra.Module;
 using Celeste.Mod.CeilingUltra.Utils;
 using Microsoft.Xna.Framework;
 using Mono.Cecil.Cil;
@@ -9,6 +6,7 @@ using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
 using static Celeste.TextMenu;
 
+namespace Celeste.Mod.CeilingUltra.Module;
 internal static class ModOptionsMenu {
 
     private static TextMenu.Item indexer;

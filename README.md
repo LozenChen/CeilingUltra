@@ -2,13 +2,13 @@
 
 https://gamebanana.com/mods/485472
 
-本文档的最后更新时间: v1.2.5, 请自行留意这是否是最新版本.
+本文档的最后更新时间: v1.3.0, 请自行留意这是否是最新版本.
 
 Mod 兼容性:
 
 与 Mod 的各向 JumpThru 兼容.
 
-与 GravityHelper 的重力反转内容不兼容, 但你仍然可以在常规重力下正确使用 GravityHelper.UpsideDownJumpThru.
+与 GravityHelper 兼容.
 
 机制:
 
