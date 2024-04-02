@@ -10,6 +10,7 @@ public class CeilingUltraSettings : EverestModuleSettings {
     }
 
     internal void OnLoadSettings() {
+        GroundJumpEnabled = GroundHyperEnabled = GroundUltraEnabled = true;
     }
 
 
@@ -198,9 +199,9 @@ public static class LevelSettings {
             }
         }
     }
-    public static bool GroundJumpEnabled => MainEnabled && OverrideGroundTech.GetValueOrDefault(ceilingUltraSetting.GroundJumpEnabled);
+    public static bool GroundJumpEnabled => !MainEnabled || OverrideGroundTech.GetValueOrDefault(ceilingUltraSetting.GroundJumpEnabled);
 
-    public static bool GroundHyperEnabled => MainEnabled && OverrideGroundTech.GetValueOrDefault(ceilingUltraSetting.GroundHyperEnabled);
+    public static bool GroundHyperEnabled => !MainEnabled || OverrideGroundTech.GetValueOrDefault(ceilingUltraSetting.GroundHyperEnabled);
 
-    public static bool GroundUltraEnabled => MainEnabled && OverrideGroundTech.GetValueOrDefault(ceilingUltraSetting.GroundUltraEnabled);
+    public static bool GroundUltraEnabled => !MainEnabled || OverrideGroundTech.GetValueOrDefault(ceilingUltraSetting.GroundUltraEnabled);
 }
