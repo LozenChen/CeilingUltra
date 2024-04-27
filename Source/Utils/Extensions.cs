@@ -3,7 +3,6 @@ using Monocle;
 using System.Collections.Concurrent;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Runtime.CompilerServices;
 
 namespace Celeste.Mod.CeilingUltra.Utils;
 
@@ -437,28 +436,6 @@ internal static class DictionaryExtensions {
 
 internal static class LevelExtensions {
 
-    private static List<Entity> toAdd = new();
-    public static void AddImmediately(this Scene scene, Entity entity) {
-        // ensure entity is added even if the regular engine update loop is interrupted, e.g. TAS stop
-        toAdd.Add(entity);
-    }
-
-    [Initialize]
-    private static void Initialize() {
-        typeof(Scene).GetMethod("BeforeUpdate").HookBefore(AddEntities); // still add it so that if ultra fast forwarding (so render is skipped), there's no duplicate entity
-        typeof(Scene).GetMethod("BeforeRender").HookBefore(AddEntities);
-    }
-
-    private static void AddEntities() {
-        if (toAdd.IsNotEmpty()) {
-            foreach (Entity entity in toAdd) {
-                Engine.Scene.Add(entity);
-            }
-            toAdd.Clear();
-            Engine.Scene.Entities.UpdateLists();
-        }
-    }
-
     // this should always be called in Initialize, so when any tracker instance is created, these types are already stored
     public static void AddToTracker(Type entity, bool inherited = false) {
         if (!typeof(Entity).IsAssignableFrom(entity)) {
@@ -485,167 +462,7 @@ internal static class LevelExtensions {
             Tracker.StoredEntityTypes.Add(entity);
         }
     }
-
-    public static Vector2 ScreenToWorld(this Level level, Vector2 position) {
-        Vector2 size = new Vector2(320f, 180f);
-        Vector2 scaledSize = size / level.ZoomTarget;
-        Vector2 offset = level.ZoomTarget != 1f ? (level.ZoomFocusPoint - scaledSize / 2f) / (size - scaledSize) * size : Vector2.Zero;
-        float scale = level.Zoom * ((320f - level.ScreenPadding * 2f) / 320f);
-        Vector2 paddingOffset = new Vector2(level.ScreenPadding, level.ScreenPadding * 9f / 16f);
-
-        if (SaveData.Instance?.Assists.MirrorMode ?? false) {
-            position.X = 1920f - position.X;
-        }
-
-        if (ModUtils.UpsideDown) {
-            position.Y = 1080f - position.Y;
-        }
-
-        position /= 1920f / 320f;
-        position -= paddingOffset;
-        position = (position - offset) / scale + offset;
-        position = level.Camera.ScreenToCamera(position);
-        return position;
-    }
-
-    public static Vector2 WorldToScreen(this Level level, Vector2 position) {
-        Vector2 size = new Vector2(320f, 180f);
-        Vector2 scaledSize = size / level.ZoomTarget;
-        Vector2 offset = level.ZoomTarget != 1f ? (level.ZoomFocusPoint - scaledSize / 2f) / (size - scaledSize) * size : Vector2.Zero;
-        float scale = level.Zoom * ((320f - level.ScreenPadding * 2f) / 320f);
-        Vector2 paddingOffset = new Vector2(level.ScreenPadding, level.ScreenPadding * 9f / 16f);
-
-        position = level.Camera.CameraToScreen(position);
-        position = (position - offset) * scale + offset;
-        position += paddingOffset;
-        position *= 1920f / 320f;
-
-        if (SaveData.Instance?.Assists.MirrorMode ?? false) {
-            position.X = 1920f - position.X;
-        }
-
-        if (ModUtils.UpsideDown) {
-            position.Y = 1080f - position.Y;
-        }
-
-        return position;
-    }
-
-    public static Vector2 MouseToWorld(this Level level, Vector2 mousePosition) {
-        float viewScale = (float)Engine.ViewWidth / Engine.Width;
-        return level.ScreenToWorld(mousePosition / viewScale).Floor();
-    }
-
 }
-
-internal static class ColorExtensions {
-    public static Color SetAlpha(this Color color, float alpha) {
-        float beta = (3 - alpha) * alpha * 0.5f;
-        return new Color((int)((float)color.R * beta), (int)((float)color.G * beta), (int)((float)color.B * beta), (int)((float)color.A * alpha));
-    }
-}
-
-// https://github.com/NoelFB/Foster/blob/main/Framework/Extensions/EnumExt.cs
-internal static class EnumExtensions {
-    /// <summary>
-    /// Enum.Has boxes the value, where as this method does not.
-    /// </summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static unsafe bool Has<TEnum>(this TEnum lhs, TEnum rhs) where TEnum : unmanaged, Enum {
-        return sizeof(TEnum) switch {
-            1 => (*(byte*)&lhs & *(byte*)&rhs) > 0,
-            2 => (*(ushort*)&lhs & *(ushort*)&rhs) > 0,
-            4 => (*(uint*)&lhs & *(uint*)&rhs) > 0,
-            8 => (*(ulong*)&lhs & *(ulong*)&rhs) > 0,
-            _ => throw new Exception("Size does not match a known Enum backing type."),
-        };
-    }
-}
-
-internal static class Vector2Extensions {
-    public static string ToSimpleString(this Vector2 vector2, int decimals) {
-        return $"{vector2.X.ToFormattedString(decimals)}, {vector2.Y.ToFormattedString(decimals)}";
-    }
-
-    public static string ToDynamicFormattedString(this Vector2 vector2, int decimals) {
-        if (vector2 == Vector2.Zero) {
-            return "0";
-        }
-        else if (vector2.Y == 0f) {
-            return $"X = {vector2.X.ToDynamicDecimalsString(decimals)}";
-        }
-        else if (vector2.X == 0f) {
-            return $"Y = {vector2.Y.ToDynamicDecimalsString(decimals)}";
-        }
-        else {
-            int d1 = vector2.X.GetDecimals(decimals);
-            int d2 = vector2.Y.GetDecimals(decimals);
-            int d = Math.Max(d1, d2);
-            return $"X = {vector2.X.ToSignedString(d)} ; Y = {vector2.Y.ToSignedString(d)}";
-        }
-    }
-}
-
-internal static class NumberExtensions {
-    private static readonly string format = "0.".PadRight(339, '#');
-
-    private const double eps = 1E-6;
-
-    public static string ToDynamicDecimalsString(this float value, int decimals) {
-        string sign = value switch {
-            > 0 => "+",
-            < 0 => "-",
-            _ => ""
-        };
-        return sign + Math.Abs(value).ToString($"F{value.GetDecimals(decimals)}");
-    }
-
-    public static string ToSignedString(this float value, int decimals) {
-        string sign = value switch {
-            > 0 => "+",
-            < 0 => "-",
-            _ => ""
-        };
-        return sign + Math.Abs(value).ToFormattedString(decimals);
-    }
-    public static int GetDecimals(this float value, int decimals) {
-        int indeedDecimals = 0;
-        while (indeedDecimals < decimals) {
-            if (AlmostInteger(value, indeedDecimals)) {
-                break;
-            }
-            indeedDecimals++;
-        }
-        return indeedDecimals;
-    }
-
-    public static bool AlmostInteger(this float value, int decimals) {
-        return Math.Abs(value - Math.Round(value, decimals)) < eps;
-    }
-
-    public static bool AlmostInteger(this double value, int decimals) {
-        return Math.Abs(value - Math.Round(value, decimals)) < eps;
-    }
-
-    public static string ToFormattedString(this float value, int decimals) {
-        if (decimals == -1) {
-            return value.ToString(format);
-        }
-        else {
-            return ((double)value).ToFormattedString(decimals);
-        }
-    }
-
-    public static string ToFormattedString(this double value, int decimals) {
-        if (decimals == -1) {
-            return value.ToString(format); // unlimited precision
-        }
-        else {
-            return value.ToString($"F{decimals}");
-        }
-    }
-}
-
 
 internal static class SceneExtensions {
     public static Player GetPlayer(this Scene scene) => scene.Tracker.GetEntity<Player>();
