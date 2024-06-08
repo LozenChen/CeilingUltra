@@ -1,3 +1,4 @@
+using Celeste.Mod.CeilingUltra.Gameplay;
 using Celeste.Mod.Helpers;
 using MonoMod.Utils;
 using System.Reflection;
@@ -49,7 +50,7 @@ internal static class ModUtils {
     }
 
 
-    private static class ExtendedVariantsUtils {
+    internal static class ExtendedVariantsUtils {
         private static readonly Lazy<EverestModule> module = new(() => ModUtils.GetModule("ExtendedVariantMode"));
         private static readonly Lazy<object> triggerManager = new(() => module.Value?.GetFieldValue<object>("TriggerManager"));
 
@@ -61,6 +62,10 @@ internal static class ModUtils {
 
         // enum value might be different between different ExtendedVariantMode version, so we have to parse from string
         private static readonly Lazy<object> upsideDownVariant = new(ParseVariant("UpsideDown"));
+
+        private static readonly Lazy<object> ultraJumpVariant = new(ParseVariant("EveryJumpIsUltra"));
+
+        private static readonly Lazy<object> ultraSpeedMultiplier = new(ParseVariant("UltraSpeedMultiplier"));
 
         public static Func<object> ParseVariant(string value) {
             return () => {
@@ -75,9 +80,29 @@ internal static class ModUtils {
 
         public static bool UpsideDown => GetCurrentVariantValue(upsideDownVariant) is { } value && (bool)value;
 
+        public static bool UltraJumpMode => GetCurrentVariantValue(ultraJumpVariant) is { } value && (bool)value;
+
         public static object GetCurrentVariantValue(Lazy<object> variant) {
             if (variant.Value is null) return null;
             return getCurrentVariantValue.Value?.Invoke(triggerManager.Value, variant.Value);
+        }
+
+        public static void TryCeilingUltraJump(Player self, int dir) {
+            if (UltraJumpMode) {
+                self.DashDir.X = Math.Sign(self.DashDir.X);
+                self.DashDir.Y = 0f;
+                self.Speed.X *= (float)(GetCurrentVariantValue(ultraSpeedMultiplier) ?? 1.2f);
+                self.TryCeilingDuck(dir);
+            }
+        }
+
+        public static void TryVerticalUltraJump(Player self, int dir) {
+            if (UltraJumpMode) {
+                self.TrySqueezeHitbox(-dir, self.Speed.Y);
+                self.DashDir.Y = Math.Sign(self.DashDir.Y);
+                self.DashDir.X = 0f;
+                self.Speed.Y *= (float)(GetCurrentVariantValue(ultraSpeedMultiplier) ?? 1.2f);
+            }
         }
     }
 }

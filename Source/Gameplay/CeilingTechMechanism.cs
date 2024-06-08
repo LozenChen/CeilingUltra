@@ -7,6 +7,7 @@ using Monocle;
 using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
 using MonoMod.Utils;
+using System.Runtime.CompilerServices;
 using CelesteInput = Celeste.Input;
 
 namespace Celeste.Mod.CeilingUltra.Gameplay;
@@ -587,9 +588,27 @@ public static class CeilingTechMechanism {
                 (CeilingRefillDash && PlayerOnCeiling && !player.CollideCheck<IceCeiling>()) ||
                 (WallRefillDash && (PlayerOnLeftWall && !ClimbBlocker.Check(player.Scene, player, player.Position - Vector2.UnitX) || PlayerOnRightWall && !ClimbBlocker.Check(player.Scene, player, player.Position + Vector2.UnitX)))
             )
-            && (!player.CollideCheck<Spikes>() || SaveData.Instance.Assists.Invincible)) {
+            && (!FixedSpikeCollisionCheck(player) || SaveData.Instance.Assists.Invincible)) {
             player.RefillDash();
         }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool FixedSpikeCollisionCheck(Player player) {
+        /*
+        Collider orig = player.Collider;
+        player.Collider = player.hurtbox;
+        // we are not using PlayerCollider, so there's no side effect
+        bool result = Collide.Check(player, Engine.Scene.Tracker.GetEntities<Spikes>());
+        player.Collider = orig;
+        return result;
+        */
+        return Collide.Check(player, Engine.Scene.Tracker.GetEntities<Spikes>());
+        // some examples:
+        // 1) a spiked corner boost, i think we shouldn't get dashes back in this case
+        // 2) grab a wall, but our feet touches an upward spike, i think we should refill dash?
+        // 3) our right feet, but not other pixels of our right-side, touches the right wall, i think we should refill dash
+        // this looks quite contradictory...
     }
 
     public static void CeilingJump(this Player player, bool particles = true, bool playSfx = true) {
@@ -642,6 +661,8 @@ public static class CeilingTechMechanism {
             Dust.BurstFG(ModImports.IsPlayerInverted ? player.BottomCenter : player.TopCenter, (float)Math.PI / 2f * ModImports.InvertY, downPressed ? 8 : 4, downPressed ? 8f : 4f, player.DustParticleFromSurfaceIndex(index));
         }
         SaveData.Instance.TotalJumps++;
+
+        ModUtils.ExtendedVariantsUtils.TryCeilingUltraJump(player, priorDirection);
     }
 
     private static void CeilingJumpHookNormalUpdate(ILContext il) {

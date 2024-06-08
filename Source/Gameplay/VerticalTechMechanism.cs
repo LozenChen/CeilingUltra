@@ -98,11 +98,13 @@ public static class VerticalTechMechanism {
         else if (CelesteInput.MoveY < 0 && UpwardWallJumpAcceleration) {
             player.Speed.Y = Math.Min(-105f, origSpeedY + upperWallJumpIncrement);
             player.Speed.Y += player.LiftBoost.Y;
+            ModUtils.ExtendedVariantsUtils.TryVerticalUltraJump(player, dir);
             player.varJumpSpeed = player.Speed.Y;
             player.varJumpTimer = Monocle.Calc.LerpClamp(0.2f, 0.1f, (player.Speed.Y - (-105f)) / (-325f - (-105f)));
         }
         else if (CelesteInput.MoveY > 0 && DownwardWallJumpAcceleration) {
             player.Speed.Y = Math.Max(40f, origSpeedY + downwardWallJumpIncrement);
+            ModUtils.ExtendedVariantsUtils.TryVerticalUltraJump(player, dir);
             CeilingTechMechanism.NextMaxFall = player.Speed.Y + 20f;
             player.varJumpTimer = 0f;
         }
