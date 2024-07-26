@@ -19,5 +19,6 @@ public class AbstractTrigger : Trigger {
         if (OneUse) {
             RemoveSelf();
         }
+        Logger.Log("CeilingUltra", "Trigger triggered");
     }
 }

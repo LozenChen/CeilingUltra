@@ -41,13 +41,13 @@ public static class TasInfo {
                 list.Add("Squeezed");
             }
             if (player.InControl && level.unpauseTimer <= 0f) {
-                if (CeilingTechMechanism.CeilingJumpGraceTimer.ToFloorFrames() is var ceilingCoyote and > 0) {
+                if (CeilingTechMechanism.CeilingJumpGraceTimer.ToCeilingFrames() is var ceilingCoyote and > 0) {
                     list.Add($"CeilingCoyote({ceilingCoyote})");
                 }
-                if (CeilingTechMechanism.LeftWallGraceTimer.ToFloorFrames() is var leftCoyote and > 0) {
+                if (CeilingTechMechanism.LeftWallGraceTimer.ToCeilingFrames() is var leftCoyote and > 0) {
                     list.Add($"LeftWallCoyote({leftCoyote})");
                 }
-                if (CeilingTechMechanism.RightWallGraceTimer.ToFloorFrames() is var rightCoyote and > 0) {
+                if (CeilingTechMechanism.RightWallGraceTimer.ToCeilingFrames() is var rightCoyote and > 0) {
                     list.Add($"RightWallCoyote({rightCoyote})");
                 }
                 if (CeilingTechMechanism.OverrideGroundUltraDir.HasValue) {
@@ -76,7 +76,7 @@ public static class TasInfo {
         }
     }
 
-    private static int ToFloorFrames(this float seconds) {
-        return (int)Math.Floor(seconds / Engine.RawDeltaTime / Engine.TimeRateB);
+    private static int ToCeilingFrames(this float seconds) {
+        return (int)Math.Ceiling(seconds / Engine.RawDeltaTime / Engine.TimeRateB);
     }
 }
