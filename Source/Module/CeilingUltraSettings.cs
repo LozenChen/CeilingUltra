@@ -16,11 +16,12 @@ public class CeilingUltraSettings : EverestModuleSettings {
 
     public bool Enabled = false;
 
-    public bool EnableAll { // we provide this property for tas set command
+    public bool TasEnableAll { // we provide this property for tas set command
         get => Enabled;
         set {
             Enabled = CeilingUltraEnabled = CeilingRefillStamina = CeilingRefillDash = CeilingJumpEnabled = CeilingHyperEnabled = UpdiagDashEndNoHorizontalSpeedLoss = VerticalHyperEnabled = VerticalUltraEnabled = DashBeginNoVerticalSpeedLoss = UpdiagDashEndNoVerticalSpeedLoss = WallRefillStamina = WallRefillDash = HorizontalUltraIntoVerticalUltra = VerticalUltraIntoHorizontalUltra = UpwardWallJumpAcceleration = DownwardWallJumpAcceleration = value;
             GroundJumpEnabled = GroundHyperEnabled = GroundUltraEnabled = true;
+            QoL = false;
             LevelSettings.ClearAllOverride();
         }
     }
@@ -70,7 +71,7 @@ public class CeilingUltraSettings : EverestModuleSettings {
 public static class LevelSettings {
 
     public static void ClearAllOverride() {
-        OverrideMainEnabled = OverrideCeilingTech = OverrideCeilingRefill = OverrideVerticalTech = OverrideWallRefill = OverrideBigInertiaUpdiagDash = OverrideUpwardWallJumpAcceleration = OverrideDownwardWallJumpAcceleration = OverrideGroundTech = null;
+        OverrideMainEnabled = OverrideCeilingTech = OverrideCeilingRefill = OverrideVerticalTech = OverrideWallRefill = OverrideBigInertiaUpdiagDash = OverrideUpwardWallJumpAcceleration = OverrideDownwardWallJumpAcceleration = OverrideGroundTech = OverrideQoL = null;
     }
 
     public static bool? OverrideMainEnabled {
