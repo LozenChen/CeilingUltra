@@ -20,4 +20,6 @@ public class CeilingUltraSession : EverestModuleSession {
     public bool? OverrideDownwardWallJumpAcceleration;
 
     public bool? OverrideGroundTech;
+
+    public bool? OverrideQoL;
 }

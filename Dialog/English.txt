@@ -25,3 +25,5 @@ CEILING_ULTRA_GROUND_MECHANISMS=                              > Ground Mechanism
 CEILING_ULTRA_GROUND_JUMP=								      Ground Jump
 CEILING_ULTRA_GROUND_SUPER_HYPER=                             Ground Super/Hyper
 CEILING_ULTRA_GROUND_ULTRA=                                   Ground Ultra
+CEILING_ULTRA_QOL=											  > Quality of Life
+CEILING_ULTRA_BUFFERED_VERTICAL_HYPER=						  Buffered Vertical Hyper

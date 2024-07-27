@@ -53,6 +53,7 @@ internal static class ModOptionsMenu {
             bool overrideUpWallJumpAcc = LevelSettings.OverrideUpwardWallJumpAcceleration.HasValue;
             bool overrideDownWallJumpAcc = LevelSettings.OverrideDownwardWallJumpAcceleration.HasValue;
             bool overrideGroundTech = LevelSettings.OverrideGroundTech.HasValue;
+            bool overrideQoL = LevelSettings.OverrideQoL.HasValue;
 
 
             Add(new EaseInSubHeader("Ceiling Mechanisms".ToDialogText()) { HeightExtra = 30f });
@@ -94,7 +95,11 @@ internal static class ModOptionsMenu {
             Add(new EaseInOnOffExt("Ground Ultra".ToDialogText(), LevelSettings.GroundUltraEnabled, overrideGroundTech).Change(value => ceilingUltraSetting.GroundUltraEnabled = value));
 
 
-            if (overrideMain || overrideCeilRefill || overrideCeilTech || overrideVertTech || overrideWallRefill || overrideUpdiagEnd || overrideUpWallJumpAcc || overrideDownWallJumpAcc || overrideGroundTech) {
+            Add(new EaseInSubHeader("QoL".ToDialogText()) { HeightExtra = 30f });
+
+            Add(new EaseInOnOffExt("Buffered Vertical Hyper".ToDialogText(), LevelSettings.QoL, overrideQoL).Change(value => ceilingUltraSetting.QoL = value)); // actually not buffered but stops wall jump when dash
+
+            if (overrideMain || overrideCeilRefill || overrideCeilTech || overrideVertTech || overrideWallRefill || overrideUpdiagEnd || overrideUpWallJumpAcc || overrideDownWallJumpAcc || overrideGroundTech || overrideQoL) {
                 Add(new EaseInSubHeader("Lock By Map".ToDialogText()) { TextColor = Color.Goldenrod, HeightExtra = 10f });
             }
 

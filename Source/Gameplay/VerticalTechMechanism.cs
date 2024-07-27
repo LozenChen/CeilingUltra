@@ -25,6 +25,8 @@ public static class VerticalTechMechanism {
 
     public static bool DownwardWallJumpAcceleration => LevelSettings.DownwardWallJumpAcceleration;
 
+    public static bool QoL => LevelSettings.QoL;
+
     private static readonly Vector2 squeezedSpriteScale = new Vector2(0.5f, 1.5f);
 
     [Load]
@@ -47,7 +49,7 @@ public static class VerticalTechMechanism {
             typeof(Player).GetMethodInfo("set_Ducking").IlHook(ModifySetDucking);
             typeof(Player).GetMethodInfo("orig_Update").IlHook(AutoUnsqueeze);
             typeof(Player).GetMethodInfo("DashUpdate").IlHook(VerticalHyperHookDashUpdate);
-            typeof(Player).GetMethodInfo("RedDashUpdate").IlHook(VerticalHyperHookDashUpdate);
+            typeof(Player).GetMethodInfo("RedDashUpdate").IlHook(VerticalHyperHookRedDashUpdate);
             typeof(Player).GetMethodInfo("DashCoroutine").GetStateMachineTarget().IlHook(DashBeginDontLoseVertSpeed);
             typeof(Player).GetMethodInfo("OnCollideV").IlHook(ProtectVarJumpTimer);
         }
@@ -89,6 +91,10 @@ public static class VerticalTechMechanism {
     }
     private static void invertHitbox(Hitbox hitbox) => hitbox.Position.Y = -hitbox.Position.Y - hitbox.Height;
 
+    private static bool QoLPreventWallJump(Player player, int dir) {
+        return QoL && player.StateMachine.state == 2 && -dir == Math.Sign(player.DashDir.X) && -dir == Math.Sign(player.Speed.X) && player.DashDir.Y != 0f;
+        // suppress wall jump in dash state if you are facing that wall, so you can buffer a vertical hyper
+    }
     private static void OnPlayerWallJump(On.Celeste.Player.orig_WallJump orig, Player player, int dir) {
         float origSpeedY = player.Speed.Y;
         orig(player, dir); // ExtendedJumpGraceTimer is cleared here
@@ -439,7 +445,56 @@ public static class VerticalTechMechanism {
         else {
             success = false;
         }
-        "Player.(Red)DashUpdate".LogHookData("Vertical Hyper", success);
+
+        bool success2 = true;
+        OpCode wall_jump_dir = OpCodes.Ldc_I4_M1;
+        if (cursor.TryGotoNext(ins => ins.OpCode == wall_jump_dir, ins => ins.MatchCallOrCallvirt<Player>(nameof(Player.WallJump)), ins => ins.OpCode == OpCodes.Ldc_I4_0, ins => ins.OpCode == OpCodes.Ret)) {
+            cursor.Index++;
+            Instruction target = cursor.Next.Next.Next.Next;
+            cursor.MoveAfterLabels();
+            cursor.EmitDelegate(QoLPreventWallJump);
+            cursor.Emit(OpCodes.Brtrue, target);
+            cursor.Emit(OpCodes.Ldarg_0);
+            cursor.Emit(OpCodes.Ldc_I4_M1);
+            cursor.Index += 2;
+        }
+        else {
+            success2 = false;
+        }
+        wall_jump_dir = OpCodes.Ldc_I4_1;
+        if (cursor.TryGotoNext(ins => ins.OpCode == wall_jump_dir, ins => ins.MatchCallOrCallvirt<Player>(nameof(Player.WallJump)), ins => ins.OpCode == OpCodes.Ldc_I4_0, ins => ins.OpCode == OpCodes.Ret)) {
+            cursor.Index++;
+            Instruction target = cursor.Next.Next.Next.Next;
+            cursor.MoveAfterLabels();
+            cursor.EmitDelegate(QoLPreventWallJump);
+            cursor.Emit(OpCodes.Brtrue, target);
+            cursor.Emit(OpCodes.Ldarg_0);
+            cursor.Emit(wall_jump_dir);
+        }
+        else {
+            success2 = false;
+        }
+
+        "Player.DashUpdate".LogHookData("Vertical Hyper", success);
+        "Player.DashUpdate".LogHookData("Vertical Hyper QoL", success2);
+    }
+
+    private static void VerticalHyperHookRedDashUpdate(ILContext il) {
+        ILCursor cursor = new ILCursor(il);
+        bool success = true;
+        if (cursor.TryGotoNext(ins => ins.OpCode == OpCodes.Ldarg_0, ins => ins.MatchCallOrCallvirt<Player>("get_SuperWallJumpAngleCheck"))) {
+            Instruction next = cursor.Next;
+            cursor.MoveAfterLabels();
+            cursor.Emit(OpCodes.Ldarg_0);
+            cursor.EmitDelegate(TryVerticalHyper);
+            cursor.Emit(OpCodes.Brfalse, next);
+            cursor.Emit(OpCodes.Ldc_I4_0);
+            cursor.Emit(OpCodes.Ret);
+        }
+        else {
+            success = false;
+        }
+        "Player.RedDashUpdate".LogHookData("Vertical Hyper", success);
     }
 
     private static bool TryVerticalHyper(Player player) {

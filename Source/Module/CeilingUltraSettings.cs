@@ -63,6 +63,7 @@ public class CeilingUltraSettings : EverestModuleSettings {
 
     public bool DownwardWallJumpAcceleration { get; set; } = true;
 
+    public bool QoL { get; set; } = true;
     public bool ShowInPauseMenu { get; set; } = true;
 }
 
@@ -204,4 +205,17 @@ public static class LevelSettings {
     public static bool GroundHyperEnabled => !MainEnabled || OverrideGroundTech.GetValueOrDefault(ceilingUltraSetting.GroundHyperEnabled);
 
     public static bool GroundUltraEnabled => !MainEnabled || OverrideGroundTech.GetValueOrDefault(ceilingUltraSetting.GroundUltraEnabled);
+
+    // QoL
+
+    public static bool? OverrideQoL {
+        get => CeilingUltraSession.Instance?.OverrideQoL;
+        set {
+            if (CeilingUltraSession.Instance is { } instance) {
+                instance.OverrideQoL = value;
+            }
+        }
+    }
+    public static bool QoL => MainEnabled && OverrideQoL.GetValueOrDefault(ceilingUltraSetting.QoL);
+
 }

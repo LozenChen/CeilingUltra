@@ -2,7 +2,7 @@
 
 https://gamebanana.com/mods/485472
 
-本文档的最后更新时间: v1.3.3, 请自行留意这是否是最新版本.
+本文档的最后更新时间: v1.3.4, 请自行留意这是否是最新版本.
 
 Mod 兼容性:
 
@@ -26,7 +26,9 @@ Mod 的设置界面足以说明其大概.
 
 你可以反向天花板 super/hyper, 反向竖直 hyper.
 
-斜冲左右墙可以被墙跳打断竖直 ultra, 但斜冲天花板不能被蹬天花板跳打断天花板 ultra. 这是因为 DashUpdate 中不允许你在地面上进行狼跳, 因此我们也不允许你蹬天花板跳.
+斜冲左右墙可以被墙跳打断竖直 ultra (也会打断 hyper), 但斜冲天花板不能被蹬天花板跳打断天花板 ultra. 这是因为 DashUpdate 中不允许你在地面上进行狼跳, 因此我们也不允许你蹬天花板跳.
+
+如果你开启了 QoL 的预输入纵向 hyper, 那么在冲刺状态下, 如果是斜冲并且有对应的速度分量, 则你无法踢水平速度方向所指向的墙, 这使得你可以预输入纵向 hyper. 不过你仍然可以踢反向的墙来打断冲刺, 或者使用正反向的抓跳.
 
 竖直向上 hyper 尽管只有 6 帧跳跃长度, 但此时撞到头并不会取消跳跃, 我们有机制保护这一点. 这使得你很容易绕过 1px 的凸出角落 (当然, 鉴于水平速度并不高, 你还需要按住远离墙面的方向).
 
@@ -55,6 +57,8 @@ NormalUpdate 中蹬天花板跳的优先级: 最低.
 冲刺第 5 帧的几种 ultra 的优先级: 地面 ultra > 竖直 ultra > 天花板 ultra. 这保证你在地面靠墙时能顺利做出 reverse hyper.
 
 DashUpdate 中几种动作的优先级: Super Jump > Vertical Hyper > Super WallJump > ClimbJump > WallJump. 向上/下蹬墙加速视为变种的 WallJump.
+
+RedDashUpdate 中, 不仅可以 Ceiling Super, 并且可以 Ceiling Hyper (条件比较难达成), 在更苛刻的条件下还可以 Vertical Hyper.
 
 不同于竖直上冲无法抓跳, 在冲刺并进入挤压态的情况下, 你依然可以抓跳.
 

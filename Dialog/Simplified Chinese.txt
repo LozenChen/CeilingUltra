@@ -27,3 +27,5 @@ CEILING_ULTRA_GROUND_MECHANISMS=                              > 地面机制
 CEILING_ULTRA_GROUND_JUMP=								      地面跳跃
 CEILING_ULTRA_GROUND_SUPER_HYPER=                             地面 Super/Hyper
 CEILING_ULTRA_GROUND_ULTRA=                                   地面 Ultra
+CEILING_ULTRA_QOL=											  > 容错机制
+CEILING_ULTRA_BUFFERED_VERTICAL_HYPER=						  预输入纵向 Hyper
