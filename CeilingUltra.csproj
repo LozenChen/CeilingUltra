@@ -1,8 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net4.5.2</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
 	<LangVersion>10.0</LangVersion>
+	<CelestePrefix Condition="'$(CelestePrefix)' == '' And Exists('../../Celeste.dll')">../..</CelestePrefix>
+	<CelestePrefix Condition="'$(CelestePrefix)' == ''">lib-stripped</CelestePrefix>
+	  
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Authors>$(AssemblyName)</Authors>
@@ -24,9 +27,7 @@
   </ItemDefinitionGroup>
 
   <ItemGroup>
-    <Reference Include="Celeste">
-      <HintPath>..\..\legacyRef\Celeste.exe</HintPath>
-    </Reference>
+    <Reference Include="$(CelestePrefix)\Celeste.dll" Publicize="true" />
     <Reference Include="FNA">
       <HintPath>Libs\FNA.dll</HintPath>
     </Reference>
