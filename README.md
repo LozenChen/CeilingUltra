@@ -2,7 +2,7 @@
 
 https://gamebanana.com/mods/485472
 
-本文档的最后更新时间: v1.3.4, 请自行留意这是否是最新版本.
+本文档的最后更新时间: v1.3.5, 请自行留意这是否是最新版本.
 
 Mod 兼容性:
 
@@ -11,6 +11,8 @@ Mod 兼容性:
 与 GravityHelper 兼容.
 
 与 ExtendedVariantMode 的 UltraJump 兼容. 体现为天花板跳有水平 1.2 倍加速且获得蹲姿, 向上向下踢墙跳有竖直 1.2 倍加速且获得挤压态.
+
+与 Goober Helper / Bounce Helper 的兼容性不在设计范围内, 但如果你觉得有不合理的地方, 可以向我提出建议.
 
 机制:
 
