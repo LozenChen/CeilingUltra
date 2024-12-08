@@ -102,20 +102,20 @@ public static class CeilingTechMechanism {
         }
         switch (FloatySpaceBlockDirection) {
             case 1: {
-                    PlayerOnRightWall = true;
-                    break;
-                }
+                PlayerOnRightWall = true;
+                break;
+            }
             case 2: {
-                    PlayerOnCeiling = true;
-                    break;
-                }
+                PlayerOnCeiling = true;
+                break;
+            }
             case 3: {
-                    PlayerOnLeftWall = true;
-                    break;
-                }
+                PlayerOnLeftWall = true;
+                break;
+            }
             default: {
-                    break;
-                }
+                break;
+            }
         }
         FloatySpaceBlockDirection = 0;
 
@@ -639,6 +639,7 @@ public static class CeilingTechMechanism {
             player.Speed.Y = +105f;
             player.Sprite.Scale = new Vector2(0.6f, 1.4f);
         }
+        LiftBoostY.OnCeilingJump(player);
         player.varJumpSpeed = player.Speed.Y;
         player.LaunchedBoostCheck();
         if (playSfx) {
@@ -804,6 +805,7 @@ public static class CeilingTechMechanism {
         player.wallBoostTimer = 0f;
         player.Speed.X = 260f * xDirection + player.LiftBoost.X;
         player.Speed.Y = +105f;
+        LiftBoostY.OnCeilingHyper(player);
         player.gliderBoostTimer = 0.55f; // would be cursed i guess
         player.Play("event:/char/madeline/jump");
         if (wasDuck) {

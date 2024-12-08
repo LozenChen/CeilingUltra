@@ -237,6 +237,7 @@ public static class CollideCheckHelper {
         // Celeste.Mod.GravityHelper.Entities.UpsideDownJumpThru -> Up
 
         // Celeste.Mod.JungleHelper.Entities.ClimbableOneWayPlatform -> No, but it's just an Entity so no need to treat it
+        // (it's just one-way-climbable, but you can go through it from both sides)
 
         // Celeste.Mod.MaxHelpingHand.Entities.SidewaysJumpThru -> Left/Right, depends on AllowLeftToRight 
         // Celeste.Mod.MaxHelpingHand.Entities.AttachedSidewaysJumpThru -> Subclass of above

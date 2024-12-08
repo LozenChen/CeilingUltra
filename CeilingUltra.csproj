@@ -64,7 +64,6 @@
 		<Publicize Include="Celeste" />
 		<Publicize Include="MonoMod.Utils" />
 		<Publicize Include="ExtendedVariantMode" />
-		<Publicize Include="GravityHelper" />
 	</ItemGroup>
 	
   <ItemGroup>
