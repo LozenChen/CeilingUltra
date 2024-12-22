@@ -1,36 +1,9 @@
-﻿using System.Collections;
-using Monocle;
-using Celeste;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Monocle;
 
 namespace Celeste.Mod.CeilingUltra.Entities.TutorialMachine;
 public class CeilingUltraPlaybackTutorial {
-
-    public class Data {
-        public string name;
-
-        public Vector2 offset;
-
-        public List<Vector2> dashDirs;
-
-        public Data(string name, Vector2 offset, Vector2 dir1) {
-            this.name = name;   
-            this.offset = offset;
-            dashDirs = new List<Vector2>() { dir1};
-        }
-
-        public Data(string name, Vector2 offset, Vector2 dir1, Vector2 dir2) {
-            this.name = name;
-            this.offset = offset;
-            dashDirs = new List<Vector2>() { dir1, dir2 };
-        }
-        public Data(string name, Vector2 offset, Vector2 dir1, Vector2 dir2, Vector2 dir3) {
-            this.name = name;
-            this.offset = offset;
-            dashDirs = new List<Vector2>() { dir1, dir2, dir3 };
-        }
-    }
 
     public Action OnRender = null;
 
@@ -69,7 +42,7 @@ public class CeilingUltraPlaybackTutorial {
 
     internal CustomPlayerPlayBack CurrPlayback { get; private set; }
 
-    public CeilingUltraPlaybackTutorial(List<Data> infos) {
+    public CeilingUltraPlaybackTutorial(List<CeilingUltraPlaybackData> infos) {
         PlayBacks = infos.Select(info => new CustomPlayerPlayBack(info.offset, PlayerSpriteMode.MadelineNoBackpack, PlaybackData.Tutorials[$"CeilingUltra/{info.name}"], PlayNextPlayBack)).ToList();
         DashDirections = new();
         infos.ForEach(info => DashDirections.AddRange(info.dashDirs));

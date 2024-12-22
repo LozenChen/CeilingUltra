@@ -1,9 +1,9 @@
-﻿using System.Collections;
+﻿using Microsoft.Xna.Framework;
 using Monocle;
-using Microsoft.Xna.Framework;
+using System.Collections;
 namespace Celeste.Mod.CeilingUltra.Entities.TutorialMachine;
 
-public class CeilingUltraPage05 : CeilingUltraPage {
+public abstract class AbstractCeilingUltraPage05 : CeilingUltraPage {
     private class Display {
         public Vector2 Position;
 
@@ -19,12 +19,21 @@ public class CeilingUltraPage05 : CeilingUltraPage {
 
         public MTexture texture;
 
-        public Display(Vector2 position, string text, string name, Vector2 offset, Vector2 dashDir) {
+        public Vector2 textureOffset;
+
+        private int frameIndex;
+
+        private CustomPlayerPlayBack playback;
+
+        public Display(Vector2 position, string text, List<CeilingUltraPlaybackData> datas) {
             Position = position;
             Info = FancyText.Parse(text, 896, 8, 1f, Color.Black * 0.6f);
-            Tutorial = new CeilingUltraPlaybackTutorial(new List<CeilingUltraPlaybackTutorial.Data> { new CeilingUltraPlaybackTutorial.Data(name, offset, dashDir) }) {
+            Tutorial = new CeilingUltraPlaybackTutorial(datas) {
                 OnRender = () => {
                     Draw.Line(-64f, 20f, 64f, 20f, Color.Black);
+                },
+                OnChange = () => {
+                    playback = Tutorial.CurrPlayback;
                 }
             };
             Tutorial.Initialize();
@@ -32,10 +41,10 @@ public class CeilingUltraPage05 : CeilingUltraPage {
         }
 
         private IEnumerator Routine() {
-            PlayerPlayback playback = Tutorial.CurrPlayback;
+            playback = Tutorial.CurrPlayback;
             int step = 0;
             while (true) {
-                int frameIndex = playback.FrameIndex;
+                frameIndex = playback.FrameIndex;
                 if (step % 2 == 0) {
                     Tutorial.Update();
                 }
@@ -76,23 +85,34 @@ public class CeilingUltraPage05 : CeilingUltraPage {
                 Draw.Line(position - vector * num2, position + vector * num2, Color.Red, thickness);
                 Draw.Line(position - vector2 * num2, position + vector2 * num2, Color.Red, thickness);
             }
-            texture.DrawCentered(Position - Vector2.UnitY * 170f, Color.White, 3f);
+            texture.DrawCentered(Position + textureOffset, Color.White, 3f);
         }
     }
 
-    private List<Display> displays = new List<Display>();
+    private readonly List<Display> displays = new();
 
-    public CeilingUltraPage05() {
+    public AbstractCeilingUltraPage05() {
         Transition = Transitions.Spiral;
         ClearColor = Calc.HexToColor("fff2cc");
     }
 
+    public void AddRecord(List<CeilingUltraPlaybackData> datas, string text, string texturePath, Vector2 textureOffset) {
+        Display dis = new Display(new Vector2((float)base.Width * (0.28f + 0.44f * displays.Count), base.Height - 600), Dialog.Get(text), datas);
+        dis.texture = Presentation.Gfx[texturePath];
+        dis.textureOffset = textureOffset;
+        displays.Add(dis);
+    }
+
+    public void AddRecord(CeilingUltraPlaybackData data, string text, string texturePath, Vector2 textureOffset) {
+        AddRecord(new List<CeilingUltraPlaybackData>() { data }, text, texturePath, textureOffset);
+    }
+
+    public abstract void ImportData();
 
     public override void Added(CeilingUltraPresentation presentation) {
         base.Added(presentation);
-        MTexture texture = presentation.Gfx["platform/04"];
-        displays.Add(new Display(new Vector2((float)base.Width * 0.28f, base.Height - 600), Dialog.Get("CEILING_ULTRA_PAGE5_INFO1"), "ceiling_too_far", new Vector2(-50f, 20f), new Vector2(1f, -1f)).Apply(x => x.texture = texture));
-        displays.Add(new Display(new Vector2((float)base.Width * 0.72f, base.Height - 600), Dialog.Get("CEILING_ULTRA_PAGE5_INFO2"), "ceiling_too_late", new Vector2(-50f, 20f), new Vector2(1f, -1f)).Apply(x => x.texture = texture));
+        displays.Clear();
+        ImportData();
     }
 
     public override IEnumerator Routine() {

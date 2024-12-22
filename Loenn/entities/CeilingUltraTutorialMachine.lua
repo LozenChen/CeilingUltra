@@ -7,8 +7,12 @@ tutorialMachine.name = "CeilingUltra/CeilingUltraTutorialMachine"
 tutorialMachine.depth = 1000
 
 tutorialMachine.placements = {
-        name = "Ceiling Ultra Tutorial Machine",
-        placementType = "rectangle",
+  name = "Ceiling Ultra Tutorial Machine",
+  placementType = "rectangle",
+  data = {
+    usingNoiseSfx = false,
+    PPT_Type = "Ceiling Ultra Tutorial"
+  }
 }
 
 
@@ -35,5 +39,16 @@ end
 function tutorialMachine.rectangle(room, entity)
     return utils.rectangle(entity.x - 60, entity.y - 64, 120, 64)
 end
+
+tutorialMachine.fieldInformation = {
+  PPT_Type = {
+    options = {
+      ["Ceiling Ultra Tutorial"] = "Ceiling Ultra Tutorial",
+      ["Ceiling Hyper Tutorial"] = "Ceiling Hyper Tutorial",
+      ["Wall Hyper Tutorial"] = "Wall Hyper Tutorial"
+    },
+    editable = false
+  }
+}
 
 return tutorialMachine

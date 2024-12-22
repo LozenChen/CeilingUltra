@@ -1,9 +1,8 @@
-﻿using Monocle;
-using Microsoft.Xna.Framework;
-using System.Collections;
-using System.Runtime.CompilerServices;
+﻿using Celeste.Mod.Entities;
 using FMOD.Studio;
-using Celeste.Mod.Entities;
+using Microsoft.Xna.Framework;
+using Monocle;
+using System.Collections;
 
 namespace Celeste.Mod.CeilingUltra.Entities.TutorialMachine;
 
@@ -45,10 +44,11 @@ public class CeilingUltraTutorialMachine : JumpThru {
 
     private TalkComponent talk;
 
-    public bool useNoiseSfx;
+    public bool usingNoiseSfx;
 
+    public string usingPptPages;
 
-    public CeilingUltraTutorialMachine(Vector2 position)
+    public CeilingUltraTutorialMachine(Vector2 position, string pptType)
         : base(position, 88, safe: true) {
         base.Tag = Tags.TransitionUpdate;
         base.Depth = 1000;
@@ -66,12 +66,17 @@ public class CeilingUltraTutorialMachine : JumpThru {
         Add(talk = new TalkComponent(new Rectangle(-12, -8, 24, 8), new Vector2(0f, -50f), OnInteract));
         talk.Enabled = false;
         SurfaceSoundIndex = 42;
+        usingPptPages = pptType switch {
+            "Ceiling Hyper Tutorial" => "0a,1a,2,3a,4a,5a,6a",
+            "Wall Hyper Tutorial" => "0b,1b,2,3b,4b,5b,6b",
+            _ => "0,1,2,3a,4a,5a,3b,4b,5b,6"
+        };
     }
 
 
     public CeilingUltraTutorialMachine(EntityData data, Vector2 position)
-        : this(data.Position + position) {
-        useNoiseSfx = data.Bool("useNoise");
+        : this(data.Position + position, data.Attr("PPT_Type", "Ceiling Ultra Tutorial")) {
+        usingNoiseSfx = data.Bool("usingNoiseSfx");
     }
 
     public override void Added(Scene scene) {
@@ -91,7 +96,7 @@ public class CeilingUltraTutorialMachine : JumpThru {
 
     public override void Awake(Scene scene) {
         base.Awake(scene);
-        if (useNoiseSfx) {
+        if (usingNoiseSfx) {
             Add(signSfx = new SoundSource(new Vector2(8f, -16f), "event:/new_content/env/local/cafe_sign"));
         }
         else {
@@ -120,7 +125,7 @@ public class CeilingUltraTutorialMachine : JumpThru {
                     }
                 }
                 if (playerInside) {
-                    float percent = 1f - Calc.YoYo(Calc.ClampedMap(entity.X, base.X - 37f, base.X + 46f, 0f, 1f));
+                    float percent = 1f - Calc.YoYo(Calc.ClampedMap(entity.X, base.X - 37f, base.X + 46f, 0f, 1f)) / 2f;
                     Audio.SetMusicParam("fade", percent);
                 }
             }
@@ -148,6 +153,7 @@ public class CeilingUltraTutorialMachine : JumpThru {
                 Audio.SetParameter(usingSfx, "end", 1f);
                 Audio.Stop(usingSfx);
             }
+            Audio.SetMusicParam("fade", 0f);
             inCutscene = true;
             interactStartZoom = level.ZoomTarget;
             level.StartCutscene(SkipInteraction, fadeInOnSkip: true, endingChapterAfterCutscene: false, resetZoomOnSkip: false);
@@ -164,7 +170,7 @@ public class CeilingUltraTutorialMachine : JumpThru {
         usingSfx = Audio.Play("event:/state/cafe_computer_active", player.Position);
         Audio.Play("event:/new_content/game/10_farewell/cafe_computer_on", player.Position);
         Audio.Play("event:/new_content/game/10_farewell/cafe_computer_startupsfx", player.Position);
-        presentation = new CeilingUltraPresentation(usingSfx);
+        presentation = new CeilingUltraPresentation(usingSfx, usingPptPages);
         Scene.Add(presentation);
         while (presentation.Viewing) {
             yield return null;

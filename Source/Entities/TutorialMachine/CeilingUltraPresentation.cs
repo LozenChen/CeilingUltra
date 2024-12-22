@@ -1,8 +1,9 @@
-using System.Collections;
+using Celeste.Mod.CeilingUltra.Utils;
 using FMOD.Studio;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Monocle;
+using System.Collections;
 
 namespace Celeste.Mod.CeilingUltra.Entities.TutorialMachine;
 
@@ -39,6 +40,8 @@ public class CeilingUltraPresentation : Entity {
     private VertexPositionColorTexture[] verts = new VertexPositionColorTexture[6];
 
     private EventInstance usingSfx;
+
+    public List<string> pagesId;
 
     public bool Viewing { get; private set; }
 
@@ -82,39 +85,24 @@ public class CeilingUltraPresentation : Entity {
         }
     }
 
-    public CeilingUltraPresentation(EventInstance usingSfx = null) {
+    public CeilingUltraPresentation(EventInstance usingSfx = null, string pages = null) {
         base.Tag = Tags.HUD;
         Viewing = true;
         Add(new Coroutine(Routine()));
         this.usingSfx = usingSfx;
         Gfx = new();
+        if (pages.IsNullOrEmpty()) {
+            pagesId = "0,1,2,3a,4a,5a,3b,4b,5b,6".Split(',').ToList();
+        }
+        else {
+            pagesId = pages.Split(',').ToList();
+        }
     }
 
     private IEnumerator Routine() {
-        /*
-        pages.Add(new CeilingUltraPage00());
-
-        pages.Add(new CeilingUltraPage01());
-
-        pages.Add(new CeilingUltraPage02());
-        */
-
-        /*
-        pages.Add(new CeilingUltraPage03());
-
-        pages.Add(new CeilingUltraPage04());
-
-        pages.Add(new CeilingUltraPage05());
-        */
-
-        // pages.Add(new CeilingUltraPage03b());
-
-        pages.Add(new CeilingUltraPage04b());
-
-        pages.Add(new CeilingUltraPage05b());
-
-
-        pages.Add(new CeilingUltraPage06());
+        foreach (string str in pagesId) {
+            pages.Add(PageCollection.Create(str));
+        }
 
         foreach (CeilingUltraPage page in pages) {
             page.Added(this);

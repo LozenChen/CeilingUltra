@@ -1,6 +1,6 @@
-﻿using System.Collections;
+﻿using Microsoft.Xna.Framework;
 using Monocle;
-using Microsoft.Xna.Framework;
+using System.Collections;
 using System.Globalization;
 
 namespace Celeste.Mod.CeilingUltra.Entities.TutorialMachine;
@@ -16,12 +16,25 @@ public class CeilingUltraPage00 : CeilingUltraPage {
 
     private bool selected;
 
-    public CeilingUltraPage00() {
+    private string pptName;
+    public CeilingUltraPage00(TitleType title) {
         AutoProgress = true;
         ClearColor = Calc.HexToColor("118475");
         time = DateTime.Now.ToString("h:mm tt", CultureInfo.CreateSpecificCulture("en-US"));
         pptIcon = new Vector2(600f, 500f);
         cursor = new Vector2(1000f, 700f);
+        pptName = title switch {
+            TitleType.CeilingUltra => "CEILING_ULTRA_DESKTOP_POWERPOINT_CEILING_ULTRA",
+            TitleType.CeilingHyper => "CEILING_ULTRA_DESKTOP_POWERPOINT_CEILING_HYPER",
+            TitleType.WallHyper => "CEILING_ULTRA_DESKTOP_POWERPOINT_WALL_HYPER",
+        };
+    }
+
+
+    public enum TitleType {
+        CeilingUltra,
+        CeilingHyper,
+        WallHyper
     }
 
     public override IEnumerator Routine() {
@@ -50,13 +63,12 @@ public class CeilingUltraPage00 : CeilingUltraPage {
         }
     }
 
-    public override void Update() {
-    }
+    public override void Update() { }
 
     public override void Render() {
         DrawIcon(new Vector2(160f, 120f), "desktop/mymountain_icon", Dialog.Clean("WAVEDASH_DESKTOP_MYPC"));
         DrawIcon(new Vector2(160f, 320f), "desktop/recyclebin_icon", Dialog.Clean("WAVEDASH_DESKTOP_RECYCLEBIN"));
-        DrawIcon(pptIcon, "desktop/ceiling_ultra_icon", Dialog.Clean("CEILING_ULTRA_DESKTOP_POWERPOINT"));
+        DrawIcon(pptIcon, "desktop/ceiling_ultra_icon", Dialog.Clean(pptName));
         DrawTaskbar();
         Presentation.Gfx["desktop/cursor"].DrawCentered(cursor);
     }

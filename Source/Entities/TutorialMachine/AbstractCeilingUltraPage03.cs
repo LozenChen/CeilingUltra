@@ -1,10 +1,10 @@
-﻿using System.Collections;
+﻿using Microsoft.Xna.Framework;
 using Monocle;
-using Microsoft.Xna.Framework;
+using System.Collections;
 namespace Celeste.Mod.CeilingUltra.Entities.TutorialMachine;
 
-public class CeilingUltraPage03 : CeilingUltraPage {
-    private string title;
+public abstract class AbstractCeilingUltraPage03 : CeilingUltraPage {
+    private readonly string title;
 
     private string titleDisplayed;
 
@@ -16,16 +16,24 @@ public class CeilingUltraPage03 : CeilingUltraPage {
 
     private AreaCompleteTitle easyText;
 
-    public CeilingUltraPage03() {
+    public abstract string Title { get; }
+
+    public abstract string ClipArt { get; }
+
+    public abstract string Info { get; }
+
+    public abstract Vector2 ClipArtOffset { get; }
+
+    public AbstractCeilingUltraPage03() {
         Transition = Transitions.Blocky;
         ClearColor = Calc.HexToColor("d9ead3");
-        title = Dialog.Clean("CEILING_ULTRA_PAGE3_TITLE");
+        title = Dialog.Clean(Title);
         titleDisplayed = "";
     }
 
     public override void Added(CeilingUltraPresentation presentation) {
         base.Added(presentation);
-        clipArt = presentation.Gfx["ceiling_hyper"];
+        clipArt = presentation.Gfx[ClipArt];
     }
 
     public override IEnumerator Routine() {
@@ -40,7 +48,7 @@ public class CeilingUltraPage03 : CeilingUltraPage {
             yield return null;
         }
         yield return 0.25f;
-        infoText = FancyText.Parse(Dialog.Get("CEILING_ULTRA_PAGE3_INFO"), Width - 240, 32, 1f, Color.Black * 0.7f);
+        infoText = FancyText.Parse(Dialog.Get(Info), Width - 240, 32, 1f, Color.Black * 0.7f);
         yield return PressButton();
         Audio.Play("event:/new_content/game/10_farewell/ppt_its_easy");
         easyText = new AreaCompleteTitle(new Vector2((float)Width / 2f, Height - 150), Dialog.Clean("CEILING_ULTRA_PAGE3_EASY"), 2f, rainbow: true);
@@ -59,7 +67,7 @@ public class CeilingUltraPage03 : CeilingUltraPage {
             Vector2 scale = Vector2.One * (1f + (1f - clipArtEase) * 3f) * 0.8f;
             float rotation = (1f - clipArtEase) * 8f;
             Color color = Color.White * clipArtEase;
-            clipArt.DrawCentered(new Vector2((float)base.Width / 2f, (float)base.Height / 2f - 90f), color, scale, rotation);
+            clipArt.DrawCentered(new Vector2((float)base.Width / 2f + ClipArtOffset.X, (float)base.Height / 2f + ClipArtOffset.Y - 90f), color, scale, rotation);
         }
         if (infoText != null) {
             infoText.Draw(new Vector2((float)base.Width / 2f, base.Height - 350), new Vector2(0.5f, 0f), Vector2.One, 1f);

@@ -30,8 +30,12 @@ CEILING_ULTRA_BUFFERED_VERTICAL_HYPER=						  Buffered Wall Hyper
 CEILING_ULTRA_BUFFERED_VERTICAL_ULTRA=						  Buffered Wall Ultra
 
 #========================================== Ceiling Ultra Tutorial =========================================
-CEILING_ULTRA_DESKTOP_POWERPOINT=							  ceiling-{n}ultra.ppt
-CEILING_ULTRA_PAGE1_TITLE=									  Ceiling Ultra and You
+CEILING_ULTRA_DESKTOP_POWERPOINT_CEILING_ULTRA=				  ceiling-{n}ultra.ppt
+CEILING_ULTRA_DESKTOP_POWERPOINT_CEILING_HYPER=				  ceiling-{n}hyper.ppt
+CEILING_ULTRA_DESKTOP_POWERPOINT_WALL_HYPER=				  wall-{n}hyper.ppt
+CEILING_ULTRA_PAGE1_TITLE_CEILING_ULTRA=					  Ceiling Ultra and You
+CEILING_ULTRA_PAGE1_TITLE_CEILING_HYPER=					  Ceiling Hyper and You
+CEILING_ULTRA_PAGE1_TITLE_WALL_HYPER=						  Wall Hyper and You
 CEILING_ULTRA_PAGE1_SUBTITLE=								  A practical solution for catching birds in space
 CEILING_ULTRA_PAGE2_TITLE=									  Can't|Catch|That|Bird?
 CEILING_ULTRA_PAGE2_LIST=
@@ -41,17 +45,32 @@ CEILING_ULTRA_PAGE2_LIST=
 															  -And {+PART_OF_YOU} won't help{n}
 															  -(she's the worst)
 CEILING_ULTRA_PAGE2_IMPOSSIBLE=								  IMPOSSIBLE???
-CEILING_ULTRA_PAGE3_TITLE=									  Introducing... Ceiling Hyper!!
-CEILING_ULTRA_PAGE3_INFO=									  With {~}Ceiling Hyper{/~}, you can jump very far{n}and regain your dash {~}at the same time!{/~}
 CEILING_ULTRA_PAGE3_EASY=									  It's "easy!"
+CEILING_ULTRA_PAGE3A_TITLE=									  Introducing... Ceiling Hyper!!
+CEILING_ULTRA_PAGE3A_INFO=									  With {~}Ceiling Hyper{/~}, you can jump very far{n}and regain your dash {~}at the same time!{/~}
+CEILING_ULTRA_PAGE3B_TITLE=									  Introducing... Wall Hyper!!
+CEILING_ULTRA_PAGE3B_INFO=									  With {~}Wall Hyper{/~}, you can jump very high{n}and regain your dash {~}at the same time!{/~}
 CEILING_ULTRA_PAGE4_TITLE=									  How It's Done
-CEILING_ULTRA_PAGE4_LIST=
+CEILING_ULTRA_PAGE4A_LIST=
 															  -Jump{n}
 															  -Dash diagonally up to the ceiling{n}
 															  -Immediately jump again and hold forward{n}
 															  -{~}You did it!{/~}{n}
-															  -(can chain another diagonal up dash)
+															  -(can chain another diagonal up dash){n}
+															  -(you can get an {~}ultra{/~} if the height is appropriate.{n}
+															  But due to gravity, it's hard {#aaaaaa}(damn gravity){#})
+CEILING_ULTRA_PAGE4B_LIST=
+															  -Dash diagonally up to the wall{n}
+															  -Immediately jump again and hold jump{n}
+															  -{~}You did it!{/~}{n}
+															  -(can chain another diagonal up dash){n}
+															  -(you can get a {~}wall ultra{/~} if the distance{n}
+															  is appropriate, then press up + jump to leave the wall)
 CEILING_ULTRA_PAGE5_TITLE=									  Trouble in Paradise?
-CEILING_ULTRA_PAGE5_INFO1=									  {#ff0000}If you don't regain your dash{#}{n}you're starting {~}too far{/~} from the ceiling.
-CEILING_ULTRA_PAGE5_INFO2=									  {#ff0000}If you don't get much distance{#}{n}you're jumping {~}too late{/~} on the ceiling.
-CEILING_ULTRA_PAGE6_TITLE=									  Happy Ceiling Ultra!
+CEILING_ULTRA_PAGE5A_INFO1=									  {#ff0000}If you don't regain your dash{#}{n}you're starting {~}too far{/~} away {n}from the ceiling.
+CEILING_ULTRA_PAGE5A_INFO2=									  {#ff0000}If you don't get much distance{#}{n}you're jumping {~}too late{/~} off {n}the ceiling.
+CEILING_ULTRA_PAGE5B_INFO1=									  {#ff0000}If you don't regain your dash{#}{n}you're jumping {~}too early{/~} off the wall.
+CEILING_ULTRA_PAGE5B_INFO2=									  {#ff0000}If you don't get much height{#}{n}you're starting {~}too far{/~} {n}away from the wall{n}or jumping {~}too late{/~} off the wall.
+CEILING_ULTRA_PAGE6_CEILING_ULTRA=							  Happy Ceiling Ultra!
+CEILING_ULTRA_PAGE6_CEILING_HYPER=							  Happy Ceiling Hyper!
+CEILING_ULTRA_PAGE6_WALL_HYPER=								  Happy Wall Hyper!

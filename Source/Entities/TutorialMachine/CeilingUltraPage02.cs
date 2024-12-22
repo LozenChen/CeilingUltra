@@ -1,8 +1,7 @@
-﻿using System.Collections;
-using Monocle;
-using Microsoft.Xna.Framework;
-using System.Runtime.CompilerServices;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Monocle;
+using System.Collections;
 
 namespace Celeste.Mod.CeilingUltra.Entities.TutorialMachine;
 

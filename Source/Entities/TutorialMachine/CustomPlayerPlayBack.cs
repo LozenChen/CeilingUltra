@@ -14,7 +14,7 @@ internal class CustomPlayerPlayBack : PlayerPlayback {
     }
 
     public void SilentRestart() {
-        if (!Silent){
+        if (!Silent) {
             Audio.Play("event:/new_content/char/tutorial_ghost/appear", Position);
         }
         Visible = true;

@@ -1,5 +1,5 @@
-﻿using System.Collections;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
+using System.Collections;
 
 namespace Celeste.Mod.CeilingUltra.Entities.TutorialMachine;
 
