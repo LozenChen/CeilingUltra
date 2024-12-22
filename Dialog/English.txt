@@ -8,9 +8,9 @@ CEILING_ULTRA_CEILING_REFILL_DASH=                            Ceiling Refill Das
 CEILING_ULTRA_CEILING_JUMP=                                   Ceiling Jump
 CEILING_ULTRA_CEILING_SUPER_HYPER=                            Ceiling Super/Hyper
 CEILING_ULTRA_UPDIAG_DASH_END_NO_HORIZONTAL_SPEED_LOSS=       Updiag Dash End No Horizontal Speed Loss
-CEILING_ULTRA_VERTICAL_MECHANISMS=                            > Vertical Mechanisms
-CEILING_ULTRA_VERTICAL_ULTRA=                                 Vertical Ultra
-CEILING_ULTRA_VERTICAL_HYPER=                                 Vertical Hyper
+CEILING_ULTRA_VERTICAL_MECHANISMS=                            > Wall Mechanisms
+CEILING_ULTRA_VERTICAL_ULTRA=                                 Wall Ultra
+CEILING_ULTRA_VERTICAL_HYPER=                                 Wall Hyper
 CEILING_ULTRA_WALL_REFILL_STAMINA=                            Wall Refill Stamina
 CEILING_ULTRA_WALL_REFILL_DASH=                               Wall Refill Dash
 CEILING_ULTRA_DASH_BEGIN_NO_VERTICAL_SPEED_LOSS=              Dash Begin No Vertical Speed Loss
@@ -26,4 +26,32 @@ CEILING_ULTRA_GROUND_JUMP=								      Ground Jump
 CEILING_ULTRA_GROUND_SUPER_HYPER=                             Ground Super/Hyper
 CEILING_ULTRA_GROUND_ULTRA=                                   Ground Ultra
 CEILING_ULTRA_QOL=											  > Quality of Life
-CEILING_ULTRA_BUFFERED_VERTICAL_HYPER=						  Buffered Vertical Hyper
+CEILING_ULTRA_BUFFERED_VERTICAL_HYPER=						  Buffered Wall Hyper
+CEILING_ULTRA_BUFFERED_VERTICAL_ULTRA=						  Buffered Wall Ultra
+
+#========================================== Ceiling Ultra Tutorial =========================================
+CEILING_ULTRA_DESKTOP_POWERPOINT=							  ceiling-{n}ultra.ppt
+CEILING_ULTRA_PAGE1_TITLE=									  Ceiling Ultra and You
+CEILING_ULTRA_PAGE1_SUBTITLE=								  A practical solution for catching birds in space
+CEILING_ULTRA_PAGE2_TITLE=									  Can't|Catch|That|Bird?
+CEILING_ULTRA_PAGE2_LIST=
+															  -Fact: Birds are hard to catch{n}
+															  -Wow. It's fast!{n}
+															  -Also, it can fly{n}
+															  -And {+PART_OF_YOU} won't help{n}
+															  -(she's the worst)
+CEILING_ULTRA_PAGE2_IMPOSSIBLE=								  IMPOSSIBLE???
+CEILING_ULTRA_PAGE3_TITLE=									  Introducing... Ceiling Hyper!!
+CEILING_ULTRA_PAGE3_INFO=									  With {~}Ceiling Hyper{/~}, you can jump very far{n}and regain your dash {~}at the same time!{/~}
+CEILING_ULTRA_PAGE3_EASY=									  It's "easy!"
+CEILING_ULTRA_PAGE4_TITLE=									  How It's Done
+CEILING_ULTRA_PAGE4_LIST=
+															  -Jump{n}
+															  -Dash diagonally up to the ceiling{n}
+															  -Immediately jump again and hold forward{n}
+															  -{~}You did it!{/~}{n}
+															  -(can chain another diagonal up dash)
+CEILING_ULTRA_PAGE5_TITLE=									  Trouble in Paradise?
+CEILING_ULTRA_PAGE5_INFO1=									  {#ff0000}If you don't regain your dash{#}{n}you're starting {~}too far{/~} from the ceiling.
+CEILING_ULTRA_PAGE5_INFO2=									  {#ff0000}If you don't get much distance{#}{n}you're jumping {~}too late{/~} on the ceiling.
+CEILING_ULTRA_PAGE6_TITLE=									  Happy Ceiling Ultra!

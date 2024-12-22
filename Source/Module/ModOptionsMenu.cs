@@ -97,7 +97,9 @@ internal static class ModOptionsMenu {
 
             Add(new EaseInSubHeader("QoL".ToDialogText()) { HeightExtra = 30f });
 
-            Add(new EaseInOnOffExt("Buffered Vertical Hyper".ToDialogText(), LevelSettings.QoL, overrideQoL).Change(value => ceilingUltraSetting.QoL = value)); // actually not buffered but stops wall jump when dash
+            Add(new EaseInOnOffExt("Buffered Vertical Hyper".ToDialogText(), LevelSettings.QoLBufferVerticalHyper, overrideQoL).Change(value => ceilingUltraSetting.QoLBufferVerticalHyper = value)); // actually not buffered but stops wall jump when dash
+            Add(new EaseInOnOffExt("Buffered Vertical Ultra".ToDialogText(), LevelSettings.QoLBufferVerticalUltra, overrideQoL).Change(value => ceilingUltraSetting.QoLBufferVerticalUltra = value)); // stops some wall jump when in normal update
+
 
             if (overrideMain || overrideCeilRefill || overrideCeilTech || overrideVertTech || overrideWallRefill || overrideUpdiagEnd || overrideUpWallJumpAcc || overrideDownWallJumpAcc || overrideGroundTech || overrideQoL) {
                 Add(new EaseInSubHeader("Lock By Map".ToDialogText()) { TextColor = Color.Goldenrod, HeightExtra = 10f });

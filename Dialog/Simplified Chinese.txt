@@ -29,3 +29,45 @@ CEILING_ULTRA_GROUND_SUPER_HYPER=                             地面 Super/Hyper
 CEILING_ULTRA_GROUND_ULTRA=                                   地面 Ultra
 CEILING_ULTRA_QOL=											  > 容错机制
 CEILING_ULTRA_BUFFERED_VERTICAL_HYPER=						  预输入纵向 Hyper
+CEILING_ULTRA_BUFFERED_VERTICAL_ULTRA=						  预输入纵向 Ultra
+
+#========================================== Ceiling Ultra Tutorial =========================================
+CEILING_ULTRA_DESKTOP_POWERPOINT=							  ceiling-{n}ultra.ppt
+CEILING_ULTRA_PAGE1_TITLE=									  Ceiling Ultra 和你
+CEILING_ULTRA_PAGE1_SUBTITLE=								  空中抓鸟的实用方法
+CEILING_ULTRA_PAGE2_TITLE=								      抓|不|到|那只鸟？
+CEILING_ULTRA_PAGE2_LIST=
+															  -事实：鸟很难抓{n}
+															  -哇哦。它很快！{n}
+															  -它还会飞{n}
+															  -而 {+PART_OF_YOU} 不动手帮忙{n}
+															  -（她最坏了）
+
+CEILING_ULTRA_PAGE2_IMPOSSIBLE=								  不可能完成的任务？？？
+CEILING_ULTRA_PAGE3_TITLE=									  介绍...穹顶漫步 ！！
+CEILING_ULTRA_PAGE3_INFO=									  {~}穹顶漫步{/~} 可以让您跳得很远，{n}同时重新获得突进{~}能力！{/~}
+CEILING_ULTRA_PAGE3_EASY=									  这很“简单”！
+CEILING_ULTRA_PAGE4_TITLE=									  操作方法
+CEILING_ULTRA_PAGE4_LIST=
+															  -跳跃{n}
+															  -斜着向天花板突进{n}
+															  -立即再次跳跃并按住前进{n}
+															  -{~}成功了！{/~}{n}
+															  -（可以再接斜上冲）
+CEILING_ULTRA_PAGE5_TITLE=									  天堂中的麻烦？
+CEILING_ULTRA_PAGE5_INFO1=									  {#ff0000}如果没有重新获得突进能力，{#}{n}那就是您开始的时候离天花板{~}太远{/~}了。
+CEILING_ULTRA_PAGE5_INFO2=									  {#ff0000}如果没能跳得很远，{#}{n}那就是您在天花板上跳跃得{~}太晚{/~}了。
+CEILING_ULTRA_PAGE6_TITLE=									  穹顶漫步, 自由的舞步!
+
+CEILING_ULTRA_PAGE3B_TITLE=									  介绍...飞檐走壁 ！！
+CEILING_ULTRA_PAGE3B_INFO=									  {~}飞檐走壁{/~} 可以让您跳得很高，{n}同时重新获得突进{~}能力！{/~}
+CEILING_ULTRA_PAGE3B_EASY=									  这很“简单”！
+CEILING_ULTRA_PAGE4B_TITLE=									  操作方法
+CEILING_ULTRA_PAGE4B_LIST=
+															  -斜着向墙面突进{n}
+															  -撞到墙壁后按住跳跃{n}
+															  -{~}成功了！{/~}{n}
+															  -（可以再接斜上冲）
+CEILING_ULTRA_PAGE5B_TITLE=									  天堂中的麻烦？
+CEILING_ULTRA_PAGE5B_INFO1=									  {#ff0000}如果没有重新获得突进能力，{#}{n}那就是您在墙面上跳得{~}太早{/~}了。
+CEILING_ULTRA_PAGE5B_INFO2=									  {#ff0000}如果没能跳得很高，{#}{n}那就是您开始的时候离墙面{~}太远{/~}了，{n}或者在墙面上跳得{~}太晚{/~}了。

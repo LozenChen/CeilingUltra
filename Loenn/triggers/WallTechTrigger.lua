@@ -1,7 +1,7 @@
 return {
-    name = "CeilingUltra/VerticalTechTrigger",
+    name = "CeilingUltra/WallTechTrigger",
     placements = {
-        name = "Vertical Tech Trigger",
+        name = "Wall Tech Trigger",
         data = {
             OneUse = true,
             Enable = true

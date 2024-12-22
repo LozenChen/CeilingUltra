@@ -14,7 +14,7 @@ public class EnableAllTrigger : AbstractTrigger {
         CeilingRefill = data.Bool("CeilingRefill", true);
         CeilingTech = data.Bool("CeilingTech", true);
         BigInertiaUpdiagDash = data.Bool("BigInertiaUpdiagDash", true);
-        VerticalTech = data.Bool("VerticalTech", true);
+        WallTech = data.Bool("WallTech", true);
         UpwardWallJumpAcceleration = data.Bool("UpwardWallJumpAcceleration", true);
         DownwardWallJumpAcceleration = data.Bool("DownwardWallJumpAcceleration", true);
         GroundTech = data.Bool("GroundTech", true);
@@ -29,7 +29,7 @@ public class EnableAllTrigger : AbstractTrigger {
 
     public bool BigInertiaUpdiagDash;
 
-    public bool VerticalTech;
+    public bool WallTech;
 
     public bool UpwardWallJumpAcceleration;
 
@@ -46,7 +46,7 @@ public class EnableAllTrigger : AbstractTrigger {
         LevelSettings.OverrideCeilingRefill = CeilingRefill;
         LevelSettings.OverrideCeilingTech = CeilingTech;
         LevelSettings.OverrideBigInertiaUpdiagDash = BigInertiaUpdiagDash;
-        LevelSettings.OverrideVerticalTech = VerticalTech;
+        LevelSettings.OverrideVerticalTech = WallTech;
         LevelSettings.OverrideUpwardWallJumpAcceleration = UpwardWallJumpAcceleration;
         LevelSettings.OverrideDownwardWallJumpAcceleration = DownwardWallJumpAcceleration;
         LevelSettings.OverrideGroundTech = GroundTech;

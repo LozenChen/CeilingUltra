@@ -25,7 +25,9 @@ public static class VerticalTechMechanism {
 
     public static bool DownwardWallJumpAcceleration => LevelSettings.DownwardWallJumpAcceleration;
 
-    public static bool QoL => LevelSettings.QoL;
+    public static bool QoL_BufferVerticalHyper => LevelSettings.QoLBufferVerticalHyper;
+
+    public static bool QoL_BufferVerticalUltra => LevelSettings.QoLBufferVerticalUltra;
 
     private static readonly Vector2 squeezedSpriteScale = new Vector2(0.5f, 1.5f);
 
@@ -52,6 +54,7 @@ public static class VerticalTechMechanism {
             typeof(Player).GetMethodInfo("RedDashUpdate").IlHook(VerticalHyperHookRedDashUpdate);
             typeof(Player).GetMethodInfo("DashCoroutine").GetStateMachineTarget().IlHook(DashBeginDontLoseVertSpeed);
             typeof(Player).GetMethodInfo("OnCollideV").IlHook(ProtectVarJumpTimer);
+            typeof(Player).GetMethodInfo("NormalUpdate").IlHook(QoLBufferVerticalUltra);
         }
 
         int[] xOffsets = { 0, 1, -1 };
@@ -92,7 +95,7 @@ public static class VerticalTechMechanism {
     private static void invertHitbox(Hitbox hitbox) => hitbox.Position.Y = -hitbox.Position.Y - hitbox.Height;
 
     private static bool QoLPreventWallJump(Player player, int dir) {
-        return QoL && player.StateMachine.state == 2 && -dir == Math.Sign(player.DashDir.X) && -dir == Math.Sign(player.Speed.X) && player.DashDir.Y != 0f;
+        return QoL_BufferVerticalHyper && VerticalHyperEnabled && player.StateMachine.state == 2 && -dir == Math.Sign(player.DashDir.X) && -dir == Math.Sign(player.Speed.X) && player.DashDir.Y != 0f;
         // suppress wall jump in dash state if you are facing that wall, so you can buffer a vertical hyper
     }
     private static void OnPlayerWallJump(On.Celeste.Player.orig_WallJump orig, Player player, int dir) {
@@ -449,6 +452,7 @@ public static class VerticalTechMechanism {
         }
 
         bool success2 = true;
+        // jump to the next branch (the WallJumpCheck(-1) branch) as WallJump(-1) doesn't actually happen
         OpCode wall_jump_dir = OpCodes.Ldc_I4_M1;
         if (cursor.TryGotoNext(ins => ins.OpCode == wall_jump_dir, ins => ins.MatchCallOrCallvirt<Player>(nameof(Player.WallJump)), ins => ins.OpCode == OpCodes.Ldc_I4_0, ins => ins.OpCode == OpCodes.Ret)) {
             cursor.Index++;
@@ -457,7 +461,7 @@ public static class VerticalTechMechanism {
             cursor.EmitDelegate(QoLPreventWallJump);
             cursor.Emit(OpCodes.Brtrue, target);
             cursor.Emit(OpCodes.Ldarg_0);
-            cursor.Emit(OpCodes.Ldc_I4_M1);
+            cursor.Emit(wall_jump_dir);
             cursor.Index += 2;
         }
         else {
@@ -497,8 +501,11 @@ public static class VerticalTechMechanism {
             success = false;
         }
         "Player.RedDashUpdate".LogHookData("Vertical Hyper", success);
+        // it's very hard to be Squeezed when you are in red bubble... so you almostly can't vertical hyper in this case
+        // so i don't set a QoL here
     }
 
+    // 外网多叫 Wall Hyper, 中文名暂定为 飞檐走壁
     private static bool TryVerticalHyper(Player player) {
         if (VerticalHyperEnabled && player.IsSqueezed() && CelesteInput.Jump.Pressed && Math.Abs(player.DashDir.X) < 0.1f && player.CanUnSqueezeToUnDuck()) {
             if (CelesteInput.GrabCheck && player.Stamina > 0f && player.Holding == null) {
@@ -582,5 +589,62 @@ public static class VerticalTechMechanism {
 
     private static bool CheckProtectVarJumpTimer() {
         return CeilingTechMechanism.ProtectVarJumpTimer > 0f;
+    }
+
+    private static void QoLBufferVerticalUltra(ILContext il) {
+        ILCursor cursor = new ILCursor(il);
+        bool success = true;
+        OpCode wall_jump_dir = OpCodes.Ldc_I4_M1;
+        // jump to the next branch (the WallJumpCheck(-1) branch) as WallJump(-1) doesn't actually happen
+        if (cursor.TryGotoNext(ins => ins.OpCode == OpCodes.Ldarg_0, ins => ins.OpCode == wall_jump_dir, ins => ins.MatchCallvirt<Player>(nameof(Player.WallJump)), ins => ins.MatchBr(out _))) {
+            cursor.Index += 4;
+            Instruction target = cursor.Next;
+            cursor.Index -= 4;
+            cursor.MoveAfterLabels();
+            cursor.Emit(OpCodes.Ldarg_0);
+            cursor.Emit(wall_jump_dir);
+            cursor.EmitDelegate(CheckBufferVerticalUltra);
+            cursor.Emit(OpCodes.Brtrue, target);
+        }
+        else {
+            success = false;
+        }
+
+        wall_jump_dir = OpCodes.Ldc_I4_1;
+        if (cursor.TryGotoNext(ins => ins.OpCode == OpCodes.Ldarg_0, ins => ins.OpCode == wall_jump_dir, ins => ins.MatchCallvirt<Player>(nameof(Player.WallJump)), ins => ins.MatchBr(out _))) {
+            cursor.Index += 4;
+            Instruction target = cursor.Next;
+            cursor.Index -= 4;
+            cursor.MoveAfterLabels();
+            cursor.Emit(OpCodes.Ldarg_0);
+            cursor.Emit(wall_jump_dir);
+            cursor.EmitDelegate(CheckBufferVerticalUltra);
+            cursor.Emit(OpCodes.Brtrue, target);
+        }
+        else {
+            success = false;
+        }
+
+        "Player.NormalUpdate".LogHookData("QoLBufferVerticalUltra", success);
+    }
+
+    private const float bufferedUpwardVerticalUltraLowestSpeed = -260f;
+
+    private const float bufferedDownwardVerticalUltraLowestSpeed = 280f;
+
+    private static bool CheckBufferVerticalUltra(Player player, int wallJumpDir) {
+        if (!(QoL_BufferVerticalUltra && VerticalUltraEnabled && wallJumpDir == -Math.Sign(player.Speed.X) && wallJumpDir == -Math.Sign(player.DashDir.X) && player.DashDir.Y != 0f)) {
+            return false;
+        }
+        if (CelesteInput.MoveY < 0 && UpwardWallJumpAcceleration && player.Speed.Y < bufferedUpwardVerticalUltraLowestSpeed) {
+            // normally we will go into the upward-boosted-wall-jump branch
+            // now we prevent this (if we are in high speed)
+            return true;
+        }
+        else if (CelesteInput.MoveY > 0 && DownwardWallJumpAcceleration && player.Speed.Y > bufferedDownwardVerticalUltraLowestSpeed) {
+            return true;
+        }
+
+        return true;
     }
 }

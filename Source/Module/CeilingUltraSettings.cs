@@ -21,7 +21,8 @@ public class CeilingUltraSettings : EverestModuleSettings {
         set {
             Enabled = CeilingUltraEnabled = CeilingRefillStamina = CeilingRefillDash = CeilingJumpEnabled = CeilingHyperEnabled = UpdiagDashEndNoHorizontalSpeedLoss = VerticalHyperEnabled = VerticalUltraEnabled = DashBeginNoVerticalSpeedLoss = UpdiagDashEndNoVerticalSpeedLoss = WallRefillStamina = WallRefillDash = HorizontalUltraIntoVerticalUltra = VerticalUltraIntoHorizontalUltra = UpwardWallJumpAcceleration = DownwardWallJumpAcceleration = value;
             GroundJumpEnabled = GroundHyperEnabled = GroundUltraEnabled = true;
-            QoL = false;
+            QoLBufferVerticalHyper = false;
+            QoLBufferVerticalUltra = false;
             LevelSettings.ClearAllOverride();
         }
     }
@@ -64,7 +65,9 @@ public class CeilingUltraSettings : EverestModuleSettings {
 
     public bool DownwardWallJumpAcceleration { get; set; } = true;
 
-    public bool QoL { get; set; } = true;
+    public bool QoLBufferVerticalHyper { get; set; } = true;
+
+    public bool QoLBufferVerticalUltra { get; set; } = true;
     public bool ShowInPauseMenu { get; set; } = true;
 }
 
@@ -217,6 +220,7 @@ public static class LevelSettings {
             }
         }
     }
-    public static bool QoL => MainEnabled && OverrideQoL.GetValueOrDefault(ceilingUltraSetting.QoL);
+    public static bool QoLBufferVerticalHyper => MainEnabled && OverrideQoL.GetValueOrDefault(ceilingUltraSetting.QoLBufferVerticalHyper);
 
+    public static bool QoLBufferVerticalUltra => MainEnabled && OverrideQoL.GetValueOrDefault(ceilingUltraSetting.QoLBufferVerticalUltra);
 }

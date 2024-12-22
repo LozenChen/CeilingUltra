@@ -932,6 +932,7 @@ public static class CeilingTechMechanism {
         "Player.RedDashUpdate".LogHookData("Ceiling Hyper", success);
     }
 
+    // Ceiling Hyper 暂且译为: 穹顶漫步. 不过表意上比较精准的可能是, 踏天疾跃.
     private static bool CheckAndApplyCeilingHyper(Player player) {
         if (CeilingHyperEnabled && Math.Abs(player.DashDir.Y) < 0.1f && Input.Jump.Pressed && CeilingJumpGraceTimer > 0f && player.TryCeilingUnduck(out bool wasDuck, (int)player.Facing)) { // we take the prior direction to be the direction of hyper
             player.CeilingHyper(wasDuck);

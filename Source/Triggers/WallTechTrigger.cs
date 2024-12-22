@@ -5,10 +5,10 @@ using Monocle;
 namespace Celeste.Mod.Entities.CeilingUltra.Triggers;
 
 [Tracked]
-[CustomEntity("CeilingUltra/VerticalTechTrigger")]
-public class VerticalTechTrigger : AbstractTrigger {
+[CustomEntity("CeilingUltra/WallTechTrigger", "CeilingUltra/VerticalTechTrigger")]
+public class WallTechTrigger : AbstractTrigger {
 
-    public VerticalTechTrigger(EntityData data, Vector2 offset) : base(data, offset) {
+    public WallTechTrigger(EntityData data, Vector2 offset) : base(data, offset) {
     }
 
     public override void OnEnter(Player player) {
