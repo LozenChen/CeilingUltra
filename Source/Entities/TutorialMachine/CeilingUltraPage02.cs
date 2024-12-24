@@ -100,7 +100,7 @@ public class CeilingUltraPage02 : CeilingUltraPage {
             list.Draw(new Vector2(160f, 260f), new Vector2(0f, 0f), Vector2.One, 1f, 0, listIndex);
         }
         if (impossibleEase > 0f) {
-            MTexture mTexture = Presentation.Gfx["Guy Clip Art"];
+            MTexture mTexture = Presentation.VanillaGfx["Guy Clip Art"];
             float num = 0.75f;
             mTexture.Draw(new Vector2((float)base.Width - (float)mTexture.Width * num, (float)base.Height - 640f * impossibleEase), Vector2.Zero, Color.White, num);
             Matrix transformationMatrix = Matrix.CreateRotationZ(-0.5f + Ease.CubeIn(1f - impossibleEase) * 8f) * Matrix.CreateTranslation(base.Width - 500, base.Height - 600, 0f);

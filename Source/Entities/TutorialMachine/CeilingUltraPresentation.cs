@@ -55,6 +55,8 @@ public class CeilingUltraPresentation : Entity {
 
     public FakeAtlas Gfx { get; private set; }
 
+    public Atlas VanillaGfx { get; private set; }
+
     public bool ShowInput {
         get {
             if (!waitingForPageTurn) {
@@ -85,21 +87,35 @@ public class CeilingUltraPresentation : Entity {
         }
     }
 
+    private bool loading;
+
     public CeilingUltraPresentation(EventInstance usingSfx = null, string pages = null) {
         base.Tag = Tags.HUD;
         Viewing = true;
         Add(new Coroutine(Routine()));
         this.usingSfx = usingSfx;
-        Gfx = new();
         if (pages.IsNullOrEmpty()) {
             pagesId = "0,1,2,3a,4a,5a,3b,4b,5b,6".Split(',').ToList();
         }
         else {
             pagesId = pages.Split(',').ToList();
         }
+        loading = true;
+
+        RunThread.Start(LoadingThread, "Ceiling Ultra Presentation Loading", highPriority: true);
+    }
+
+    private void LoadingThread() {
+        Gfx = new FakeAtlas();
+        VanillaGfx = Atlas.FromAtlas(Path.Combine("Graphics", "Atlases", "WaveDashing"), Atlas.AtlasDataFormat.Packer);
+        loading = false;
     }
 
     private IEnumerator Routine() {
+        while (loading) {
+            yield return null;
+        }
+
         foreach (string str in pagesId) {
             pages.Add(PageCollection.Create(str));
         }
@@ -172,6 +188,9 @@ public class CeilingUltraPresentation : Entity {
     }
 
     private void BeforeRender() {
+        if (loading) {
+            return;
+        }
         if (screenBuffer == null || screenBuffer.IsDisposed) {
             screenBuffer = VirtualContent.CreateRenderTarget("CeilingUltra-Buffer", ScreenWidth, ScreenHeight, depth: true);
         }
@@ -293,13 +312,13 @@ public class CeilingUltraPresentation : Entity {
         else {
             waitingForInputTime = 0f;
         }
-        if (CurrPage != null && pageUpdating) {
+        if (!loading && CurrPage != null && pageUpdating) {
             CurrPage.Update();
         }
     }
 
     public override void Render() {
-        if (screenBuffer != null && !screenBuffer.IsDisposed) {
+        if (!loading && screenBuffer != null && !screenBuffer.IsDisposed) {
             float num = (float)ScreenWidth * Ease.CubeOut(Calc.ClampedMap(ease, 0f, 0.5f));
             float num2 = (float)ScreenHeight * Ease.CubeInOut(Calc.ClampedMap(ease, 0.5f, 1f, 0.2f));
             Rectangle rectangle = new Rectangle((int)((1920f - num) / 2f), (int)((1080f - num2) / 2f), (int)num, (int)num2);
@@ -324,6 +343,9 @@ public class CeilingUltraPresentation : Entity {
     }
 
     private void Dispose() {
+        while (loading) {
+            Thread.Sleep(1);
+        }
         if (screenBuffer != null) {
             screenBuffer.Dispose();
         }
@@ -336,6 +358,9 @@ public class CeilingUltraPresentation : Entity {
             currPageBuffer.Dispose();
         }
         currPageBuffer = null;
+
+        VanillaGfx.Dispose();
+        VanillaGfx = null;
     }
 
     private static uint PseudoRand(ref uint seed) {

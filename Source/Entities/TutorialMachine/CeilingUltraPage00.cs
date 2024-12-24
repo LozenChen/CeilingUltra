@@ -68,15 +68,15 @@ public class CeilingUltraPage00 : CeilingUltraPage {
     public override void Render() {
         DrawIcon(new Vector2(160f, 120f), "desktop/mymountain_icon", Dialog.Clean("WAVEDASH_DESKTOP_MYPC"));
         DrawIcon(new Vector2(160f, 320f), "desktop/recyclebin_icon", Dialog.Clean("WAVEDASH_DESKTOP_RECYCLEBIN"));
-        DrawIcon(pptIcon, "desktop/ceiling_ultra_icon", Dialog.Clean(pptName));
+        DrawIcon(pptIcon, "desktop/wavedashing_icon", Dialog.Clean(pptName));
         DrawTaskbar();
-        Presentation.Gfx["desktop/cursor"].DrawCentered(cursor);
+        Presentation.VanillaGfx["desktop/cursor"].DrawCentered(cursor);
     }
 
     public void DrawTaskbar() {
         Draw.Rect(0f, (float)base.Height - 80f, base.Width, 80f, taskbarColor);
         Draw.Rect(0f, (float)base.Height - 80f, base.Width, 4f, Color.White * 0.5f);
-        MTexture mTexture = Presentation.Gfx["desktop/startberry"];
+        MTexture mTexture = Presentation.VanillaGfx["desktop/startberry"];
         float num = 64f;
         float num2 = num / (float)mTexture.Height * 0.7f;
         string text = Dialog.Clean("WAVEDASH_DESKTOP_STARTBUTTON");
@@ -99,7 +99,7 @@ public class CeilingUltraPage00 : CeilingUltraPage {
         if (flag) {
             DrawDottedRect(position.X - 80f, position.Y - 80f, 160f, pptIconHeight);
         }
-        MTexture mTexture = Presentation.Gfx[icon];
+        MTexture mTexture = Presentation.VanillaGfx[icon];
         float scale = 128f / (float)mTexture.Height;
         mTexture.DrawCentered(position, Color.White, scale);
         ActiveFont.Draw(text, position + new Vector2(0f, 80f), new Vector2(0.5f, 0f), Vector2.One * 0.6f, (selected && flag) ? Color.Black : Color.White);

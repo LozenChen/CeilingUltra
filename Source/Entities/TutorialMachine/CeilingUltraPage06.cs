@@ -38,7 +38,7 @@ public class CeilingUltraPage06 : CeilingUltraPage {
     }
 
     public override void Render() {
-        Presentation.Gfx["Bird Clip Art"].DrawCentered(new Vector2(base.Width, base.Height) / 2f, Color.White, 1.5f);
+        Presentation.VanillaGfx["Bird Clip Art"].DrawCentered(new Vector2(base.Width, base.Height) / 2f, Color.White, 1.5f);
         if (title != null) {
             title.Render();
         }

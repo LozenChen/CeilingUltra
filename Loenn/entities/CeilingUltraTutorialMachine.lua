@@ -16,8 +16,8 @@ tutorialMachine.placements = {
 }
 
 
-local leftTexture = "CeilingUltra/Presentation/building/building_front_left"
-local rightTexture = "CeilingUltra/Presentation/building/building_front_right"
+local leftTexture = "objects/wavedashtutorial/building_front_left"
+local rightTexture = "objects/wavedashtutorial/building_front_right"
 
 
 function tutorialMachine.sprite(room, entity)
