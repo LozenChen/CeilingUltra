@@ -1,4 +1,5 @@
 using Celeste.Mod.CeilingUltra.Entities;
+using Celeste.Mod.CeilingUltra.ModInterop;
 using Celeste.Mod.CeilingUltra.Module;
 using Celeste.Mod.CeilingUltra.Utils;
 using Microsoft.Xna.Framework;

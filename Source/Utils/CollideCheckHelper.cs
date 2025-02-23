@@ -1,3 +1,4 @@
+using Celeste.Mod.CeilingUltra.ModInterop;
 using Microsoft.Xna.Framework;
 using Monocle;
 

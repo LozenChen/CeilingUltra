@@ -1,7 +1,7 @@
 using Microsoft.Xna.Framework;
 using MonoMod.ModInterop;
 
-namespace Celeste.Mod.CeilingUltra.Utils;
+namespace Celeste.Mod.CeilingUltra.ModInterop;
 
 public static class ModImports {
     public static bool IsPlayerInverted => GravityHelperImport.IsPlayerInverted?.Invoke() ?? false;
