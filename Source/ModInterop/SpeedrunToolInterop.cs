@@ -50,12 +50,20 @@ internal static class SpeedrunToolInterop {
 
         object handleSqueezed = SpeedrunToolImport.RegisterSaveLoadAction(
             (savedValues, level) => {
-                savedValues[typeof(VerticalTechMechanism)]["isSqueezed"] = level.GetPlayer()?.IsSqueezed() ?? false;
+                if (savedValues.TryGetValue(typeof(VerticalTechMechanism), out Dictionary<string, object> dict)) {
+                    dict["isSqueezed"] = level.GetPlayer()?.IsSqueezed() ?? false;
+                }
+                else {
+                    Dictionary<string, object> dict2 = new Dictionary<string, object>();
+                    dict2["isSqueezed"] = level.GetPlayer()?.IsSqueezed() ?? false;
+                    savedValues[typeof(VerticalTechMechanism)] = dict2;
+                }
             },
             (savedValues, level) => {
-                bool isSqueezed = (bool)savedValues[typeof(VerticalTechMechanism)]["isSqueezed"];
-                if (isSqueezed && level.GetPlayer() is { } player) {
-                    player.SetSqueezedHitbox();
+                if (savedValues.TryGetValue(typeof(VerticalTechMechanism), out Dictionary<string, object> dict) && dict.TryGetValue("isSqueezed", out object isSqueezed)) {
+                    if ((bool)isSqueezed && level.GetPlayer() is { } player) {
+                        player.SetSqueezedHitbox();
+                    }
                 }
             },
             null, null, null, null

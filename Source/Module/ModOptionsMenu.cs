@@ -99,7 +99,9 @@ internal static class ModOptionsMenu {
 
             Add(new EaseInOnOffExt("Buffered Vertical Hyper".ToDialogText(), LevelSettings.QoLBufferVerticalHyper, overrideQoL).Change(value => ceilingUltraSetting.QoLBufferVerticalHyper = value)); // actually not buffered but stops wall jump when dash
             Add(new EaseInOnOffExt("Buffered Vertical Ultra".ToDialogText(), LevelSettings.QoLBufferVerticalUltra, overrideQoL).Change(value => ceilingUltraSetting.QoLBufferVerticalUltra = value)); // stops some wall jump when in normal update
-
+            TextMenu.Item QoL_RefillDashOnWallJump;
+            Add(QoL_RefillDashOnWallJump = new EaseInOnOffExt("Refill Dash on Wall Jump".ToDialogText(), LevelSettings.QoLRefillDashOnWallJump, overrideQoL).Change(value => ceilingUltraSetting.QoLRefillDashOnWallJump = value)); // refill dash on wall jump even if you are not adjacent to wall
+            Add(CreateDescription(menu, QoL_RefillDashOnWallJump, "Refill Dash On Wall Jump Description".ToDialogText()));
 
             if (overrideMain || overrideCeilRefill || overrideCeilTech || overrideVertTech || overrideWallRefill || overrideUpdiagEnd || overrideUpWallJumpAcc || overrideDownWallJumpAcc || overrideGroundTech || overrideQoL) {
                 Add(new EaseInSubHeader("Lock By Map".ToDialogText()) { TextColor = Color.Goldenrod, HeightExtra = 10f });
@@ -133,6 +135,16 @@ internal static class ModOptionsMenu {
     }
 
     private static List<TextMenu.Item> disabledItems = new();
+
+    private static EaseInSubHeader CreateDescription(TextMenu containingMenu, TextMenu.Item subMenuItem, string description) {
+        EaseInSubHeader descriptionText = new(description, false) {
+            TextColor = Color.Gray,
+            HeightExtra = 0f
+        };
+        subMenuItem.OnEnter += () => descriptionText.FadeVisible = true;
+        subMenuItem.OnLeave += () => descriptionText.FadeVisible = false;
+        return descriptionText;
+    }
 }
 
 internal static class HookPauseMenu {
@@ -250,15 +262,17 @@ public class HeaderExt : Item {
 public class EaseInSubHeader : TextMenuExt.SubHeaderExt, IEaseInItem {
     private float alpha;
     private float unEasedAlpha;
+    public bool initVisible = true;
 
     public void Initialize() {
         alpha = unEasedAlpha = 0f;
-        Visible = FadeVisible = true;
+        Visible = FadeVisible = initVisible;
     }
     public bool FadeVisible { get; set; }
-    public EaseInSubHeader(string label) : base(label) {
+    public EaseInSubHeader(string label, bool initVisible = true) : base(label) {
         alpha = unEasedAlpha = 1f;
-        FadeVisible = Visible = true;
+        this.initVisible = initVisible;
+        FadeVisible = Visible = initVisible;
     }
 
     public override float Height() => MathHelper.Lerp(-Container.ItemSpacing, base.Height(), alpha);

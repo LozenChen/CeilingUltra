@@ -584,7 +584,7 @@ public static class CeilingTechMechanism {
     }
 
     public static void ExtendedRefillDash(Player player) {
-        if (!player.Inventory.NoRefills
+        if (!player.Inventory.NoRefills && player.Dashes < player.MaxDashes
             && (
                 (CeilingRefillDash && PlayerOnCeiling && !player.CollideCheck<IceCeiling>()) ||
                 (WallRefillDash && (PlayerOnLeftWall && !ClimbBlocker.Check(player.Scene, player, player.Position - Vector2.UnitX) || PlayerOnRightWall && !ClimbBlocker.Check(player.Scene, player, player.Position + Vector2.UnitX)))
@@ -595,7 +595,7 @@ public static class CeilingTechMechanism {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool FixedSpikeCollisionCheck(Player player) {
+    internal static bool FixedSpikeCollisionCheck(Player player) {
         /*
         Collider orig = player.Collider;
         player.Collider = player.hurtbox;

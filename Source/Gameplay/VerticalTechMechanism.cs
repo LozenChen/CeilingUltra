@@ -1,3 +1,4 @@
+using Celeste.Mod.CeilingUltra.Entities;
 using Celeste.Mod.CeilingUltra.Module;
 using Celeste.Mod.CeilingUltra.Utils;
 using Celeste.Mod.GravityHelper.Components;
@@ -29,18 +30,22 @@ public static class VerticalTechMechanism {
 
     public static bool QoL_BufferVerticalUltra => LevelSettings.QoLBufferVerticalUltra;
 
+    public static bool QoL_RefillDashOnWallJump => LevelSettings.QoLRefillDashOnWallJump;
+
     private static readonly Vector2 squeezedSpriteScale = new Vector2(0.5f, 1.5f);
 
     [Load]
     public static void Load() {
         On.Celeste.Level.LoadNewPlayer += OnLoadNewPlayer;
         On.Celeste.Player.WallJump += OnPlayerWallJump;
+        On.Celeste.Player.ClimbJump += OnPlayerClimbJump;
     }
 
     [Unload]
     public static void Unload() {
         On.Celeste.Level.LoadNewPlayer -= OnLoadNewPlayer;
         On.Celeste.Player.WallJump -= OnPlayerWallJump;
+        On.Celeste.Player.ClimbJump -= OnPlayerClimbJump;
     }
 
     [Initialize]
@@ -54,7 +59,7 @@ public static class VerticalTechMechanism {
             typeof(Player).GetMethodInfo("RedDashUpdate").IlHook(VerticalHyperHookRedDashUpdate);
             typeof(Player).GetMethodInfo("DashCoroutine").GetStateMachineTarget().IlHook(DashBeginDontLoseVertSpeed);
             typeof(Player).GetMethodInfo("OnCollideV").IlHook(ProtectVarJumpTimer);
-            typeof(Player).GetMethodInfo("NormalUpdate").IlHook(QoLBufferVerticalUltra);
+            typeof(Player).GetMethodInfo("NormalUpdate").IlHook(QoL_BufferVerticalUltra_StNormal);
         }
 
         int[] xOffsets = { 0, 1, -1 };
@@ -94,13 +99,10 @@ public static class VerticalTechMechanism {
     }
     private static void invertHitbox(Hitbox hitbox) => hitbox.Position.Y = -hitbox.Position.Y - hitbox.Height;
 
-    private static bool QoLPreventWallJump(Player player, int dir) {
-        return QoL_BufferVerticalHyper && VerticalHyperEnabled && player.StateMachine.state == 2 && -dir == Math.Sign(player.DashDir.X) && -dir == Math.Sign(player.Speed.X) && player.DashDir.Y != 0f;
-        // suppress wall jump in dash state if you are facing that wall, so you can buffer a vertical hyper
-    }
     private static void OnPlayerWallJump(On.Celeste.Player.orig_WallJump orig, Player player, int dir) {
         float origSpeedY = player.Speed.Y;
         orig(player, dir); // ExtendedJumpGraceTimer is cleared here
+        QoL_RefillDashOnWallJumpOrClimbJump_Impl(player, dir); // make it easier to refill dash when vertical bhop
         if (player.StateMachine.State != 0 && player.StateMachine.State != 1) {
             return;
         }
@@ -458,7 +460,7 @@ public static class VerticalTechMechanism {
             cursor.Index++;
             Instruction target = cursor.Next.Next.Next.Next;
             cursor.MoveAfterLabels();
-            cursor.EmitDelegate(QoLPreventWallJump);
+            cursor.EmitDelegate(QoL_PreventWallJump_StDash);
             cursor.Emit(OpCodes.Brtrue, target);
             cursor.Emit(OpCodes.Ldarg_0);
             cursor.Emit(wall_jump_dir);
@@ -472,7 +474,7 @@ public static class VerticalTechMechanism {
             cursor.Index++;
             Instruction target = cursor.Next.Next.Next.Next;
             cursor.MoveAfterLabels();
-            cursor.EmitDelegate(QoLPreventWallJump);
+            cursor.EmitDelegate(QoL_PreventWallJump_StDash);
             cursor.Emit(OpCodes.Brtrue, target);
             cursor.Emit(OpCodes.Ldarg_0);
             cursor.Emit(wall_jump_dir);
@@ -591,7 +593,7 @@ public static class VerticalTechMechanism {
         return CeilingTechMechanism.ProtectVarJumpTimer > 0f;
     }
 
-    private static void QoLBufferVerticalUltra(ILContext il) {
+    private static void QoL_BufferVerticalUltra_StNormal(ILContext il) {
         ILCursor cursor = new ILCursor(il);
         bool success = true;
         OpCode wall_jump_dir = OpCodes.Ldc_I4_M1;
@@ -603,7 +605,7 @@ public static class VerticalTechMechanism {
             cursor.MoveAfterLabels();
             cursor.Emit(OpCodes.Ldarg_0);
             cursor.Emit(wall_jump_dir);
-            cursor.EmitDelegate(CheckBufferVerticalUltra);
+            cursor.EmitDelegate(CheckBufferVerticalUltra_StNormal);
             cursor.Emit(OpCodes.Brtrue, target);
         }
         else {
@@ -618,7 +620,7 @@ public static class VerticalTechMechanism {
             cursor.MoveAfterLabels();
             cursor.Emit(OpCodes.Ldarg_0);
             cursor.Emit(wall_jump_dir);
-            cursor.EmitDelegate(CheckBufferVerticalUltra);
+            cursor.EmitDelegate(CheckBufferVerticalUltra_StNormal);
             cursor.Emit(OpCodes.Brtrue, target);
         }
         else {
@@ -632,7 +634,7 @@ public static class VerticalTechMechanism {
 
     private const float bufferedDownwardVerticalUltraLowestSpeed = 280f;
 
-    private static bool CheckBufferVerticalUltra(Player player, int wallJumpDir) {
+    private static bool CheckBufferVerticalUltra_StNormal(Player player, int wallJumpDir) {
         if (!(QoL_BufferVerticalUltra && VerticalUltraEnabled && wallJumpDir == -Math.Sign(player.Speed.X) && wallJumpDir == -Math.Sign(player.DashDir.X) && player.DashDir.Y != 0f)) {
             return false;
         }
@@ -646,5 +648,26 @@ public static class VerticalTechMechanism {
         }
 
         return true;
+    }
+
+    private static bool QoL_PreventWallJump_StDash(Player player, int dir) {
+        return QoL_BufferVerticalHyper && VerticalHyperEnabled && player.StateMachine.state == 2 && -dir == Math.Sign(player.DashDir.X) && -dir == Math.Sign(player.Speed.X) && player.DashDir.Y != 0f;
+        // suppress wall jump in dash state if you are facing that wall, so you can buffer a vertical hyper
+    }
+
+    private static void QoL_RefillDashOnWallJumpOrClimbJump_Impl(Player player, int dir) {
+        if (QoL_RefillDashOnWallJump && CeilingTechMechanism.WallRefillDash && !player.Inventory.NoRefills && player.Dashes < player.MaxDashes && player.dashRefillCooldownTimer <= 0f) {
+            Vector2 checkPosition = player.Position - Vector2.UnitX * dir * 3;
+            if (!ClimbBlocker.Check(player.Scene, player, checkPosition)
+                && (SaveData.Instance.Assists.Invincible || !Collide.Check(player, Engine.Scene.Tracker.GetEntities<Spikes>(), checkPosition))) {
+                player.RefillDash();
+            }
+        }
+    }
+
+
+    private static void OnPlayerClimbJump(On.Celeste.Player.orig_ClimbJump orig, Player self) {
+        orig(self);
+        QoL_RefillDashOnWallJumpOrClimbJump_Impl(self, -(int)self.Facing);
     }
 }
