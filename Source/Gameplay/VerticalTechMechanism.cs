@@ -1,4 +1,3 @@
-using Celeste.Mod.CeilingUltra.Entities;
 using Celeste.Mod.CeilingUltra.Module;
 using Celeste.Mod.CeilingUltra.Utils;
 using Celeste.Mod.GravityHelper.Components;
