@@ -446,7 +446,7 @@ public static class CeilingTechMechanism {
 
     private static void CheckCeilingVerticalUltraInDashCoroutine(Player player) {
         if (VerticalTechMechanism.VerticalUltraEnabled
-            && HasSpeedX(player, out int sign) 
+            && HasSpeedX(player, out int sign)
             && (PlayerOnRightWall && sign > 0 || PlayerOnLeftWall && sign < 0)
             && (!player.Inventory.DreamDash || !player.CollideCheck<DreamBlock>(player.Position + Vector2.UnitX * sign))
             && player.TryVerticalUltra()) {
