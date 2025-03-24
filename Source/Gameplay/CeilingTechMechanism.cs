@@ -445,15 +445,28 @@ public static class CeilingTechMechanism {
     }
 
     private static void CheckCeilingVerticalUltraInDashCoroutine(Player player) {
-        if (VerticalTechMechanism.VerticalUltraEnabled && (PlayerOnRightWall && player.Speed.X > 0f || PlayerOnLeftWall && player.Speed.X < 0f) && (!player.Inventory.DreamDash || !player.CollideCheck<DreamBlock>(player.Position + Vector2.UnitX * Math.Sign(player.Speed.X))) && player.TryVerticalUltra()) {
+        if (VerticalTechMechanism.VerticalUltraEnabled
+            && HasSpeedX(player, out int sign) 
+            && (PlayerOnRightWall && sign > 0 || PlayerOnLeftWall && sign < 0)
+            && (!player.Inventory.DreamDash || !player.CollideCheck<DreamBlock>(player.Position + Vector2.UnitX * sign))
+            && player.TryVerticalUltra()) {
             // already applied as a side effect of TryVerticalUltra
             // we put TryVerticalUltra inside conditions coz if all other conditions are satisfied but can't vertical ultra (e.g. Can't Squeeze Hitbox), then still need to try Ceiling Ultra
             if (player.DashDir.Y < 0f) {
                 InstantUltraLeaveGround = true; // in this case, we dont auto unsqueeze in this frame (although we may be on ground)
             }
+
+            ApplyEffectsOnMoveBlock(player, Vector2.UnitX * sign);
         }
-        else if (CeilingUltraEnabled && PlayerOnCeiling && (!player.Inventory.DreamDash || !player.CollideCheck<DreamBlock>(player.Position - Vector2.UnitY * ModImports.InvertY)) && player.TryCeilingUltra()) {
+        else if (CeilingUltraEnabled
+            && PlayerOnCeiling
+            && (!player.Inventory.DreamDash || !player.CollideCheck<DreamBlock>(player.Position - Vector2.UnitY * ModImports.InvertY))
+            && player.TryCeilingUltra()) {
             // already applied
+
+            ApplyEffectsOnMoveBlock(player, -Vector2.UnitY * ModImports.InvertY);
+
+            // if ground ultra, then MoveBlock can be triggered by being standing on, so we don't need to apply effects
         }
         // try vertical ultra first, so it matchs the intuition that, first horizontal movement, then vertical
         // although that actually ground ultra > vertical ultra > ceiling ultra
@@ -462,6 +475,23 @@ public static class CeilingTechMechanism {
         ClearOverrideUltraDir();
         // player.DashDir is created this frame, so we need to clear override ultra dir
         // and such instant ultra should't produce override ultra dir, so we just clear override anyway
+    }
+
+    private static void ApplyEffectsOnMoveBlock(Player player, Vector2 dir) {
+        Vector2 origPosition = player.Position;
+        player.Position += dir;
+        foreach (MoveBlockOnDashCollide moveBlock in player.Scene.Tracker.GetEntities<MoveBlockOnDashCollide>()
+            .Cast<MoveBlockOnDashCollide>().Where(x => x.ActivateOnDashCollide && x.AllowInstantUltra && x.Collidable)) {
+            if (Collide.Check(player, moveBlock)) {
+                moveBlock.OnDashCollide.Invoke(player, dir);
+            }
+        }
+        player.Position = origPosition;
+    }
+
+    private static bool HasSpeedX(Player player, out int sign) {
+        sign = Math.Sign(player.Speed.X);
+        return sign != 0;
     }
 
     public static bool OnCeiling(this Player player, int upCheck = 1) {
