@@ -38,6 +38,8 @@ public static class CeilingTechMechanism {
 
     public static bool HorizontalUltraIntoVerticalUltra => LevelSettings.HorizontalUltraIntoVerticalUltra;
 
+    public static bool QoL_BufferCeilingUltra => LevelSettings.QoLBufferCeilingUltra;
+
     [Load]
     public static void Load() {
         On.Celeste.Level.LoadNewPlayer += OnLoadNewPlayer;
@@ -462,7 +464,7 @@ public static class CeilingTechMechanism {
             && PlayerOnCeiling
             && (!player.Inventory.DreamDash || !player.CollideCheck<DreamBlock>(player.Position - Vector2.UnitY * ModImports.InvertY))
             && player.TryCeilingUltra()) {
-            // already applied
+            // already applied ceiling ultra
 
             ApplyEffectsOnMoveBlock(player, -Vector2.UnitY * ModImports.InvertY);
 
@@ -727,7 +729,21 @@ public static class CeilingTechMechanism {
     }
     private static void CheckAndApplyCeilingJumpInNormal(Player player) {
         if (CeilingJumpEnabled && CeilingJumpGraceTimer > 0f && CelesteInput.Jump.Pressed && !jumpFlag && (TalkComponent.PlayerOver == null || !CelesteInput.Talk.Pressed)) {
+            BufferedCeilingUltra(player);
             player.CeilingJump();
+        }
+    }
+
+    // let ceiling ultra happen when player is close to ceiling, trying to ceiling jump but has not ceiling ultraed yet
+    // which also makes ceiling ultra easier, as it's possible you are close to but can't collide ceiling
+    private static void BufferedCeilingUltra(Player player) {
+        if (CeilingUltraEnabled
+            && QoL_BufferCeilingUltra
+            && PlayerOnCeiling
+            && player.Speed.Y < 0f // will OnCollideV potentially 
+            && (!player.Inventory.DreamDash || !player.CollideCheck<DreamBlock>(player.Position - Vector2.UnitY * ModImports.InvertY))
+            && player.TryCeilingUltra()) {
+            ApplyEffectsOnMoveBlock(player, -Vector2.UnitY * ModImports.InvertY);
         }
     }
 

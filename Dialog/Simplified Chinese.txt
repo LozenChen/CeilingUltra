@@ -30,6 +30,7 @@ CEILING_ULTRA_GROUND_ULTRA=                                   地面 Ultra
 CEILING_ULTRA_QOL=											  > 容错机制
 CEILING_ULTRA_BUFFERED_VERTICAL_HYPER=						  预输入纵向 Hyper
 CEILING_ULTRA_BUFFERED_VERTICAL_ULTRA=						  预输入纵向 Ultra
+CEILING_ULTRA_BUFFERED_CEILING_ULTRA=						  预输入天花板 Ultra
 CEILING_ULTRA_REFILL_DASH_ON_WALL_JUMP=						  隔空踢墙/抓跳时恢复冲刺
 CEILING_ULTRA_REFILL_DASH_ON_WALL_JUMP_DESCRIPTION=			  需要 "贴墙恢复冲刺". 使得你哪怕隔空踢墙/抓跳也能恢复冲刺.
 

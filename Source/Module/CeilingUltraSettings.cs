@@ -71,6 +71,8 @@ public class CeilingUltraSettings : EverestModuleSettings {
     public bool QoLBufferVerticalUltra { get; set; } = true;
 
     public bool QoLRefillDashOnWallJump { get; set; } = true;
+
+    public bool QoLBufferCeilingUltra { get; set; } = true;
     public bool ShowInPauseMenu { get; set; } = true;
 }
 
@@ -228,4 +230,6 @@ public static class LevelSettings {
     public static bool QoLBufferVerticalUltra => MainEnabled && OverrideQoL.GetValueOrDefault(ceilingUltraSetting.QoLBufferVerticalUltra);
 
     public static bool QoLRefillDashOnWallJump => MainEnabled && OverrideQoL.GetValueOrDefault(ceilingUltraSetting.QoLRefillDashOnWallJump);
+
+    public static bool QoLBufferCeilingUltra => MainEnabled && OverrideQoL.GetValueOrDefault(ceilingUltraSetting.QoLBufferCeilingUltra);
 }

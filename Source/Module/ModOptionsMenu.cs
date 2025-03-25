@@ -99,6 +99,8 @@ internal static class ModOptionsMenu {
 
             Add(new EaseInOnOffExt("Buffered Vertical Hyper".ToDialogText(), LevelSettings.QoLBufferVerticalHyper, overrideQoL).Change(value => ceilingUltraSetting.QoLBufferVerticalHyper = value)); // actually not buffered but stops wall jump when dash
             Add(new EaseInOnOffExt("Buffered Vertical Ultra".ToDialogText(), LevelSettings.QoLBufferVerticalUltra, overrideQoL).Change(value => ceilingUltraSetting.QoLBufferVerticalUltra = value)); // stops some wall jump when in normal update
+            Add(new EaseInOnOffExt("Buffered Ceiling Ultra".ToDialogText(), LevelSettings.QoLBufferCeilingUltra, overrideQoL).Change(value => ceilingUltraSetting.QoLBufferCeilingUltra = value)); // force a ceiling ultra when ceiling jump in normal update
+
             TextMenu.Item QoL_RefillDashOnWallJump;
             Add(QoL_RefillDashOnWallJump = new EaseInOnOffExt("Refill Dash on Wall Jump".ToDialogText(), LevelSettings.QoLRefillDashOnWallJump, overrideQoL).Change(value => ceilingUltraSetting.QoLRefillDashOnWallJump = value)); // refill dash on wall jump even if you are not adjacent to wall
             Add(CreateDescription(menu, QoL_RefillDashOnWallJump, "Refill Dash On Wall Jump Description".ToDialogText()));
