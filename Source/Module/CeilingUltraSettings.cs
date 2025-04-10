@@ -78,6 +78,11 @@ public class CeilingUltraSettings : EverestModuleSettings {
 
 public static class LevelSettings {
 
+    [Monocle.Command("ceiling_ultra_cheat", "clear all map settings so you can edit them yourself.")]
+    private static void Command_ClearAllOverride() {
+        ClearAllOverride();
+    }
+
     public static void ClearAllOverride() {
         OverrideMainEnabled = OverrideCeilingTech = OverrideCeilingRefill = OverrideVerticalTech = OverrideWallRefill = OverrideBigInertiaUpdiagDash = OverrideUpwardWallJumpAcceleration = OverrideDownwardWallJumpAcceleration = OverrideGroundTech = OverrideQoL = null;
     }
