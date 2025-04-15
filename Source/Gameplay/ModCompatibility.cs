@@ -14,6 +14,7 @@ public static class ModCompatibility {
                 cursor.EmitDelegate(ClearCeilingJump);
             });
         }
+        // this no longer work? coz implement change
     }
 
     private static void ClearCeilingJump() {

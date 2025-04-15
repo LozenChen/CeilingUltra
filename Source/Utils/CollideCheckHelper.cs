@@ -65,10 +65,10 @@ public static class CollideCheckHelper {
             offset = Vector2.Zero;
             return true;
         }
-        if (ModImports.IsPlayerInverted) { // well we should use IsEntityInverted here, but ...
+        if (GravityImports.IsPlayerInverted) { // well we should use IsEntityInverted here, but ...
             alignment = InvertY(alignment);
         }
-        List<Vector2> local_wigglelist = ModImports.IsPlayerInverted ? wiggleList.Select(vec => new Vector2(vec.X, -vec.Y)).ToList() : wiggleList;
+        List<Vector2> local_wigglelist = GravityImports.IsPlayerInverted ? wiggleList.Select(vec => new Vector2(vec.X, -vec.Y)).ToList() : wiggleList;
 
         Vector2 orig_Position = entity.Position;
         Collider orig_Collider = entity.Collider;

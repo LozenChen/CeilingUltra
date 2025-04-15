@@ -15,6 +15,8 @@ namespace Celeste.Mod.CeilingUltra.Gameplay;
 
 public static class CeilingTechMechanism {
 
+    #region Settings
+
     public static bool CeilingUltraEnabled => LevelSettings.CeilingUltraEnabled;
 
     public static bool GroundUltraEnabled => LevelSettings.GroundUltraEnabled;
@@ -40,17 +42,89 @@ public static class CeilingTechMechanism {
 
     public static bool QoL_BufferCeilingUltra => LevelSettings.QoLBufferCeilingUltra;
 
+    public static bool QoL_RefillOnDashCollision = true;
+
+    #endregion
+
+    #region Variables
+
+    [SaveLoad]
+    public static bool PlayerOnCeiling = false;
+
+    [SaveLoad]
+    public static bool PlayerOnLeftWall = false;
+
+    [SaveLoad]
+    public static bool PlayerOnRightWall = false;
+
+    public enum DashCollisionDirections { None, Up, Down, Left, Right }
+
+    [SaveLoad]
+
+    public static DashCollisionDirections DashCollisionDirection = DashCollisionDirections.None;
+
+    public static bool PlayerOnWall => PlayerOnLeftWall || PlayerOnRightWall;
+
+    [SaveLoad]
+    public static float CeilingJumpGraceTimer = 0f;
+
+    [SaveLoad]
+    public static float LeftWallGraceTimer = 0f;
+
+    [SaveLoad]
+    public static float RightWallGraceTimer = 0f;
+
+    [SaveLoad]
+    public static float ProtectVarJumpTimer = 0f;
+
+    [SaveLoad]
+    public static float ProtectGroundSqueezeTimer = 0f;
+
+    [SaveLoad]
+    public static float LastGroundJumpGraceTimer = 1f;
+
+    [SaveLoad]
+    public static bool LastFrameSetJumpTimerCalled = false;
+
+    private static bool jumpFlag = false;
+    // used to detect if any jump is performed (so we shouldn't perform a ceiling jump in this case)
+    // no need to save load as its "lifetime" is inside Player.NormalUpdate
+
+    [SaveLoad]
+    public static Vector2? OverrideGroundUltraDir = null;
+
+    [SaveLoad]
+    public static Vector2? OverrideCeilingUltraDir = null;
+
+    [SaveLoad]
+    public static Vector2? OverrideLeftWallUltraDir = null;
+
+    [SaveLoad]
+    public static Vector2? OverrideRightWallUltraDir = null;
+
+    [SaveLoad]
+    public static bool LastFrameWriteOverrideUltraDir = false;
+
+    [SaveLoad]
+    public static Vector2 LastFrameDashDir = Vector2.Zero;
+
+    [SaveLoad]
+    public static float NextMaxFall = float.MinValue;
+
+    [SaveLoad]
+    public static bool InstantUltraLeaveGround = false;
+
+    #endregion
+
     [Load]
     public static void Load() {
         On.Celeste.Level.LoadNewPlayer += OnLoadNewPlayer;
-        On.Celeste.FloatySpaceBlock.OnDash += FloatySpaceBlockOnDash;
     }
 
 
     [Unload]
     public static void Unload() {
         On.Celeste.Level.LoadNewPlayer -= OnLoadNewPlayer;
-        On.Celeste.FloatySpaceBlock.OnDash -= FloatySpaceBlockOnDash;
     }
 
     [Initialize]
@@ -68,7 +142,7 @@ public static class CeilingTechMechanism {
             typeof(Player).GetMethodInfo("DashUpdate").IlHook(CeilingHyperHookDashUpdate);
             typeof(Player).GetMethodInfo("RedDashUpdate").IlHook(CeilingHyperHookRedDashUpdate);
 
-            new List<string> { "OnTransition", "Jump", "SuperJump", "SuperWallJump", "Bounce", "SuperBounce", "StarFlyBegin", "orig_WallJump", "SideBounce", "DreamDashEnd" }.Select(str => typeof(Player).GetMethodInfo(str)).ToList().ForEach(x => x.IlHook(SetExtendedJumpGraceTimerIL));
+            new List<string> { "OnTransition", "Jump", "SuperJump", "SuperWallJump", "Bounce", "SuperBounce", "StarFlyBegin", "orig_WallJump", "SideBounce", "DreamDashEnd", "Rebound", "ReflectBounce" }.Select(str => typeof(Player).GetMethodInfo(str)).ToList().ForEach(x => x.IlHook(SetExtendedJumpGraceTimerIL));
 
             new List<string> { "DashBegin", "RedDashBegin" }.Select(str => typeof(Player).GetMethodInfo(str)).ToList().ForEach(x => x.IlHook(ClearOverrideUltraDirHookDashBegin));
 
@@ -85,7 +159,7 @@ public static class CeilingTechMechanism {
 
         if (LastGroundJumpGraceTimer > 0f && player.jumpGraceTimer <= 0f && !LastFrameSetJumpTimerCalled) {
             // so it's killed by something that maybe we have not hooked (e.g. a jump from other mods)
-            // but if that's during a protect jump grace time, i will not care you mods (e.g. MaxHelpingHand.UpsideDownJumpThru hook OnCollideV)
+            // but if that's during a protect jump grace time, i will not care your mods (e.g. MaxHelpingHand.UpsideDownJumpThru hook OnCollideV)
             ClearExtendedJumpGraceTimer();
         }
         LastFrameSetJumpTimerCalled = false;
@@ -102,25 +176,33 @@ public static class CeilingTechMechanism {
             PlayerOnCeiling = player.OnCeiling();
             PlayerOnLeftWall = player.CanStand(-Vector2.UnitX);
             PlayerOnRightWall = player.CanStand(Vector2.UnitX);
+
+            if (QoL_RefillOnDashCollision) {
+                switch (DashCollisionDirection) {
+                    // give refill and varJumpTimer
+                    // to avoid the issue that: the block move away after we hit them in last frame, so we can't refill
+                    // (coz the moving block won't carry us in these directions)
+                    case DashCollisionDirections.Right: {
+                        PlayerOnRightWall = true;
+                        break;
+                    }
+                    case DashCollisionDirections.Up: {
+                        PlayerOnCeiling = true;
+                        break;
+                    }
+                    case DashCollisionDirections.Left: {
+                        PlayerOnLeftWall = true;
+                        break;
+                    }
+                    // technically we can also support Down, there are some rare cases where it would be useful
+                    // but ... let's just don't do it for now
+                    default: {
+                        break;
+                    }
+                }
+                DashCollisionDirection = DashCollisionDirections.None;
+            }
         }
-        switch (FloatySpaceBlockDirection) {
-            case 1: {
-                PlayerOnRightWall = true;
-                break;
-            }
-            case 2: {
-                PlayerOnCeiling = true;
-                break;
-            }
-            case 3: {
-                PlayerOnLeftWall = true;
-                break;
-            }
-            default: {
-                break;
-            }
-        }
-        FloatySpaceBlockDirection = 0;
 
         if (PlayerOnCeiling) {
             if (CeilingRefillStamina && !player.CollideCheck<IceCeiling>()) {
@@ -184,13 +266,8 @@ public static class CeilingTechMechanism {
 
     private static void SetExtendedJumpGraceTimerIL(ILContext il) {
         ILCursor cursor = new ILCursor(il);
-        bool success = false;
-        while (cursor.TryGotoNext(ins => ins.OpCode == OpCodes.Ldarg_0, ins => ins.MatchLdcR4(0f), ins => ins.MatchStfld<Player>(nameof(Player.jumpGraceTimer)))) {
-            cursor.Index += 3;
-            cursor.EmitDelegate(ClearExtendedJumpGraceTimer);
-            success = true;
-        }
-        "Player.SomeSetJumpGraceTimerMethod".LogHookData("Set Jump Grace Timer", success);
+        cursor.EmitDelegate(ClearExtendedJumpGraceTimer);
+        "Player.SomeSetJumpGraceTimerMethod".LogHookData("Set Jump Grace Timer", true);
 
     }
 
@@ -232,13 +309,13 @@ public static class CeilingTechMechanism {
         ClearOverrideUltraDir();
         LastFrameWriteOverrideUltraDir = false;
         LastFrameDashDir = Vector2.Zero;
-        FloatySpaceBlockDirection = 0;
+        DashCollisionDirection = DashCollisionDirections.None;
         InstantUltraLeaveGround = false;
         return player;
     }
 
     public static void CeilingDuck(this Player player) {
-        if (ModImports.IsPlayerInverted) {
+        if (GravityImports.IsPlayerInverted) {
             float origBottom = player.Collider.Bottom;
             player.Ducking = true;
             float offset = origBottom - player.Collider.Bottom;
@@ -250,6 +327,15 @@ public static class CeilingTechMechanism {
             float offset = origTop - player.Collider.Top;
             player.Y += offset;
         }
+    }
+
+    public static bool CanCeilingDuck(this Player player, int priorDirection = 1) {
+        if (player.IsSqueezed()) {
+            int direction = priorDirection >= 0 ? 1 : -1;
+            List<Vector2> wiggle = new List<Vector2>() { Vector2.Zero, direction * Vector2.UnitX, -direction * Vector2.UnitX };
+            return player.CanTransform(player.duckHitbox, Alignment.Top, wiggle, out _);
+        }
+        return true;
     }
 
     public static bool TryCeilingDuck(this Player player, int priorDirection = 1) {
@@ -305,6 +391,10 @@ public static class CeilingTechMechanism {
         return result;
     }
 
+    public static bool CanCeilingUltra(this Player player) {
+        return player.DashDir.X != 0f && player.DashDir.Y < 0f && player.Speed.Y <= 0f && player.CanCeilingDuck(Math.Sign(player.Speed.X));
+    }
+
     public static bool TryCeilingUltra(this Player player, bool getOverrideVerticalUltra = false) {
         // why do we check Speed.Y <= 0f instead of < 0f here: coz MaxHelpingHand.UpsideDownJumpThru kills Speed.Y on the start of collision
 
@@ -341,10 +431,11 @@ public static class CeilingTechMechanism {
         bool success1 = false;
         bool success2 = false;
         if (cursor.TryGotoNext(ins => ins.MatchCallOrCallvirt<Player>(nameof(Player.DreamDashCheck)), ins => ins.OpCode == OpCodes.Brfalse_S)) {
-
+            // locate the first "if (DreamDashCheck(Vector2.UnitY * Math.Sign(Speed.Y)))" inside Speed.Y > 0f branch
             ILLabel label1 = (ILLabel)cursor.Next.Next.Operand;
             cursor.GotoLabel(label1);
             if (cursor.TryGotoNext(ins => ins.OpCode == OpCodes.Beq)) {
+                // locate "if (DashDir.X != 0f && DashDir.Y > 0f && Speed.Y > 0f)"
                 success1 = true;
                 ILLabel target = (ILLabel)cursor.Next.Operand;
                 cursor.GotoLabel(label1);
@@ -354,6 +445,7 @@ public static class CeilingTechMechanism {
             }
 
             if (cursor.TryGotoNext(ins => ins.MatchCallOrCallvirt<Player>(nameof(Player.DreamDashCheck)), ins => ins.OpCode == OpCodes.Brfalse_S)) {
+                // locate the second "if (DreamDashCheck(Vector2.UnitY * Math.Sign(Speed.Y)))" inside Speed.Y < 0f branch
                 success2 = true;
                 ILLabel label2 = (ILLabel)cursor.Next.Next.Operand;
                 cursor.GotoLabel(label2);
@@ -361,8 +453,29 @@ public static class CeilingTechMechanism {
                 cursor.EmitDelegate(CheckAndApplyCeilingUltra);
             }
         }
+
+        bool success3 = false;
+        cursor.Goto(0);
+        if (cursor.TryGotoNext(
+            ins => ins.OpCode == OpCodes.Ldarg_1,
+            ins => ins.MatchLdfld<CollisionData>(nameof(CollisionData.Hit)),
+            ins => ins.MatchLdfld<Platform>(nameof(Platform.OnDashCollide)),
+            ins => ins.OpCode == OpCodes.Ldarg_0)
+            ) {
+            cursor.Index += 4;
+            if (cursor.TryGotoNext(ins => ins.OpCode == OpCodes.Stloc_0)) {
+                // locate "if (DashAttacking && data.Direction.Y == (float)Math.Sign(DashDir.Y)) {
+                //          DashCollisionResults dashCollisionResults = data.Hit.OnDashCollide(this, data.Direction);"
+                success3 = true;
+                cursor.Index++;
+                cursor.Emit(OpCodes.Ldloc_0);
+                cursor.Emit(OpCodes.Ldarg_1);
+                cursor.EmitDelegate(SetDashCollisionRefillDirection);
+            }
+        }
         "OnCollideV".LogHookData("Ground Ultra", success1);
         "OnCollideV".LogHookData("Ceiling Ultra", success2);
+        "OnCollideV".LogHookData("QoL_RefillOnDashCollision", success3);
     }
 
     private static bool CheckAndApplyGroundUltra(Player player) {
@@ -446,6 +559,7 @@ public static class CeilingTechMechanism {
         "Player.DashCoroutine".LogHookData("Clear Override Ultra Dir", success);
     }
 
+    // instant ultra
     private static void CheckCeilingVerticalUltraInDashCoroutine(Player player) {
         if (VerticalTechMechanism.VerticalUltraEnabled
             && HasSpeedX(player, out int sign)
@@ -462,11 +576,11 @@ public static class CeilingTechMechanism {
         }
         else if (CeilingUltraEnabled
             && PlayerOnCeiling
-            && (!player.Inventory.DreamDash || !player.CollideCheck<DreamBlock>(player.Position - Vector2.UnitY * ModImports.InvertY))
+            && (!player.Inventory.DreamDash || !player.CollideCheck<DreamBlock>(player.Position - Vector2.UnitY * GravityImports.InvertY))
             && player.TryCeilingUltra()) {
             // already applied ceiling ultra
 
-            ApplyEffectsOnMoveBlock(player, -Vector2.UnitY * ModImports.InvertY);
+            ApplyEffectsOnMoveBlock(player, -Vector2.UnitY * GravityImports.InvertY);
 
             // if ground ultra, then MoveBlock can be triggered by being standing on, so we don't need to apply effects
         }
@@ -480,6 +594,8 @@ public static class CeilingTechMechanism {
     }
 
     private static void ApplyEffectsOnMoveBlock(Player player, Vector2 dir) {
+        // instant ultra triggers move block
+
         Vector2 origPosition = player.Position;
         player.Position += dir;
         foreach (MoveBlockOnDashCollide moveBlock in player.Scene.Tracker.GetEntities<MoveBlockOnDashCollide>()
@@ -497,72 +613,8 @@ public static class CeilingTechMechanism {
     }
 
     public static bool OnCeiling(this Player player, int upCheck = 1) {
-        return player.CanStand(-upCheck * Vector2.UnitY * ModImports.InvertY);
+        return player.CanStand(-upCheck * Vector2.UnitY * GravityImports.InvertY);
     }
-
-    [SaveLoad]
-    public static bool PlayerOnCeiling = false;
-
-    [SaveLoad]
-    public static bool PlayerOnLeftWall = false;
-
-    [SaveLoad]
-    public static bool PlayerOnRightWall = false;
-
-    [SaveLoad]
-
-    public static int FloatySpaceBlockDirection = 0;
-
-    public static bool PlayerOnWall => PlayerOnLeftWall || PlayerOnRightWall;
-
-    [SaveLoad]
-    public static float CeilingJumpGraceTimer = 0f;
-
-    [SaveLoad]
-    public static float LeftWallGraceTimer = 0f;
-
-    [SaveLoad]
-    public static float RightWallGraceTimer = 0f;
-
-    [SaveLoad]
-    public static float ProtectVarJumpTimer = 0f;
-
-    [SaveLoad]
-    public static float ProtectGroundSqueezeTimer = 0f;
-
-    [SaveLoad]
-    public static float LastGroundJumpGraceTimer = 1f;
-
-    [SaveLoad]
-    public static bool LastFrameSetJumpTimerCalled = false;
-
-    private static bool jumpFlag = false;
-    // used to detect if any jump is performed (so we shouldn't perform a ceiling jump in this case)
-    // no need to save load as its "lifetime" is inside Player.NormalUpdate
-
-    [SaveLoad]
-    public static Vector2? OverrideGroundUltraDir = null;
-
-    [SaveLoad]
-    public static Vector2? OverrideCeilingUltraDir = null;
-
-    [SaveLoad]
-    public static Vector2? OverrideLeftWallUltraDir = null;
-
-    [SaveLoad]
-    public static Vector2? OverrideRightWallUltraDir = null;
-
-    [SaveLoad]
-    public static bool LastFrameWriteOverrideUltraDir = false;
-
-    [SaveLoad]
-    public static Vector2 LastFrameDashDir = Vector2.Zero;
-
-    [SaveLoad]
-    public static float NextMaxFall = float.MinValue;
-
-    [SaveLoad]
-    public static bool InstantUltraLeaveGround = false;
 
     public static void SetOverrideUltraDir(bool isVerticalUltra, Vector2 dashDir) {
         ClearOverrideUltraDir();
@@ -688,11 +740,11 @@ public static class CeilingTechMechanism {
         }
         if (particles) {
             int index = -1;
-            Platform platformByPriority = SurfaceIndex.GetPlatformByPriority(player.CollideAll<Platform>(player.Position - Vector2.UnitY * ModImports.InvertY, player.temp));
+            Platform platformByPriority = SurfaceIndex.GetPlatformByPriority(player.CollideAll<Platform>(player.Position - Vector2.UnitY * GravityImports.InvertY, player.temp));
             if (platformByPriority != null) {
                 index = platformByPriority.GetLandSoundIndex(player);
             }
-            Dust.BurstFG(ModImports.IsPlayerInverted ? player.BottomCenter : player.TopCenter, (float)Math.PI / 2f * ModImports.InvertY, downPressed ? 8 : 4, downPressed ? 8f : 4f, player.DustParticleFromSurfaceIndex(index));
+            Dust.BurstFG(GravityImports.IsPlayerInverted ? player.BottomCenter : player.TopCenter, (float)Math.PI / 2f * GravityImports.InvertY, downPressed ? 8 : 4, downPressed ? 8f : 4f, player.DustParticleFromSurfaceIndex(index));
         }
         SaveData.Instance.TotalJumps++;
 
@@ -729,22 +781,30 @@ public static class CeilingTechMechanism {
     }
     private static void CheckAndApplyCeilingJumpInNormal(Player player) {
         if (CeilingJumpEnabled && CeilingJumpGraceTimer > 0f && CelesteInput.Jump.Pressed && !jumpFlag && (TalkComponent.PlayerOver == null || !CelesteInput.Talk.Pressed)) {
-            BufferedCeilingUltra(player);
-            player.CeilingJump();
+            bool needReCheck = TryBufferedCeilingUltra(player);
+            if (!needReCheck || (CeilingJumpGraceTimer > 0f && !jumpFlag)) {
+                // if Rebound / ReflectBounce in player.MoveV(-1, player.onCollideV), then we can't ceiling jump
+                player.CeilingJump();
+            }
         }
     }
 
     // let ceiling ultra happen when player is close to ceiling, trying to ceiling jump but has not ceiling ultraed yet
     // which also makes ceiling ultra easier, as it's possible you are close to but can't collide ceiling
-    private static void BufferedCeilingUltra(Player player) {
+    // return if we might have ceiling ultraed
+    private static bool TryBufferedCeilingUltra(Player player) {
         if (CeilingUltraEnabled
             && QoL_BufferCeilingUltra
-            && PlayerOnCeiling
-            && player.Speed.Y < 0f // will OnCollideV potentially 
-            && (!player.Inventory.DreamDash || !player.CollideCheck<DreamBlock>(player.Position - Vector2.UnitY * ModImports.InvertY))
-            && player.TryCeilingUltra()) {
-            ApplyEffectsOnMoveBlock(player, -Vector2.UnitY * ModImports.InvertY);
+            && player.OnCeiling() // don't use PlayerOnCeiling as that may be faked by DashAttackBlockPosition
+            && player.Speed.Y < 0f // will OnCollideV potentially
+            && (!player.Inventory.DreamDash || !player.CollideCheck<DreamBlock>(player.Position - Vector2.UnitY * GravityImports.InvertY))
+            && player.CanCeilingUltra()) {
+            player.MoveV_GravityCompatible(-1, player.onCollideV);
+            // this might trigger player.TryCeilingUltra(), but also maybe no
+            // e.g. if that's a DashBlock / ClutterDoor / MrOshiroDoor / CrushBlock / ...
+            return true;
         }
+        return false;
     }
 
     private static void CeilingJumpHookSwimUpdate(ILContext il) {
@@ -869,11 +929,11 @@ public static class CeilingTechMechanism {
         player.launched = true;
         player.Sprite.Scale = new Vector2(0.6f, 1.4f);
         int index = -1;
-        Platform platformByPriority = SurfaceIndex.GetPlatformByPriority(player.CollideAll<Platform>(player.Position - Vector2.UnitY * ModImports.InvertY, player.temp));
+        Platform platformByPriority = SurfaceIndex.GetPlatformByPriority(player.CollideAll<Platform>(player.Position - Vector2.UnitY * GravityImports.InvertY, player.temp));
         if (platformByPriority != null) {
             index = platformByPriority.GetLandSoundIndex(player);
         }
-        Dust.Burst(ModImports.IsPlayerInverted ? player.BottomCenter : player.TopCenter, (float)Math.PI / 2f * ModImports.InvertY, 4, player.DustParticleFromSurfaceIndex(index));
+        Dust.Burst(GravityImports.IsPlayerInverted ? player.BottomCenter : player.TopCenter, (float)Math.PI / 2f * GravityImports.InvertY, 4, player.DustParticleFromSurfaceIndex(index));
         SaveData.Instance.TotalJumps++;
     }
 
@@ -997,22 +1057,21 @@ public static class CeilingTechMechanism {
         return false;
     }
 
-    private static DashCollisionResults FloatySpaceBlockOnDash(On.Celeste.FloatySpaceBlock.orig_OnDash orig, FloatySpaceBlock self, Player player, Vector2 direction) {
-        // floaty space block will only carry player riding it to move, but not under/besides
-        // so it will be a bit inconvient for us
-
-        if (self.MasterOfGroup && self.dashEase <= 0.2f && player != null) {
-            if (direction.X > 0) {
-                FloatySpaceBlockDirection = 1;
-            }
-            else if (direction.X < 0) {
-                FloatySpaceBlockDirection = 3;
-            }
-            else {
-                FloatySpaceBlockDirection = direction.Y * ModImports.InvertY < 0 ? 2 : 0;
-            }
+    internal static void SetDashCollisionRefillDirection(DashCollisionResults result, CollisionData data) {
+        if (result is DashCollisionResults.Bounce or DashCollisionResults.Rebound) {
+            return;
         }
-        return orig(self, player, direction);
+        Vector2 direction = data.Direction;
+        if (direction.X > 0) {
+            DashCollisionDirection = DashCollisionDirections.Right;
+        }
+        else if (direction.X < 0) {
+            DashCollisionDirection = DashCollisionDirections.Left;
+        }
+        else if (direction.Y != 0){
+            // direction.Y is already inverted by GravityHelper (coz it's called inside Actore.MoveH / V), so we invert it again
+            DashCollisionDirection = direction.Y * GravityImports.InvertY < 0 ? DashCollisionDirections.Up : DashCollisionDirections.Down;
+        }
     }
 
     private static bool CanGroundJump_Parameter0() {

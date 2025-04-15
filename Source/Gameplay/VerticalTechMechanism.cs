@@ -175,12 +175,12 @@ public static class VerticalTechMechanism {
 
     private static void VerticalUltraHookOnCollideH(ILContext il) {
         ILCursor cursor = new ILCursor(il);
-        bool success = false;
+        bool success1 = false;
         if (cursor.TryGotoNext(ins => ins.MatchCallOrCallvirt<Player>(nameof(Player.DreamDashCheck)), ins => ins.OpCode == OpCodes.Brfalse_S)) {
             ILLabel label = (ILLabel)cursor.Next.Next.Operand; // goto wall speed retention
             cursor.GotoLabel(label);
             if (cursor.Next.Next.Next.Next.MatchBgtUn(out ILLabel label2)) {
-                success = true;
+                success1 = true;
                 cursor.MoveAfterLabels();
                 cursor.Emit(OpCodes.Ldarg_0);
                 // cursor.EmitDelegate(TryVerticalUltra);
@@ -190,7 +190,29 @@ public static class VerticalTechMechanism {
             }
 
         }
-        "Player.OnCollideH".LogHookData("Vertical Ultra", success);
+
+        bool success2 = false;
+        cursor.Goto(0);
+        if (cursor.TryGotoNext(
+            ins => ins.OpCode == OpCodes.Ldarg_1,
+            ins => ins.MatchLdfld<CollisionData>(nameof(CollisionData.Hit)),
+            ins => ins.MatchLdfld<Platform>(nameof(Platform.OnDashCollide)),
+            ins => ins.OpCode == OpCodes.Ldarg_0)
+            ) {
+            cursor.Index += 4;
+            if (cursor.TryGotoNext(ins => ins.OpCode == OpCodes.Stloc_0)) {
+                // locate "if (DashAttacking && data.Hit != null && data.Hit.OnDashCollide != null && data.Direction.X == (float)Math.Sign(DashDir.X)){
+                //          DashCollisionResults dashCollisionResults = data.Hit.OnDashCollide(this, data.Direction);"
+                success2 = true;
+                cursor.Index++;
+                cursor.Emit(OpCodes.Ldloc_0);
+                cursor.Emit(OpCodes.Ldarg_1);
+                cursor.EmitDelegate(CeilingTechMechanism.SetDashCollisionRefillDirection);
+            }
+        }
+
+        "Player.OnCollideH".LogHookData("Vertical Ultra", success1);
+        "OnCollideH".LogHookData("QoL_RefillOnDashCollision", success2);
     }
 
     public static bool TryVerticalUltra(this Player player) {
