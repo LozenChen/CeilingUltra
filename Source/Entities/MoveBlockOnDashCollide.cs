@@ -5,7 +5,6 @@ using Monocle;
 namespace Celeste.Mod.CeilingUltra.Entities;
 
 [CustomEntity("CeilingUltra/MoveBlockOnDashCollide")]
-[Tracked]
 public class MoveBlockOnDashCollide : MoveBlock {
 
     // we don't need this field, but leave it here so others can find it easily

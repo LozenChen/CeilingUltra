@@ -6,7 +6,6 @@ using System.Collections;
 namespace Celeste.Mod.CeilingUltra.Entities;
 
 [CustomEntity("CeilingUltra/ZipMoverOnDashCollide")]
-[Tracked]
 
 // basically vanilla ZipMover
 public class ZipMoverOnDashCollide : Solid {
