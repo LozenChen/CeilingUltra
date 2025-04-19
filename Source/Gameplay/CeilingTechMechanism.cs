@@ -632,7 +632,7 @@ public static class CeilingTechMechanism {
             && HasSpeedX(player, out int sign)
             && (PlayerOnRightWall && sign > 0 || PlayerOnLeftWall && sign < 0)
             && (!player.Inventory.DreamDash || !player.CollideCheck<DreamBlock>(player.Position + Vector2.UnitX * sign))
-            && player.TryVerticalUltra()) {
+            && player.TryInstantVerticalUltraWithRetention()) {
             // already applied as a side effect of TryVerticalUltra
             // we put TryVerticalUltra inside conditions coz if all other conditions are satisfied but can't vertical ultra (e.g. Can't Squeeze Hitbox), then still need to try Ceiling Ultra
             if (player.DashDir.Y < 0f) {
@@ -661,16 +661,19 @@ public static class CeilingTechMechanism {
     }
 
     private static void ApplyEffectsOnMoveBlock(Player player, Vector2 dir) {
-        // instant ultra triggers move block
+        // instant ultra triggers move blocks etc.
 
         Vector2 origPosition = player.Position;
         player.Position += dir;
-        foreach (MoveBlockOnDashCollide moveBlock in player.Scene.Tracker.GetEntities<MoveBlockOnDashCollide>()
-            .Cast<MoveBlockOnDashCollide>().Where(x => x.ActivateOnDashCollide && x.AllowInstantUltra && x.Collidable)) {
-            if (Collide.Check(player, moveBlock)) {
-                moveBlock.OnDashCollide.Invoke(player, dir);
+
+        if (Engine.Scene.Tracker.Components.TryGetValue(typeof(ActivateOnDashCollideComponent), out List<Component> list) && list.IsNotNullOrEmpty()) {
+            foreach (Component component in list) {
+                if (player.CollideCheck(component.Entity)) {
+                    (component as ActivateOnDashCollideComponent)!.ActivateOnInstantUltra(player, dir);
+                }
             }
         }
+
         player.Position = origPosition;
     }
 

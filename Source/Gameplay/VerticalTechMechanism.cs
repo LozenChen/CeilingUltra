@@ -219,9 +219,39 @@ public static class VerticalTechMechanism {
         "OnCollideH".LogHookData("QoL_RefillOnDashCollision", success2);
     }
 
-    public static bool TryVerticalUltra(this Player player) {
+    [Obsolete]
+    public static bool TryVerticalUltra(Player player) {
         if (Math.Sign(player.DashDir.X) is { } xSign && xSign != 0 && xSign == Math.Sign(player.Speed.X) && player.DashDir.Y != 0f && player.TrySqueezeHitbox(xSign, player.Speed.Y)) {
             player.DashDir.Y = Math.Sign(player.DashDir.Y); // wow, this allows you to super wall jump after an upward vertical ultra
+            player.DashDir.X = 0f;
+            player.Speed.X = 0f;
+            player.Speed.Y *= 1.2f;
+            player.Sprite.Scale = squeezedSpriteScale;
+            return true;
+        }
+        return false;
+    }
+
+    public static bool TryInstantVerticalUltraWithRetention(this Player player) {
+        // instead of just TryVerticalUltra
+        // "With Retention" is more like Vanilla behavior
+        if (Math.Sign(player.DashDir.X) is { } xSign && xSign != 0 && xSign == Math.Sign(player.Speed.X) && player.DashDir.Y != 0f && player.TrySqueezeHitbox(xSign, player.Speed.Y)) {
+            if (VerticalUltraIntoHorizontalUltra) {
+                if (player.DashDir.Y < 0f) {
+                    if (CeilingTechMechanism.CeilingUltraEnabled) {
+                        CeilingTechMechanism.SetOverrideUltraDir(true, player.DashDir);
+                    }
+                }
+                else {
+                    if (CeilingTechMechanism.GroundUltraEnabled) {
+                        CeilingTechMechanism.SetOverrideUltraDir(true, player.DashDir);
+                    }
+                }
+            }
+
+            player.wallSpeedRetained = player.Speed.X;
+            player.wallSpeedRetentionTimer = 0.06f;
+            player.DashDir.Y = Math.Sign(player.DashDir.Y);
             player.DashDir.X = 0f;
             player.Speed.X = 0f;
             player.Speed.Y *= 1.2f;
@@ -235,10 +265,10 @@ public static class VerticalTechMechanism {
         if (!VerticalUltraEnabled) {
             return false;
         }
-        return TryVerticalUltraWithRetention(player);
+        return TryVerticalUltraWithRetentionAndOverrideDir(player);
     }
 
-    public static bool TryVerticalUltraWithRetention(this Player player) {
+    public static bool TryVerticalUltraWithRetentionAndOverrideDir(this Player player) {
         // return true if wallSpeedRetained is set
         if (CeilingTechMechanism.OverrideLeftWallUltraDir.HasValue) {
             if (-1 != Math.Sign(player.Speed.X)) {

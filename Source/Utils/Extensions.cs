@@ -460,9 +460,9 @@ internal static class LevelExtensions {
                     continue;
                 }
 
-                if (Tracker.TrackedEntityTypes.TryGetValue(subclass, out List<Type> subclasses)) {
-                    if (!subclasses.Contains(entity)) {
-                        subclasses.Add(entity);
+                if (Tracker.TrackedEntityTypes.TryGetValue(subclass, out List<Type> parentOfSubclass)) {
+                    if (!parentOfSubclass.Contains(entity)) {
+                        parentOfSubclass.Add(entity);
                     }
                 }
                 else {
