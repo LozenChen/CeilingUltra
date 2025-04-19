@@ -6,7 +6,54 @@ namespace Celeste.Mod.CeilingUltra.Utils;
 
 public static class CollideCheckHelper {
 
+    public static bool CanStand(this Entity entity, Vector2 direciton, Entity platform, Vector2 platformAt) {
+        direciton.Y *= GravityImports.InvertY;
+
+        Vector2 orig_Position = entity.Position;
+        Vector2 orig_platformPosition = platform.Position;
+        entity.Position += direciton;
+        platform.Position = platformAt;
+        bool result = false;
+        if (platform is Solid solid) {
+            result = entity.CollideCheck(solid);
+        }
+        else if (direciton != Vector2.Zero && IsJumpThru(platform)) {
+            if (platform.GetDirection() == GetDir(direciton) && entity.CollideCheck(platform)) {
+                entity.Position = orig_Position;
+                if (!entity.CollideCheck(platform)) {
+                    result = true;
+                }
+            }
+        }
+        entity.Position = orig_Position;
+        platform.Position = orig_platformPosition;
+        return result;
+    }
+
+    public static bool CanStand(this Entity entity, Vector2 direction, Entity platform) {
+        direction.Y *= GravityImports.InvertY;
+
+        Vector2 orig_Position = entity.Position;
+        entity.Position += direction;
+        bool result = false;
+        if (platform is Solid solid) {
+            result = entity.CollideCheck(solid);
+        }
+        else if (direction != Vector2.Zero && IsJumpThru(platform)) {
+            if (platform.GetDirection() == GetDir(direction) && entity.CollideCheck(platform)) {
+                entity.Position = orig_Position;
+                if (!entity.CollideCheck(platform)) {
+                    result = true;
+                }
+            }
+        }
+        entity.Position = orig_Position;
+        return result;
+    }
+
     public static bool CanStand(this Entity entity, Vector2 direciton) {
+        direciton.Y *= GravityImports.InvertY;
+
         Vector2 orig_Position = entity.Position;
         entity.Position += direciton;
         bool result = false;
@@ -205,9 +252,15 @@ public static class CollideCheckHelper {
         if (jumpThruDirections.TryGetValue(jumpThru, out Direction dir)) {
             return dir;
         }
-        // we don't initialize this when load level, so we dont need to worry about SRT
+        // we don't initialize this when load level, so we dont need to worry about SRT ...
+        // okay but we will need re-init after save load
+        // TODO: Support SRT
         InitializeDictionary();
         return jumpThruDirections[jumpThru];
+    }
+
+    private static bool IsJumpThru(Entity entity) {
+        return entity is JumpThru || JumpThruIsNotJumpThruTypes.Contains(entity.GetType());
     }
 
     internal static List<Entity> GetJumpThrus() {

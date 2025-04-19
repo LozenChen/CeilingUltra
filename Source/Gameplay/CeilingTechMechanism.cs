@@ -42,20 +42,27 @@ public static class CeilingTechMechanism {
 
     public static bool QoL_BufferCeilingUltra => LevelSettings.QoLBufferCeilingUltra;
 
-    public static bool QoL_RefillOnDashCollision = true;
+    public static bool QoL_RefillOnDashCollision = true; // only for moving blocks
 
     #endregion
 
     #region Variables
 
-    [SaveLoad]
+    // updates every frame, no need to save load
+
     public static bool PlayerOnCeiling = false;
 
-    [SaveLoad]
     public static bool PlayerOnLeftWall = false;
 
-    [SaveLoad]
     public static bool PlayerOnRightWall = false;
+
+    public static bool CheckCeilingRefill = false;
+
+    public static bool CheckLeftRefill = false;
+
+    public static bool CheckRightRefill = false;
+
+    public static bool InstantUltraLeaveGround = false;
 
     public enum DashCollisionDirections { None, Up, Down, Left, Right }
 
@@ -111,8 +118,16 @@ public static class CeilingTechMechanism {
     [SaveLoad]
     public static float NextMaxFall = float.MinValue;
 
+
     [SaveLoad]
-    public static bool InstantUltraLeaveGround = false;
+    public static Platform hitLastFrame = null;
+
+    [SaveLoad]
+    public static Vector2 hitLastPosition = Vector2.Zero;
+
+    [SaveLoad]
+
+    public static bool hitSuppressDashRefill = false;
 
     #endregion
 
@@ -164,10 +179,15 @@ public static class CeilingTechMechanism {
         }
         LastFrameSetJumpTimerCalled = false;
 
+        bool getNewValue = false;
+        bool orig_ceil = false;
+        bool orig_left = false;
+        bool orig_right = false;
+
         if (player.StateMachine.State == 9) {
-            PlayerOnCeiling = false;
-            PlayerOnLeftWall = false;
-            PlayerOnRightWall = false;
+            CheckCeilingRefill = PlayerOnCeiling = false;
+            CheckLeftRefill = PlayerOnLeftWall = false;
+            CheckRightRefill = PlayerOnRightWall = false;
         }
         else {
             // there's no speed check coz:
@@ -177,30 +197,54 @@ public static class CeilingTechMechanism {
             PlayerOnLeftWall = player.CanStand(-Vector2.UnitX);
             PlayerOnRightWall = player.CanStand(Vector2.UnitX);
 
-            if (QoL_RefillOnDashCollision) {
+            CheckCeilingRefill = CeilingRefillDash && PlayerOnCeiling;
+            CheckLeftRefill = WallRefillDash && PlayerOnLeftWall;
+            CheckRightRefill = WallRefillDash && PlayerOnRightWall;
+
+            if (QoL_RefillOnDashCollision && hitLastFrame is not null) {
                 switch (DashCollisionDirection) {
                     // give refill and varJumpTimer
                     // to avoid the issue that: the block move away after we hit them in last frame, so we can't refill
                     // (coz the moving block won't carry us in these directions)
-                    case DashCollisionDirections.Right: {
-                        PlayerOnRightWall = true;
-                        break;
-                    }
+
+                    // this should only apply to refill and varJumpTimer
+                    // so these values will be reset later, so that game logic can still use PlayerOnCeiling etc.
                     case DashCollisionDirections.Up: {
-                        PlayerOnCeiling = true;
+                        if (!PlayerOnCeiling) {
+                            // check if (we are not next to the moving block X now, but if that block X has not moved, then we will be).
+                            // if we are pushed by another block Y, so that we cannot to be next to X even if X has not moved
+                            // then we should not get PlayerOnCeiling
+                            getNewValue = PlayerOnCeiling = player.CanStand(-Vector2.UnitY, hitLastFrame, hitLastPosition);
+                            if (!hitSuppressDashRefill) {
+                                // if we are inside ClimbBlocker last frame, then we also shouldn't refill dash this frame
+                                // this should avoid abusing Order of Operations
+                                CheckCeilingRefill = CeilingRefillDash && PlayerOnCeiling;
+                            }
+                        }
                         break;
                     }
                     case DashCollisionDirections.Left: {
-                        PlayerOnLeftWall = true;
+                        if (!PlayerOnCeiling) {
+                            getNewValue = PlayerOnLeftWall = player.CanStand(-Vector2.UnitX, hitLastFrame, hitLastPosition);
+                            if (!hitSuppressDashRefill) {
+                                CheckLeftRefill = WallRefillDash && PlayerOnLeftWall;
+                            }
+                        }
                         break;
                     }
-                    // technically we can also support Down, there are some rare cases where it would be useful
-                    // but ... let's just don't do it for now
+                    case DashCollisionDirections.Right: {
+                        if (!PlayerOnRightWall) {
+                            getNewValue = PlayerOnRightWall = player.CanStand(Vector2.UnitX, hitLastFrame, hitLastPosition);
+                            if (!hitSuppressDashRefill) {
+                                CheckRightRefill = WallRefillDash && PlayerOnRightWall;
+                            }
+                        }
+                        break;
+                    }
                     default: {
                         break;
                     }
                 }
-                DashCollisionDirection = DashCollisionDirections.None;
             }
         }
 
@@ -215,7 +259,9 @@ public static class CeilingTechMechanism {
             CeilingJumpGraceTimer -= Engine.DeltaTime;
         }
 
-        if (WallRefillStamina && (PlayerOnLeftWall && !ClimbBlocker.Check(player.Scene, player, player.Position - Vector2.UnitX) || PlayerOnRightWall && !ClimbBlocker.Check(player.Scene, player, player.Position + Vector2.UnitX))) {
+        if (WallRefillStamina &&
+            (PlayerOnLeftWall && !ClimbBlocker.Check(player.Scene, player, player.Position - Vector2.UnitX) ||
+            PlayerOnRightWall && !ClimbBlocker.Check(player.Scene, player, player.Position + Vector2.UnitX))) {
             player.Stamina = 110f;
             player.wallSlideTimer = 1.2f;
         }
@@ -239,6 +285,18 @@ public static class CeilingTechMechanism {
         }
 
         InstantUltraLeaveGround = false;
+
+        if (getNewValue) {
+            // reset these, so other game logic can still use PlayerOnCeiling etc.
+            PlayerOnCeiling = orig_ceil;
+            PlayerOnLeftWall = orig_left;
+            PlayerOnRightWall = orig_right;
+        }
+
+        DashCollisionDirection = DashCollisionDirections.None;
+        hitLastFrame = null;
+        hitLastPosition = Vector2.Zero;
+        hitSuppressDashRefill = false;
     }
 
     private static void HookPlayerUpdate(ILContext il) {
@@ -311,6 +369,8 @@ public static class CeilingTechMechanism {
         LastFrameDashDir = Vector2.Zero;
         DashCollisionDirection = DashCollisionDirections.None;
         InstantUltraLeaveGround = false;
+        hitLastFrame = null;
+        hitLastPosition = Vector2.Zero;
         return player;
     }
 
@@ -470,7 +530,8 @@ public static class CeilingTechMechanism {
                 cursor.Index++;
                 cursor.Emit(OpCodes.Ldloc_0);
                 cursor.Emit(OpCodes.Ldarg_1);
-                cursor.EmitDelegate(SetDashCollisionRefillDirection);
+                cursor.Emit(OpCodes.Ldarg_0);
+                cursor.EmitDelegate(RecordDashCollisionResults);
             }
         }
         "OnCollideV".LogHookData("Ground Ultra", success1);
@@ -613,7 +674,7 @@ public static class CeilingTechMechanism {
     }
 
     public static bool OnCeiling(this Player player, int upCheck = 1) {
-        return player.CanStand(-upCheck * Vector2.UnitY * GravityImports.InvertY);
+        return player.CanStand(-upCheck * Vector2.UnitY);
     }
 
     public static void SetOverrideUltraDir(bool isVerticalUltra, Vector2 dashDir) {
@@ -646,10 +707,49 @@ public static class CeilingTechMechanism {
         while (cursor.TryGotoNext(MoveType.AfterLabel, i => i.OpCode == OpCodes.Ret)) {
             success = true;
             cursor.Emit(OpCodes.Ldarg_0);
-            cursor.EmitDelegate(UpdateMaxFallAndJumpGrace);
+            cursor.EmitDelegate(UpdateOnEndImpl);
             cursor.Index++;
         }
+        "Player.orig_Update".LogHookData("QoL_RefillOnDashCollision", success);
         "Player.orig_Update".LogHookData("Set MaxFall Helper", success);
+    }
+
+    private static void UpdateOnEndImpl(Player player) {
+        HandleRefillDashCollision(player);
+        UpdateMaxFallAndJumpGrace(player);
+    }
+
+    private static void HandleRefillDashCollision(Player player) {
+        if (!QoL_RefillOnDashCollision) {
+            return;
+        }
+        
+        if (hitLastFrame is null
+            || DashCollisionDirection is DashCollisionDirections.None or DashCollisionDirections.Down){
+            return;
+        }
+
+        Vector2 dir = DashCollisionDirection switch {
+            DashCollisionDirections.Up => -Vector2.UnitY,
+            DashCollisionDirections.Left => -Vector2.UnitX,
+            DashCollisionDirections.Right => Vector2.UnitX,
+            _ => Vector2.Zero
+        };
+        bool stillNextTo = player.CanStand(dir, hitLastFrame);
+        if (!stillNextTo) {
+            DashCollisionDirection = DashCollisionDirections.None;
+            hitLastFrame = null;
+        }
+
+        if (stillNextTo && !player.Inventory.NoRefills && player.Dashes < player.MaxDashes && (!FixedSpikeCollisionCheck(player) || SaveData.Instance.Assists.Invincible)) {
+            // we don't want player to refill dash, when colliding with a moving block with spikes, by abusing Order of Operations
+            hitSuppressDashRefill = DashCollisionDirection switch {
+                DashCollisionDirections.Up => player.CollideCheck<IceCeiling>(),
+                DashCollisionDirections.Left => ClimbBlocker.Check(player.Scene, player, player.Position - Vector2.UnitX),
+                DashCollisionDirections.Right => ClimbBlocker.Check(player.Scene, player, player.Position + Vector2.UnitX),
+                _ => false
+            };
+        }
     }
 
     private static void UpdateMaxFallAndJumpGrace(Player player) {
@@ -670,8 +770,9 @@ public static class CeilingTechMechanism {
     public static void ExtendedRefillDash(Player player) {
         if (!player.Inventory.NoRefills && player.Dashes < player.MaxDashes
             && (
-                (CeilingRefillDash && PlayerOnCeiling && !player.CollideCheck<IceCeiling>()) ||
-                (WallRefillDash && (PlayerOnLeftWall && !ClimbBlocker.Check(player.Scene, player, player.Position - Vector2.UnitX) || PlayerOnRightWall && !ClimbBlocker.Check(player.Scene, player, player.Position + Vector2.UnitX)))
+                (CheckCeilingRefill && !player.CollideCheck<IceCeiling>()) ||
+                (CheckLeftRefill && !ClimbBlocker.Check(player.Scene, player, player.Position - Vector2.UnitX)) ||
+                (CheckRightRefill && !ClimbBlocker.Check(player.Scene, player, player.Position + Vector2.UnitX))
             )
             && (!FixedSpikeCollisionCheck(player) || SaveData.Instance.Assists.Invincible)) {
             player.RefillDash();
@@ -1057,8 +1158,12 @@ public static class CeilingTechMechanism {
         return false;
     }
 
-    internal static void SetDashCollisionRefillDirection(DashCollisionResults result, CollisionData data) {
-        if (result is DashCollisionResults.Bounce or DashCollisionResults.Rebound) {
+    internal static void RecordDashCollisionResults(DashCollisionResults result, CollisionData data, Player player) {
+        if (!QoL_RefillOnDashCollision) {
+            return;
+        }
+        if (result is DashCollisionResults.Bounce or DashCollisionResults.Rebound || player.StateMachine.State == 5) { // StRedDash
+            DashCollisionDirection = DashCollisionDirections.None;
             return;
         }
         Vector2 direction = data.Direction;
@@ -1069,9 +1174,11 @@ public static class CeilingTechMechanism {
             DashCollisionDirection = DashCollisionDirections.Left;
         }
         else if (direction.Y != 0){
-            // direction.Y is already inverted by GravityHelper (coz it's called inside Actore.MoveH / V), so we invert it again
-            DashCollisionDirection = direction.Y * GravityImports.InvertY < 0 ? DashCollisionDirections.Up : DashCollisionDirections.Down;
+            // if direction.Y is already inverted by GravityHelper (coz it's called inside Actore.MoveH / V), we respect it
+            DashCollisionDirection = direction.Y < 0 ? DashCollisionDirections.Up : DashCollisionDirections.Down;
         }
+        hitLastFrame = data.Hit;
+        hitLastPosition = data.Hit.Position;
     }
 
     private static bool CanGroundJump_Parameter0() {

@@ -16,14 +16,21 @@ public class CeilingUltraSettings : EverestModuleSettings {
 
     public bool Enabled = false;
 
-    public bool TasEnableAll { // we provide this property for tas set command
+    // we provide this property for tas set command.
+    // if it's not a mod map which use ceiling ultra on its own, please set this to true
+    public bool TasEnableAll {
         get => Enabled;
         set {
-            Enabled = CeilingUltraEnabled = CeilingRefillStamina = CeilingRefillDash = CeilingJumpEnabled = CeilingHyperEnabled = UpdiagDashEndNoHorizontalSpeedLoss = VerticalHyperEnabled = VerticalUltraEnabled = DashBeginNoVerticalSpeedLoss = UpdiagDashEndNoVerticalSpeedLoss = WallRefillStamina = WallRefillDash = HorizontalUltraIntoVerticalUltra = VerticalUltraIntoHorizontalUltra = UpwardWallJumpAcceleration = DownwardWallJumpAcceleration = value;
+            Enabled = 
+                CeilingUltraEnabled = CeilingRefillStamina = CeilingRefillDash = CeilingJumpEnabled = CeilingHyperEnabled = 
+                UpdiagDashEndNoHorizontalSpeedLoss = VerticalHyperEnabled = VerticalUltraEnabled = DashBeginNoVerticalSpeedLoss =
+                UpdiagDashEndNoVerticalSpeedLoss = WallRefillStamina = WallRefillDash = HorizontalUltraIntoVerticalUltra =
+                VerticalUltraIntoHorizontalUltra = UpwardWallJumpAcceleration = DownwardWallJumpAcceleration = value;
             GroundJumpEnabled = GroundHyperEnabled = GroundUltraEnabled = true;
             QoLBufferVerticalHyper = false;
             QoLBufferVerticalUltra = false;
             QoLRefillDashOnWallJump = false;
+            QoLBufferCeilingUltra = false;
             LevelSettings.ClearAllOverride();
         }
     }

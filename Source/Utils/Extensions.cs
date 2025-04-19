@@ -438,29 +438,40 @@ internal static class LevelExtensions {
 
     // this should always be called in Initialize, so when any tracker instance is created, these types are already stored
     public static void AddToTracker(Type entity, bool inherited = false) {
+        // if inherited, then all subclass entities of class T can be fetched using Tracker.GetEntities<T>()
+        // otherwise, Tracker.GetEntities<T>() only return those entities whose type is exactly T
         if (!typeof(Entity).IsAssignableFrom(entity)) {
             return;
         }
 
-        if (!Tracker.TrackedEntityTypes.ContainsKey(entity)) {
-            Tracker.TrackedEntityTypes.Add(entity, new List<Type>());
-            Tracker.TrackedEntityTypes[entity].Add(entity);
+        // avoids CA1854: two lookups when only one is needed
+        if (Tracker.TrackedEntityTypes.TryGetValue(entity, out List<Type> types)) {
+            if (!types.Contains(entity)) {
+                Tracker.TrackedEntityTypes[entity].Add(entity);
+            }
+        }
+        else {
+            Tracker.TrackedEntityTypes.Add(entity, new List<Type>() { entity });
         }
 
         if (inherited) {
             foreach (Type subclass in Tracker.GetSubclasses(entity)) {
-                if (!subclass.IsAbstract) {
-                    if (!Tracker.TrackedEntityTypes.ContainsKey(subclass)) {
-                        Tracker.TrackedEntityTypes.Add(subclass, new List<Type>());
+                if (subclass.IsAbstract) {
+                    continue;
+                }
+
+                if (Tracker.TrackedEntityTypes.TryGetValue(subclass, out List<Type> subclasses)) {
+                    if (!subclasses.Contains(entity)) {
+                        subclasses.Add(entity);
                     }
-                    Tracker.TrackedEntityTypes[subclass].Add(entity);
+                }
+                else {
+                    Tracker.TrackedEntityTypes.Add(subclass, new List<Type>() { entity });
                 }
             }
         }
 
-        if (!Tracker.StoredEntityTypes.Contains(entity)) {
-            Tracker.StoredEntityTypes.Add(entity);
-        }
+        Tracker.StoredEntityTypes.Add(entity);
     }
 }
 

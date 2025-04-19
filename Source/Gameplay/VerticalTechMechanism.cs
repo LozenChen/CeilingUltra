@@ -207,7 +207,8 @@ public static class VerticalTechMechanism {
                 cursor.Index++;
                 cursor.Emit(OpCodes.Ldloc_0);
                 cursor.Emit(OpCodes.Ldarg_1);
-                cursor.EmitDelegate(CeilingTechMechanism.SetDashCollisionRefillDirection);
+                cursor.Emit(OpCodes.Ldarg_0);
+                cursor.EmitDelegate(CeilingTechMechanism.RecordDashCollisionResults);
             }
         }
 
