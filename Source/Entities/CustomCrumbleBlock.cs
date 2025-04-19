@@ -17,9 +17,14 @@ public class CustomCrumbleBlock : Solid {
 
     public const string TexturePath_Down = "CeilingUltra/CrumbleBlock/down";
 
-    public const string TexturePath_Outline_Horizontal = "CeilingUltra/CrumbleBlock/outline_h";
+    public const string TexturePath_Outline_Left = "CeilingUltra/CrumbleBlock/outline_left";
 
-    public const string TexturePath_Outline_Vertical = "CeilingUltra/CrumbleBlock/outline_v";
+    public const string TexturePath_Outline_Right = "CeilingUltra/CrumbleBlock/outline_right";
+
+    public const string TexturePath_Outline_Up = "CeilingUltra/CrumbleBlock/outline_up";
+
+    public const string TexturePath_Outline_Down = "CeilingUltra/CrumbleBlock/outline_down";
+
 
     public static ParticleType P_Crumble => CrumblePlatform.P_Crumble;
 
@@ -39,13 +44,17 @@ public class CustomCrumbleBlock : Solid {
 
     public string TexturePath;
 
-    public bool isHorizontal;
+    public string OutlinePath;
 
     public int Length;
 
     public bool ActivateOnDashCollide = true;
 
     public bool triggered;
+
+    private int dirX;
+
+    private int dirY;
 
     public CustomCrumbleBlock(Vector2 position)
         : base(position, 8f, 8f, safe: false) {
@@ -56,32 +65,39 @@ public class CustomCrumbleBlock : Solid {
     public CustomCrumbleBlock(EntityData data, Vector2 offset)
         : this(data.Position + offset) {
 
+        triggered = false;
         ActivateOnDashCollide = data.Bool("ActivateOnDashCollide", true);
         if (ActivateOnDashCollide) {
             OnDashCollide = ActivateOnDash;
             Add(new ActivateOnDashCollideComponent());
         }
 
+        bool isHorizontal;
+
         string facing = data.String("Facing", "Down");
         switch (facing) {
             case "Down": {
                 isHorizontal = true;
                 TexturePath = TexturePath_Down;
+                OutlinePath = TexturePath_Outline_Down;
                 break;
             }
             case "Left": {
                 isHorizontal = false;
                 TexturePath = TexturePath_Left;
+                OutlinePath = TexturePath_Outline_Left;
                 break;
             }
             case "Right": {
                 isHorizontal = false;
                 TexturePath = TexturePath_Right;
+                OutlinePath = TexturePath_Outline_Right;
                 break;
             }
             default: {
                 isHorizontal = true;
                 TexturePath = TexturePath_Up;
+                OutlinePath = TexturePath_Outline_Up;
                 break;
             }
         }
@@ -89,10 +105,14 @@ public class CustomCrumbleBlock : Solid {
         if (isHorizontal) {
             Length = Math.Max(8, data.Width);
             Collider.Width = Length;
+            dirX = 1;
+            dirY = 0;
         }
         else {
             Length = Math.Max(8, data.Height);
             Collider.Height = Length;
+            dirX = 0;
+            dirY = 1;
         }
     }
 
@@ -104,14 +124,12 @@ public class CustomCrumbleBlock : Solid {
 
     public override void Added(Scene scene) {
         base.Added(scene);
-        MTexture mTexture = GFX.Game[isHorizontal ? TexturePath_Outline_Horizontal : TexturePath_Outline_Vertical];
+        MTexture mTexture = GFX.Game[OutlinePath];
         MTexture mTexture2 = GFX.Game[TexturePath];
-        int x = isHorizontal ? 1 : 0;
-        int y = isHorizontal ? 0 : 1;
 
         outline = new List<Image>();
         if (Length <= 8f) {
-            Image image = new Image(mTexture.GetSubtexture(24 * x, 24 * y, 8, 8));
+            Image image = new Image(mTexture.GetSubtexture(24 * dirX, 24 * dirY, 8, 8));
             image.Color = Color.White * 0f;
             Add(image);
             outline.Add(image);
@@ -119,8 +137,8 @@ public class CustomCrumbleBlock : Solid {
         else {
             for (int i = 0; i < Length; i += 8) {
                 int num = ((i != 0) ? ((i > 0 && i < Length - 8f) ? 1 : 2) : 0);
-                Image image2 = new Image(mTexture.GetSubtexture(num * 8 * x, num * 8 * y, 8, 8));
-                image2.Position = new Vector2(i * x, i * y);
+                Image image2 = new Image(mTexture.GetSubtexture(num * 8 * dirX, num * 8 * dirY, 8, 8));
+                image2.Position = new Vector2(i * dirX, i * dirY);
                 image2.Color = Color.White * 0f;
                 Add(image2);
                 outline.Add(image2);
@@ -133,8 +151,8 @@ public class CustomCrumbleBlock : Solid {
         fallOrder = new List<int>();
         for (int j = 0; j < Length; j += 8) {
             int num2 = (int)((Math.Abs(X) + j) / 8f) % 4;
-            Image image3 = new Image(mTexture2.GetSubtexture(num2 * 8 * x, num2 * 8 * y, 8, 8));
-            image3.Position = new Vector2(4f + j * x, 4f + j * y);
+            Image image3 = new Image(mTexture2.GetSubtexture(num2 * 8 * dirX, num2 * 8 * dirY, 8, 8));
+            image3.Position = new Vector2(4f + j * dirX, 4f + j * dirY);
             image3.CenterOrigin();
             Add(image3);
             images.Add(image3);
@@ -148,7 +166,7 @@ public class CustomCrumbleBlock : Solid {
         Add(new Coroutine(Sequence()));
         Add(shaker = new ShakerList(images.Count, on: false, (Vector2[] v) => {
             for (int k = 0; k < images.Count; k++) {
-                images[k].Position = new Vector2(4f + k * 8 * x, 4f + k * 8 * y) + v[k];
+                images[k].Position = new Vector2(4f + k * 8 * dirX, 4f + k * 8 * dirY) + v[k];
             }
         }));
         Add(occluder = new LightOcclude(0.2f));
@@ -156,19 +174,26 @@ public class CustomCrumbleBlock : Solid {
 
     private IEnumerator Sequence() {
         while (true) {
-            bool onTop;
-            if (GetPlayerOnTop() != null) {
-                onTop = true;
-                Input.Rumble(RumbleStrength.Medium, RumbleLength.Medium);
-            }
-            else {
-                if (GetPlayerClimbing() == null) {
-                    yield return null;
-                    continue;
+            bool onTop = false;
+            triggered = false;
+            bool waiting = true;
+            while (waiting) {
+                if (GetPlayerOnTop() != null) {
+                    onTop = true;
+                    waiting = false;
+                    Input.Rumble(RumbleStrength.Medium, RumbleLength.Medium);
                 }
-                onTop = false;
-                Input.Rumble(RumbleStrength.Medium, RumbleLength.Medium);
+                else {
+                    if (GetPlayerClimbing() == null && !triggered) {
+                        yield return null;
+                        continue;
+                    }
+                    onTop = false;
+                    waiting = false;
+                    Input.Rumble(RumbleStrength.Medium, RumbleLength.Medium);
+                }
             }
+            
             Audio.Play("event:/game/general/platform_disintegrate", Center);
             shaker.ShakeFor(onTop ? 0.6f : 1f, removeOnFinish: false);
             foreach (Image image in images) {
@@ -254,7 +279,7 @@ public class CustomCrumbleBlock : Solid {
         Audio.Play("event:/game/general/platform_return", Center);
         img.Visible = true;
         img.Color = Color.White;
-        img.Position = new Vector2(index * 8 + 4, 4f);
+        img.Position = new Vector2(index * 8 * dirX + 4f, index * 8 * dirY + 4f);
         for (float time = 0f; time < 1f; time += Engine.DeltaTime / 0.25f) {
             yield return null;
             img.Scale = Vector2.One * (1f + Ease.BounceOut(1f - time) * 0.2f);
