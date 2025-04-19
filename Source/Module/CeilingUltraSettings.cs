@@ -21,8 +21,8 @@ public class CeilingUltraSettings : EverestModuleSettings {
     public bool TasEnableAll {
         get => Enabled;
         set {
-            Enabled = 
-                CeilingUltraEnabled = CeilingRefillStamina = CeilingRefillDash = CeilingJumpEnabled = CeilingHyperEnabled = 
+            Enabled =
+                CeilingUltraEnabled = CeilingRefillStamina = CeilingRefillDash = CeilingJumpEnabled = CeilingHyperEnabled =
                 UpdiagDashEndNoHorizontalSpeedLoss = VerticalHyperEnabled = VerticalUltraEnabled = DashBeginNoVerticalSpeedLoss =
                 UpdiagDashEndNoVerticalSpeedLoss = WallRefillStamina = WallRefillDash = HorizontalUltraIntoVerticalUltra =
                 VerticalUltraIntoHorizontalUltra = UpwardWallJumpAcceleration = DownwardWallJumpAcceleration = value;

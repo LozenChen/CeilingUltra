@@ -42,7 +42,7 @@ public static class CeilingTechMechanism {
 
     public static bool QoL_BufferCeilingUltra => LevelSettings.QoLBufferCeilingUltra;
 
-    public static bool QoL_RefillOnDashCollision = true; // only for moving blocks
+    public static bool QoL_RefillOnCollision = true; // only for moving blocks
 
     #endregion
 
@@ -64,13 +64,9 @@ public static class CeilingTechMechanism {
 
     public static bool InstantUltraLeaveGround = false;
 
-    public enum DashCollisionDirections { None, Up, Down, Left, Right }
-
-    [SaveLoad]
-
-    public static DashCollisionDirections DashCollisionDirection = DashCollisionDirections.None;
-
     public static bool PlayerOnWall => PlayerOnLeftWall || PlayerOnRightWall;
+
+    // variables live across frames
 
     [SaveLoad]
     public static float CeilingJumpGraceTimer = 0f;
@@ -118,6 +114,12 @@ public static class CeilingTechMechanism {
     [SaveLoad]
     public static float NextMaxFall = float.MinValue;
 
+
+    public enum CollisionDirections { None, Up, Down, Left, Right }
+
+    [SaveLoad]
+
+    public static CollisionDirections CollisionDirection = CollisionDirections.None;
 
     [SaveLoad]
     public static Platform hitLastFrame = null;
@@ -201,15 +203,15 @@ public static class CeilingTechMechanism {
             CheckLeftRefill = WallRefillDash && PlayerOnLeftWall;
             CheckRightRefill = WallRefillDash && PlayerOnRightWall;
 
-            if (QoL_RefillOnDashCollision && hitLastFrame is not null && Engine.Scene.Entities.Contains(hitLastFrame)) { // shouldn't be removed last frame
-                switch (DashCollisionDirection) {
+            if (QoL_RefillOnCollision && hitLastFrame is not null && Engine.Scene.Entities.Contains(hitLastFrame)) { // shouldn't be removed last frame
+                switch (CollisionDirection) {
                     // give refill and varJumpTimer
                     // to avoid the issue that: the block move away after we hit them in last frame, so we can't refill
                     // (coz the moving block won't carry us in these directions)
 
                     // this should only apply to refill and varJumpTimer
                     // so these values will be reset later, so that game logic can still use PlayerOnCeiling etc.
-                    case DashCollisionDirections.Up: {
+                    case CollisionDirections.Up: {
                         if (!PlayerOnCeiling) {
                             // check if (we are not next to the moving block X now, but if that block X has not moved, then we will be).
                             // if we are pushed by another block Y, so that we cannot to be next to X even if X has not moved
@@ -223,7 +225,7 @@ public static class CeilingTechMechanism {
                         }
                         break;
                     }
-                    case DashCollisionDirections.Left: {
+                    case CollisionDirections.Left: {
                         if (!PlayerOnCeiling) {
                             getNewValue = PlayerOnLeftWall = player.CanStand(-Vector2.UnitX, hitLastFrame, hitLastPosition);
                             if (!hitSuppressDashRefill) {
@@ -232,7 +234,7 @@ public static class CeilingTechMechanism {
                         }
                         break;
                     }
-                    case DashCollisionDirections.Right: {
+                    case CollisionDirections.Right: {
                         if (!PlayerOnRightWall) {
                             getNewValue = PlayerOnRightWall = player.CanStand(Vector2.UnitX, hitLastFrame, hitLastPosition);
                             if (!hitSuppressDashRefill) {
@@ -293,7 +295,7 @@ public static class CeilingTechMechanism {
             PlayerOnRightWall = orig_right;
         }
 
-        DashCollisionDirection = DashCollisionDirections.None;
+        CollisionDirection = CollisionDirections.None;
         hitLastFrame = null;
         hitLastPosition = Vector2.Zero;
         hitSuppressDashRefill = false;
@@ -367,7 +369,7 @@ public static class CeilingTechMechanism {
         ClearOverrideUltraDir();
         LastFrameWriteOverrideUltraDir = false;
         LastFrameDashDir = Vector2.Zero;
-        DashCollisionDirection = DashCollisionDirections.None;
+        CollisionDirection = CollisionDirections.None;
         InstantUltraLeaveGround = false;
         hitLastFrame = null;
         hitLastPosition = Vector2.Zero;
@@ -724,33 +726,36 @@ public static class CeilingTechMechanism {
     }
 
     private static void HandleRefillDashCollision(Player player) {
-        if (!QoL_RefillOnDashCollision) {
-            return;
-        }
-        
-        if (hitLastFrame is null
-            || DashCollisionDirection is DashCollisionDirections.None or DashCollisionDirections.Down){
+        if (!QoL_RefillOnCollision) {
             return;
         }
 
-        Vector2 dir = DashCollisionDirection switch {
-            DashCollisionDirections.Up => -Vector2.UnitY,
-            DashCollisionDirections.Left => -Vector2.UnitX,
-            DashCollisionDirections.Right => Vector2.UnitX,
+        if (hitLastFrame is null
+            || CollisionDirection is CollisionDirections.None or CollisionDirections.Down
+            || player.StateMachine.State == 9) {
+            CollisionDirection = CollisionDirections.None;
+            hitLastFrame = null;
+            return;
+        }
+
+        Vector2 dir = CollisionDirection switch {
+            CollisionDirections.Up => -Vector2.UnitY,
+            CollisionDirections.Left => -Vector2.UnitX,
+            CollisionDirections.Right => Vector2.UnitX,
             _ => Vector2.Zero
         };
         bool stillNextTo = player.CanStand(dir, hitLastFrame);
         if (!stillNextTo) {
-            DashCollisionDirection = DashCollisionDirections.None;
+            CollisionDirection = CollisionDirections.None;
             hitLastFrame = null;
         }
 
         if (stillNextTo && !player.Inventory.NoRefills && player.Dashes < player.MaxDashes && (!FixedSpikeCollisionCheck(player) || SaveData.Instance.Assists.Invincible)) {
             // we don't want player to refill dash, when colliding with a moving block with spikes, by abusing Order of Operations
-            hitSuppressDashRefill = DashCollisionDirection switch {
-                DashCollisionDirections.Up => player.CollideCheck<IceCeiling>(),
-                DashCollisionDirections.Left => ClimbBlocker.Check(player.Scene, player, player.Position - Vector2.UnitX),
-                DashCollisionDirections.Right => ClimbBlocker.Check(player.Scene, player, player.Position + Vector2.UnitX),
+            hitSuppressDashRefill = CollisionDirection switch {
+                CollisionDirections.Up => player.CollideCheck<IceCeiling>(),
+                CollisionDirections.Left => ClimbBlocker.Check(player.Scene, player, player.Position - Vector2.UnitX),
+                CollisionDirections.Right => ClimbBlocker.Check(player.Scene, player, player.Position + Vector2.UnitX),
                 _ => false
             };
         }
@@ -1163,31 +1168,32 @@ public static class CeilingTechMechanism {
     }
 
     internal static void RecordDashCollisionResults(CollisionData data) {
-        if (!QoL_RefillOnDashCollision || data.Hit is null) {
+        if (!QoL_RefillOnCollision || data.Hit is null) {
             return;
         }
+        // we don't require DashAttacking
         Vector2 direction = data.Direction;
         if (direction.X > 0) {
-            DashCollisionDirection = DashCollisionDirections.Right;
+            CollisionDirection = CollisionDirections.Right;
         }
         else if (direction.X < 0) {
-            DashCollisionDirection = DashCollisionDirections.Left;
+            CollisionDirection = CollisionDirections.Left;
         }
         else if (direction.Y != 0) {
             // if direction.Y is already inverted by GravityHelper (coz it's called inside Actore.MoveH / V), we respect it
-            DashCollisionDirection = direction.Y < 0 ? DashCollisionDirections.Up : DashCollisionDirections.Down;
+            CollisionDirection = direction.Y < 0 ? CollisionDirections.Up : CollisionDirections.Down;
         }
         hitLastFrame = data.Hit;
         hitLastPosition = data.Hit.Position;
     }
 
     internal static void EraseDashCollisionResults(DashCollisionResults result, Player player) {
-        if (!QoL_RefillOnDashCollision) {
+        if (!QoL_RefillOnCollision) {
             return;
         }
         if (result is DashCollisionResults.Bounce or DashCollisionResults.Rebound && player.StateMachine.State != 5) {
             // if StRedDash then it will be DashCollisionResults.Ignore
-            DashCollisionDirection = DashCollisionDirections.None;
+            CollisionDirection = CollisionDirections.None;
             hitLastFrame = null;
         }
     }
