@@ -193,7 +193,7 @@ public class CustomCrumbleBlock : Solid {
                     Input.Rumble(RumbleStrength.Medium, RumbleLength.Medium);
                 }
             }
-            
+
             Audio.Play("event:/game/general/platform_disintegrate", Center);
             shaker.ShakeFor(onTop ? 0.6f : 1f, removeOnFinish: false);
             foreach (Image image in images) {
