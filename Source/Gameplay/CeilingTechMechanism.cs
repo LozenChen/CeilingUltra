@@ -201,7 +201,7 @@ public static class CeilingTechMechanism {
             CheckLeftRefill = WallRefillDash && PlayerOnLeftWall;
             CheckRightRefill = WallRefillDash && PlayerOnRightWall;
 
-            if (QoL_RefillOnDashCollision && hitLastFrame is not null) {
+            if (QoL_RefillOnDashCollision && hitLastFrame is not null && Engine.Scene.Entities.Contains(hitLastFrame)) { // shouldn't be removed last frame
                 switch (DashCollisionDirection) {
                     // give refill and varJumpTimer
                     // to avoid the issue that: the block move away after we hit them in last frame, so we can't refill
@@ -529,9 +529,13 @@ public static class CeilingTechMechanism {
                 success3 = true;
                 cursor.Index++;
                 cursor.Emit(OpCodes.Ldloc_0);
-                cursor.Emit(OpCodes.Ldarg_1);
                 cursor.Emit(OpCodes.Ldarg_0);
+                cursor.EmitDelegate(EraseDashCollisionResults);
+
+                cursor.Goto(0);
+                cursor.Emit(OpCodes.Ldarg_1);
                 cursor.EmitDelegate(RecordDashCollisionResults);
+                // don't merge these two functions! coz data.Hit.OnDashCollide can be null
             }
         }
         "OnCollideV".LogHookData("Ground Ultra", success1);
@@ -1158,12 +1162,8 @@ public static class CeilingTechMechanism {
         return false;
     }
 
-    internal static void RecordDashCollisionResults(DashCollisionResults result, CollisionData data, Player player) {
-        if (!QoL_RefillOnDashCollision) {
-            return;
-        }
-        if (result is DashCollisionResults.Bounce or DashCollisionResults.Rebound || player.StateMachine.State == 5) { // StRedDash
-            DashCollisionDirection = DashCollisionDirections.None;
+    internal static void RecordDashCollisionResults(CollisionData data) {
+        if (!QoL_RefillOnDashCollision || data.Hit is null) {
             return;
         }
         Vector2 direction = data.Direction;
@@ -1173,12 +1173,23 @@ public static class CeilingTechMechanism {
         else if (direction.X < 0) {
             DashCollisionDirection = DashCollisionDirections.Left;
         }
-        else if (direction.Y != 0){
+        else if (direction.Y != 0) {
             // if direction.Y is already inverted by GravityHelper (coz it's called inside Actore.MoveH / V), we respect it
             DashCollisionDirection = direction.Y < 0 ? DashCollisionDirections.Up : DashCollisionDirections.Down;
         }
         hitLastFrame = data.Hit;
         hitLastPosition = data.Hit.Position;
+    }
+
+    internal static void EraseDashCollisionResults(DashCollisionResults result, Player player) {
+        if (!QoL_RefillOnDashCollision) {
+            return;
+        }
+        if (result is DashCollisionResults.Bounce or DashCollisionResults.Rebound && player.StateMachine.State != 5) {
+            // if StRedDash then it will be DashCollisionResults.Ignore
+            DashCollisionDirection = DashCollisionDirections.None;
+            hitLastFrame = null;
+        }
     }
 
     private static bool CanGroundJump_Parameter0() {
