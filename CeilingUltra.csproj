@@ -34,6 +34,9 @@
     <Reference Include="GravityHelper">
       <HintPath>Libs\GravityHelper.dll</HintPath>
     </Reference>
+    <Reference Include="MaxHelpingHand">
+      <HintPath>..\ForILSpy\MaxHelpingHand.dll</HintPath>
+    </Reference>
     <Reference Include="Mono.Cecil">
       <HintPath>Libs\Mono.Cecil.dll</HintPath>
     </Reference>
@@ -62,6 +65,7 @@
 		<Publicize Include="Celeste" />
 		<Publicize Include="MonoMod.Utils" />
 		<Publicize Include="ExtendedVariantMode" />
+		<Publicize Include="MaxHelpingHand"/>
 	</ItemGroup>
 	
   <ItemGroup>
