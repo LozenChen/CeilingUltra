@@ -639,7 +639,7 @@ public static class CeilingTechMechanism {
                 InstantUltraLeaveGround = true; // in this case, we dont auto unsqueeze in this frame (although we may be on ground)
             }
 
-            ApplyEffectsOnMoveBlock(player, Vector2.UnitX * sign);
+            ApplyEffectsOnBlock(player, Vector2.UnitX * sign);
         }
         else if (CeilingUltraEnabled
             && PlayerOnCeiling
@@ -647,7 +647,7 @@ public static class CeilingTechMechanism {
             && player.TryCeilingUltra()) {
             // already applied ceiling ultra
 
-            ApplyEffectsOnMoveBlock(player, -Vector2.UnitY * GravityImports.InvertY);
+            ApplyEffectsOnBlock(player, -Vector2.UnitY * GravityImports.InvertY);
 
             // if ground ultra, then MoveBlock can be triggered by being standing on, so we don't need to apply effects
         }
@@ -660,7 +660,7 @@ public static class CeilingTechMechanism {
         // and such instant ultra should't produce override ultra dir, so we just clear override anyway
     }
 
-    private static void ApplyEffectsOnMoveBlock(Player player, Vector2 dir) {
+    private static void ApplyEffectsOnBlock(Player player, Vector2 dir) {
         // instant ultra triggers move blocks etc.
 
         Vector2 origPosition = player.Position;

@@ -13,6 +13,7 @@ cloud.placements = {
     }
 }
 cloud.associatedMods = {"MaxHelpingHand", "CeilingUltra"}
+cloud.fieldOrder = {"x", "y", "left", "fragile", "small"}
 
 local normalScale = 1.0
 local smallScale = 29 / 35

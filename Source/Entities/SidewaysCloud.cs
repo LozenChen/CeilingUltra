@@ -1,16 +1,15 @@
-﻿using Monocle;
-using Microsoft.Xna.Framework;
+﻿using Celeste.Mod.CeilingUltra.Utils;
 using Celeste.Mod.Entities;
-using Celeste.Mod.MaxHelpingHand.Entities;
-using Celeste.Mod.CeilingUltra.Utils;
-using MonoMod.Cil;
+using Microsoft.Xna.Framework;
 using Mono.Cecil.Cil;
+using Monocle;
+using MonoMod.Cil;
 using System.Reflection;
 
 namespace Celeste.Mod.CeilingUltra.Entities;
 
 [CustomEntity(CustomEntityName)]
-[TrackedAs(typeof(SidewaysJumpThru))]
+[TrackedAs(typeof(MaxHelpingHand.Entities.SidewaysJumpThru))]
 // Everest.Loader.LoadModAssembly / CeilingUltra.AttributeUtils, both use Assembly.GetTypesSafe(), which checks if the BaseType is safe
 // so when MaxHelpingHand is not loaded, this class will be considered unsafe, and thus will be skipped
 public class SidewaysCloud : MaxHelpingHand.Entities.SidewaysJumpThru {
@@ -26,7 +25,7 @@ public class SidewaysCloud : MaxHelpingHand.Entities.SidewaysJumpThru {
 
     [Initialize]
     internal static void Initialize() {
-        if (typeof(SidewaysJumpThru).GetMethodInfo("onLevelLoad") is { } methodInfo) {
+        if (typeof(MaxHelpingHand.Entities.SidewaysJumpThru).GetMethodInfo("onLevelLoad") is { } methodInfo) {
             methodInfo.IlHook(il => {
                 ILCursor cursor = new ILCursor(il);
                 cursor.Index = -4;
@@ -138,11 +137,11 @@ public class SidewaysCloud : MaxHelpingHand.Entities.SidewaysJumpThru {
             text += "Remix";
         }
         Add(sprite = GFX.SpriteBank.Create(text));
-        sprite.Rotation = IsLeft ? -MathF.PI/ 2f : MathF.PI / 2f;
+        sprite.Rotation = IsLeft ? -MathF.PI / 2f : MathF.PI / 2f;
         if (!IsLeft) {
             sprite.FlipX = true;
         }
-        sprite.Position = Vector2.Zero ;
+        sprite.Position = Vector2.Zero;
         sprite.OnFrameChange = (string s) => {
             if (s == "spawn" && sprite.CurrentAnimationFrame == 6) {
                 wiggler.Start();
@@ -337,6 +336,6 @@ public class SidewaysCloud : MaxHelpingHand.Entities.SidewaysJumpThru {
     }
 
     public void MoveImpl(Vector2 move) {
-        SidewaysMovingPlatform.SidewaysJumpthruOnMove(this, playerInteractingSolid, IsLeft, move);
+        MaxHelpingHand.Entities.SidewaysMovingPlatform.SidewaysJumpthruOnMove(this, playerInteractingSolid, IsLeft, move);
     }
 }
