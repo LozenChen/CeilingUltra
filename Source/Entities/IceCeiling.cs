@@ -5,7 +5,7 @@ using Monocle;
 namespace Celeste.Mod.CeilingUltra.Entities;
 
 [CustomEntity("CeilingUltra/IceCeiling")]
-[Tracked]
+[Tracked(false)]
 public class IceCeiling : Entity {
 
     // use VortexHelper.FloorBooster if you are looking for a ground version

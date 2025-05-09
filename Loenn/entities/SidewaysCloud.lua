@@ -12,6 +12,7 @@ cloud.placements = {
         small = false
     }
 }
+cloud.associatedMods = {"MaxHelpingHand", "CeilingUltra"}
 
 local normalScale = 1.0
 local smallScale = 29 / 35

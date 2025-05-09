@@ -9,21 +9,30 @@ using System.Reflection;
 
 namespace Celeste.Mod.CeilingUltra.Entities;
 
+public static class SidewaysCloudInit {
+
+    [Initialize]
+    public static void Initialize() {
+        if (ModUtils.GetType("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Entities.SidewaysJumpThru") is { }) {
+            SidewaysCloud.Initialize();
+        }
+    }
+}
+
 [CustomEntity(CustomEntityName)]
 [TrackedAs(typeof(SidewaysJumpThru))]
+// Everest will handle the: what if MaxHelpingHand is not loaded...
 public class SidewaysCloud : MaxHelpingHand.Entities.SidewaysJumpThru {
     private const string CustomEntityName = "CeilingUltra/SidewaysCloud";
 
     private Solid playerInteractingSolid;
 
-    public new readonly bool Left;
+    public readonly bool IsLeft;
 
     public Facings expectedPlayerFacing;
 
     public int playerFacingX;
-
-    [Initialize]
-    private static void Initialize() {
+    internal static void Initialize() {
         if (typeof(SidewaysJumpThru).GetMethodInfo("onLevelLoad") is { } methodInfo) {
             methodInfo.IlHook(il => {
                 ILCursor cursor = new ILCursor(il);
@@ -88,12 +97,14 @@ public class SidewaysCloud : MaxHelpingHand.Entities.SidewaysJumpThru {
 
     public SidewaysCloud(EntityData data, Vector2 offset)
         : base(Modifier(data), offset) {
-        collider.Position = new Vector2(- Width / 2f, -Height / 2f);
+        collider.Position = new Vector2(-2f, -Height / 2f);
+        // don't use CenterOrigin(), coz width is not even
+        // and if use that, then maddy can't climb up a left-facing cloud
         Small = data.Bool("small");
         Position.Y -= 16f;
-        Left = data.Bool("left");
-        expectedPlayerFacing = Left ? Facings.Right : Facings.Left;
-        playerFacingX = Left ? 1 : -1;
+        IsLeft = data.Bool("left");
+        expectedPlayerFacing = IsLeft ? Facings.Right : Facings.Left;
+        playerFacingX = IsLeft ? 1 : -1;
         playerInteractingSolid = new Solid(Position, 5f, 32f, safe: false);
         playerInteractingSolid.Collidable = false;
         playerInteractingSolid.Visible = false;
@@ -109,7 +120,6 @@ public class SidewaysCloud : MaxHelpingHand.Entities.SidewaysJumpThru {
         timer = Calc.Random.NextFloat() * 4f;
         Add(wiggler = Wiggler.Create(0.3f, 4f));
         particleType = fragile ? P_FragileCloud : P_Cloud;
-        surfaceIndex = 4;
         Add(new LightOcclude(0.2f));
         scale = Vector2.One;
         Add(sfx = new SoundSource());
@@ -118,6 +128,8 @@ public class SidewaysCloud : MaxHelpingHand.Entities.SidewaysJumpThru {
     private static EntityData Modifier(EntityData data) {
         data.Width = 5;
         data.Height = data.Bool("small") ? 26 : 32;
+        data.Values["surfaceIndex"] = 4;
+        data.Values["allowClimbing"] = true;
         return data;
     }
 
@@ -133,8 +145,8 @@ public class SidewaysCloud : MaxHelpingHand.Entities.SidewaysJumpThru {
             text += "Remix";
         }
         Add(sprite = GFX.SpriteBank.Create(text));
-        sprite.Rotation = Left ? -MathF.PI/ 2f : MathF.PI / 2f;
-        if (!Left) {
+        sprite.Rotation = IsLeft ? -MathF.PI/ 2f : MathF.PI / 2f;
+        if (!IsLeft) {
             sprite.FlipX = true;
         }
         sprite.Position = Vector2.Zero ;
@@ -243,7 +255,7 @@ public class SidewaysCloud : MaxHelpingHand.Entities.SidewaysJumpThru {
             }
         }
         if (speed < 0f && base.Scene.OnInterval(0.02f)) {
-            (base.Scene as Level).ParticlesBG.Emit(particleType, 1, Position + new Vector2(2f * playerFacingX, 0f), new Vector2(playerFacingX, base.Collider.Height / 2f), MathF.PI);
+            (base.Scene as Level).ParticlesBG.Emit(particleType, 1, Position + new Vector2(2f * playerFacingX, 0f), new Vector2(playerFacingX, base.Collider.Height / 2f), MathF.PI / 2f * (1 + playerFacingX));
         }
         if (fragile && speed < 0f) {
             sprite.Scale.Y = Calc.Approach(sprite.Scale.Y, 0f, Engine.DeltaTime * 4f);
@@ -332,6 +344,6 @@ public class SidewaysCloud : MaxHelpingHand.Entities.SidewaysJumpThru {
     }
 
     public void MoveImpl(Vector2 move) {
-        SidewaysMovingPlatform.SidewaysJumpthruOnMove(this, playerInteractingSolid, Left, move);
+        SidewaysMovingPlatform.SidewaysJumpthruOnMove(this, playerInteractingSolid, IsLeft, move);
     }
 }

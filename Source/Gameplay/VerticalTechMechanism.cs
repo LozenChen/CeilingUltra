@@ -1,6 +1,5 @@
 using Celeste.Mod.CeilingUltra.Module;
 using Celeste.Mod.CeilingUltra.Utils;
-using Celeste.Mod.GravityHelper.Components;
 using Microsoft.Xna.Framework;
 using Mono.Cecil.Cil;
 using Monocle;
@@ -89,7 +88,7 @@ public static class VerticalTechMechanism {
     }
 
     private static void HandleGravity(Player player) {
-        PlayerGravityListener listener = new((self, args) => {
+        GravityHelper.Components.PlayerGravityListener listener = new((self, args) => {
             if (!args.Changed || self.Scene == null) return;
             invertHitbox(squeezedHitbox);
             invertHitbox(squeezedHurtbox);
