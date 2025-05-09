@@ -34,7 +34,7 @@ internal static class AttributeUtils {
                     methodInfo.Invoke(null, Parameterless);
                 }
                 catch {
-                    Celeste.Commands.Log($"AttributeUtils Invoke {debugDict[methodInfo]}.{methodInfo} failed");
+                    Logger.Log(LogLevel.Debug, "CeilingUltra", $"AttributeUtils Invoke {debugDict[methodInfo]}.{methodInfo} failed");
                 }
             }
         }

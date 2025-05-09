@@ -9,19 +9,10 @@ using System.Reflection;
 
 namespace Celeste.Mod.CeilingUltra.Entities;
 
-public static class SidewaysCloudInit {
-
-    [Initialize]
-    public static void Initialize() {
-        if (ModUtils.GetType("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Entities.SidewaysJumpThru") is { }) {
-            SidewaysCloud.Initialize();
-        }
-    }
-}
-
 [CustomEntity(CustomEntityName)]
 [TrackedAs(typeof(SidewaysJumpThru))]
-// Everest will handle the: what if MaxHelpingHand is not loaded...
+// Everest.Loader.LoadModAssembly / CeilingUltra.AttributeUtils, both use Assembly.GetTypesSafe(), which checks if the BaseType is safe
+// so when MaxHelpingHand is not loaded, this class will be considered unsafe, and thus will be skipped
 public class SidewaysCloud : MaxHelpingHand.Entities.SidewaysJumpThru {
     private const string CustomEntityName = "CeilingUltra/SidewaysCloud";
 
@@ -32,6 +23,8 @@ public class SidewaysCloud : MaxHelpingHand.Entities.SidewaysJumpThru {
     public Facings expectedPlayerFacing;
 
     public int playerFacingX;
+
+    [Initialize]
     internal static void Initialize() {
         if (typeof(SidewaysJumpThru).GetMethodInfo("onLevelLoad") is { } methodInfo) {
             methodInfo.IlHook(il => {
