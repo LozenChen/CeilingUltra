@@ -171,7 +171,7 @@ public class SidewaysCloud : MaxHelpingHand.Entities.SidewaysJumpThru {
             return false;
         }
         // some conditions like Speed / Retention / MoveX check can be removed, if we had a On(Dash)Collide for it. Unluckily, no.
-        if (player.Speed.X * playerFacingX > 0f || player.wallSpeedRetained * playerFacingX > 0f ||
+        if (player.Speed.X * playerFacingX > 0f || (player.wallSpeedRetentionTimer > 0f && player.wallSpeedRetained * playerFacingX > 0f) ||
             (expectedPlayerFacing == player.Facing &&
                 (player.StateMachine.State == 1 || player.climbTriggerDir == playerFacingX || Input.MoveX.Value * playerFacingX > 0f))) {
             return player.CollideCheckOutside(playerInteractingSolid, player.Position + Vector2.UnitX * playerFacingX);
@@ -179,9 +179,7 @@ public class SidewaysCloud : MaxHelpingHand.Entities.SidewaysJumpThru {
         return false;
     }
 
-    public bool HasPlayerRider() {
-        return GetPlayerRider() != null;
-    }
+    public bool HasPlayerRider() => GetPlayerRider() != null;
 
     public override void Update() {
         base.Update();

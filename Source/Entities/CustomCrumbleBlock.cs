@@ -6,7 +6,6 @@ using System.Collections;
 namespace Celeste.Mod.CeilingUltra.Entities;
 
 [CustomEntity("CeilingUltra/CustomCrumbleBlock")]
-
 public class CustomCrumbleBlock : Solid {
 
     public const string TexturePath_Left = "CeilingUltra/CrumbleBlock/left";
@@ -52,6 +51,8 @@ public class CustomCrumbleBlock : Solid {
 
     public bool triggered;
 
+    public bool IsHorizontal;
+
     private int dirX;
 
     private int dirY;
@@ -72,37 +73,35 @@ public class CustomCrumbleBlock : Solid {
             Add(new ActivateOnDashCollideComponent());
         }
 
-        bool isHorizontal;
-
         string facing = data.String("Facing", "Down");
         switch (facing) {
             case "Down": {
-                isHorizontal = true;
+                IsHorizontal = true;
                 TexturePath = TexturePath_Down;
                 OutlinePath = TexturePath_Outline_Down;
                 break;
             }
             case "Left": {
-                isHorizontal = false;
+                IsHorizontal = false;
                 TexturePath = TexturePath_Left;
                 OutlinePath = TexturePath_Outline_Left;
                 break;
             }
             case "Right": {
-                isHorizontal = false;
+                IsHorizontal = false;
                 TexturePath = TexturePath_Right;
                 OutlinePath = TexturePath_Outline_Right;
                 break;
             }
             default: {
-                isHorizontal = true;
+                IsHorizontal = true;
                 TexturePath = TexturePath_Up;
                 OutlinePath = TexturePath_Outline_Up;
                 break;
             }
         }
 
-        if (isHorizontal) {
+        if (IsHorizontal) {
             Length = Math.Max(8, data.Width);
             Collider.Width = Length;
             dirX = 1;
@@ -184,7 +183,7 @@ public class CustomCrumbleBlock : Solid {
                     Input.Rumble(RumbleStrength.Medium, RumbleLength.Medium);
                 }
                 else {
-                    if (GetPlayerClimbing() == null && !triggered) {
+                    if (GetPlayerOnSide() == null && !triggered) {
                         yield return null;
                         continue;
                     }
@@ -285,5 +284,22 @@ public class CustomCrumbleBlock : Solid {
             img.Scale = Vector2.One * (1f + Ease.BounceOut(1f - time) * 0.2f);
         }
         img.Scale = Vector2.One;
+    }
+
+    public Player GetPlayerOnSide() {
+        if (!IsHorizontal) {
+            foreach (Player entity in Scene.Tracker.GetEntities<Player>()) {
+                if (CollideCheck(entity, Position + Vector2.UnitX)) {
+                    return entity;
+                }
+
+                if (CollideCheck(entity, Position - Vector2.UnitX)) {
+                    return entity;
+                }
+            }
+            return null;
+        }
+
+        return GetPlayerClimbing();
     }
 }
