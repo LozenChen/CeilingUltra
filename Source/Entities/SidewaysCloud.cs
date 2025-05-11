@@ -15,6 +15,14 @@ namespace Celeste.Mod.CeilingUltra.Entities;
 public class SidewaysCloud : MaxHelpingHand.Entities.SidewaysJumpThru {
     private const string CustomEntityName = "CeilingUltra/SidewaysCloud";
 
+    public static readonly HashSet<string> SidewaysJumpthruNames = new() {
+        CustomEntityName,
+        "MaxHelpingHand/SidewaysJumpThru",
+        "MaxHelpingHand/AttachedSidewaysJumpThru",
+        "MaxHelpingHand/OneWayInvisibleBarrierHorizontal",
+        "MaxHelpingHand/SidewaysMovingPlatform"
+    };
+
     private Solid playerInteractingSolid;
 
     public readonly bool IsLeft;
@@ -32,9 +40,9 @@ public class SidewaysCloud : MaxHelpingHand.Entities.SidewaysJumpThru {
                 Instruction target = cursor.Next;
                 cursor.Index = 5;
                 cursor.Emit(OpCodes.Ldarg_2);
-                cursor.EmitDelegate(ShouldActivateHooks);
-                cursor.Emit(OpCodes.Brtrue, target);
-
+                // to avoid double foreach loop, we also check MaxHelpingHand sidewaysJumpthrus, and (de)activate hooks on our own
+                cursor.EmitDelegate(OnLevelLoad);
+                cursor.Emit(OpCodes.Ret);
             });
         }
         else {
@@ -42,17 +50,25 @@ public class SidewaysCloud : MaxHelpingHand.Entities.SidewaysJumpThru {
         }
     }
 
+    private static void OnLevelLoad(Session session) {
+        if (ShouldActivateHooks(session)) {
+            MaxHelpingHand.Entities.SidewaysJumpThru.activateHooks();
+        }
+        else {
+            MaxHelpingHand.Entities.SidewaysJumpThru.deactivateHooks();
+        }
+    }
+
     private static bool ShouldActivateHooks(Session session) {
         if (session.MapData?.Levels is { } levels) {
             foreach (LevelData level in levels) {
-                if (level.Entities?.Any((EntityData entity) => entity.Name == CustomEntityName) ?? false) {
+                if (level.Entities?.Any((EntityData entity) => SidewaysJumpthruNames.Contains(entity.Name)) ?? false) {
                     return true;
                 }
             }
         }
         return false;
     }
-
     public static ParticleType P_Cloud => Cloud.P_Cloud;
 
     public static ParticleType P_FragileCloud => Cloud.P_FragileCloud;
@@ -87,9 +103,13 @@ public class SidewaysCloud : MaxHelpingHand.Entities.SidewaysJumpThru {
 
     private static Vector2 scale_stretched = new Vector2(0.7f, 1.3f);
 
+    public float ExitSpeed = 90f;
+
+    public float CoyoteTime = 0.1f;
+
     public SidewaysCloud(EntityData data, Vector2 offset)
         : base(Modifier(data), offset) {
-        collider.Position = new Vector2(-2f, -Height / 2f);
+        Collider.Position = new Vector2(-2f, -Height / 2f);
         // don't use CenterOrigin(), coz width is not even
         // and if use that, then maddy can't climb up a left-facing cloud
         Small = data.Bool("small");
@@ -105,16 +125,18 @@ public class SidewaysCloud : MaxHelpingHand.Entities.SidewaysJumpThru {
             playerInteractingSolid.Position.Y += 2f;
             playerInteractingSolid.Collider.Height -= 6f;
         }
-        playerInteractingSolid.collider.Position = collider.Position;
+        playerInteractingSolid.Collider.Position = Collider.Position;
 
         fragile = data.Bool("fragile");
-        startX = base.X;
+        startX = X;
         timer = Calc.Random.NextFloat() * 4f;
         Add(wiggler = Wiggler.Create(0.3f, 4f));
         particleType = fragile ? P_FragileCloud : P_Cloud;
         Add(new LightOcclude(0.2f));
         scale = Vector2.One;
         Add(sfx = new SoundSource());
+        ExitSpeed = data.Float("ExitSpeed", 90f);
+        CoyoteTime = data.Float("CoyoteTime", 0.1f);
     }
 
     private static EntityData Modifier(EntityData data) {
@@ -122,6 +144,7 @@ public class SidewaysCloud : MaxHelpingHand.Entities.SidewaysJumpThru {
         data.Height = data.Bool("small") ? 26 : 32;
         data.Values["surfaceIndex"] = 4;
         data.Values["allowClimbing"] = true;
+        data.Values["allowWallJumping"] = true;
         return data;
     }
 
@@ -160,7 +183,7 @@ public class SidewaysCloud : MaxHelpingHand.Entities.SidewaysJumpThru {
         bool orig = playerInteractingSolid.Collidable;
         playerInteractingSolid.Collidable = true;
         Player player = null;
-        foreach (Player entity in base.Scene.Tracker.GetEntities<Player>()) {
+        foreach (Player entity in Scene.Tracker.GetEntities<Player>()) {
             if (IsRiding(entity)) {
                 player = entity;
                 break;
@@ -200,7 +223,7 @@ public class SidewaysCloud : MaxHelpingHand.Entities.SidewaysJumpThru {
             respawnTimer -= Engine.DeltaTime;
             if (respawnTimer <= 0f) {
                 waiting = true;
-                base.X = startX;
+                X = startX;
                 playerInteractingSolid.X = startX;
                 speed = 0f;
                 scale = Vector2.One;
@@ -246,13 +269,13 @@ public class SidewaysCloud : MaxHelpingHand.Entities.SidewaysJumpThru {
                 Input.Rumble(RumbleStrength.Medium, RumbleLength.Medium);
             }
         }
-        if (speed < 0f && base.Scene.OnInterval(0.02f)) {
-            (base.Scene as Level).ParticlesBG.Emit(particleType, 1, Position + new Vector2(2f * playerFacingX, 0f), new Vector2(playerFacingX, base.Collider.Height / 2f), MathF.PI / 2f * (1 + playerFacingX));
+        if (speed < 0f && Scene.OnInterval(0.02f)) {
+            (Scene as Level).ParticlesBG.Emit(particleType, 1, Position + new Vector2(2f * playerFacingX, 0f), new Vector2(playerFacingX, Collider.Height / 2f), MathF.PI / 2f * (1 + playerFacingX));
         }
         if (fragile && speed < 0f) {
             sprite.Scale.Y = Calc.Approach(sprite.Scale.Y, 0f, Engine.DeltaTime * 4f);
         }
-        if ((base.X - startX) * playerFacingX >= 0f) {
+        if ((X - startX) * playerFacingX >= 0f) {
             speed -= 1200f * Engine.DeltaTime;
         }
         else {
@@ -260,8 +283,7 @@ public class SidewaysCloud : MaxHelpingHand.Entities.SidewaysJumpThru {
             if (speed >= -100f) {
                 Player playerRider2 = GetPlayerRider();
                 if (playerRider2 != null && playerRider2.Speed.X * playerFacingX >= 0f) {
-                    playerRider2.Speed.X = -200f * playerFacingX;
-                    playerRider2.StartJumpGraceTime();
+                    PushOffPlayer(playerRider2);
                 }
                 if (fragile) {
                     Collidable = false;
@@ -279,6 +301,11 @@ public class SidewaysCloud : MaxHelpingHand.Entities.SidewaysJumpThru {
             num = -playerFacingX * 220f;
         }
         MoveH(playerFacingX * speed * Engine.DeltaTime, num);
+    }
+
+    public void PushOffPlayer(Player player) {
+        player.Speed.X = - ExitSpeed * playerFacingX;
+        player.jumpGraceTimer = MathF.Max(player.jumpGraceTimer, CoyoteTime);
     }
 
     public float ExactPositionX => playerInteractingSolid.ExactPosition.X;

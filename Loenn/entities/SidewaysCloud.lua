@@ -9,11 +9,15 @@ cloud.placements = {
     data = {
         left = true,
         fragile = false,
-        small = false
+        small = false,
+        letSeekersThrough = false,
+        pushPlayer = true,
+        ExitSpeed = 90,
+        CoyoteTime = 0.1
     }
 }
 cloud.associatedMods = {"MaxHelpingHand", "CeilingUltra"}
-cloud.fieldOrder = {"x", "y", "left", "fragile", "small"}
+cloud.fieldOrder = {"x", "y", "ExitSpeed", "CoyoteTime", "left", "fragile", "small", "letSeekersThrough", "pushPlayer" }
 
 local normalScale = 1.0
 local smallScale = 29 / 35

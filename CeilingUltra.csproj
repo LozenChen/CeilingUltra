@@ -28,9 +28,8 @@
 
   <ItemGroup>
     <Reference Include="$(CelestePrefix)\Celeste.dll" Publicize="true" />
-    <Reference Include="FNA">
-      <HintPath>Libs\FNA.dll</HintPath>
-    </Reference>
+	<Reference Include="$(CelestePrefix)\FNA.dll" />
+	<Reference Include="$(CelestePrefix)\MMHOOK_Celeste.dll" />
     <Reference Include="GravityHelper">
       <HintPath>Libs\GravityHelper.dll</HintPath>
     </Reference>
@@ -42,9 +41,6 @@
     </Reference>
     <Reference Include="MonoMod.RuntimeDetour">
       <HintPath>Libs\MonoMod.RuntimeDetour.dll</HintPath>
-    </Reference>
-    <Reference Include="MMHOOK_Celeste">
-      <HintPath>Libs\MMHOOK_Celeste.dll</HintPath>
     </Reference>
     <PackageReference Include="Krafs.Publicizer" Version="2.2.1">
       <PrivateAssets>all</PrivateAssets>
@@ -64,6 +60,8 @@
 	<ItemGroup>
 		<Publicize Include="Celeste" />
 		<Publicize Include="MonoMod.Utils" />
+		<Publicize Include="MaxHelpingHand:Celeste.Mod.MaxHelpingHand.Entities.SidewaysJumpThru.activateHooks" />
+		<Publicize Include="MaxHelpingHand:Celeste.Mod.MaxHelpingHand.Entities.SidewaysJumpThru.deactivateHooks" />
 	</ItemGroup>
 	
   <ItemGroup>
