@@ -104,6 +104,8 @@ public class SidewaysCloud : MaxHelpingHand.Entities.SidewaysJumpThru {
     private static Vector2 scale_stretched = new Vector2(0.7f, 1.3f);
 
     public float ExitSpeed = 90f;
+    // when the cloud shakes off maddy, give this speed
+    // this makes \[ wallJumpSpeed = 130f = ExitSpeed + 40f (jumpBoost) \] (liftBoost omitted)
 
     public float CoyoteTime = 0.1f;
 
@@ -179,12 +181,12 @@ public class SidewaysCloud : MaxHelpingHand.Entities.SidewaysJumpThru {
         base.Render();
     }
 
-    public Player GetPlayerRider() {
+    public Player GetPlayerRider(bool strict = true) {
         bool orig = playerInteractingSolid.Collidable;
         playerInteractingSolid.Collidable = true;
         Player player = null;
         foreach (Player entity in Scene.Tracker.GetEntities<Player>()) {
-            if (IsRiding(entity)) {
+            if (IsRiding(entity, strict)) {
                 player = entity;
                 break;
             }
@@ -193,9 +195,12 @@ public class SidewaysCloud : MaxHelpingHand.Entities.SidewaysJumpThru {
         return player;
     }
 
-    public bool IsRiding(Player player) {
-        if (player.StateMachine.State == 23 || player.StateMachine.State == 9) {
+    public bool IsRiding(Player player, bool strict = true) {
+        if (player.StateMachine.State == 21 || player.StateMachine.State == 9) {
             return false;
+        }
+        if (!strict) {
+            return player.CollideCheckOutside(playerInteractingSolid, player.Position + Vector2.UnitX * playerFacingX);
         }
         // some conditions like Speed / Retention / MoveX check can be removed, if we had a On(Dash)Collide for it. Unluckily, no.
         if (player.Speed.X * playerFacingX > 0f || (player.wallSpeedRetentionTimer > 0f && player.wallSpeedRetained * playerFacingX > 0f) ||
@@ -206,14 +211,14 @@ public class SidewaysCloud : MaxHelpingHand.Entities.SidewaysJumpThru {
         return false;
     }
 
-    public bool HasPlayerRider() => GetPlayerRider() != null;
+    public bool HasPlayerRider(bool strict = true) => GetPlayerRider(strict) != null;
 
     public override void Update() {
         base.Update();
         scale.X = Calc.Approach(scale.X, 1f, 1f * Engine.DeltaTime);
         scale.Y = Calc.Approach(scale.Y, 1f, 1f * Engine.DeltaTime);
         timer += Engine.DeltaTime;
-        if (HasPlayerRider()) {
+        if (HasPlayerRider(strict: true)) {
             sprite.Position = Vector2.Zero;
         }
         else {
@@ -234,7 +239,7 @@ public class SidewaysCloud : MaxHelpingHand.Entities.SidewaysJumpThru {
             return;
         }
         if (waiting) {
-            Player playerRider = GetPlayerRider();
+            Player playerRider = GetPlayerRider(strict: true);
             if (playerRider != null && playerRider.Speed.X * playerFacingX >= 0f) {
                 canRumble = true;
                 speed = 180f;
@@ -259,13 +264,13 @@ public class SidewaysCloud : MaxHelpingHand.Entities.SidewaysJumpThru {
             }
             return;
         }
-        if (fragile && Collidable && !HasPlayerRider()) {
+        if (fragile && Collidable && !HasPlayerRider(strict: false)) {
             Collidable = false;
             sprite.Play("fade");
         }
         if (speed < 0f && canRumble) {
             canRumble = false;
-            if (HasPlayerRider()) {
+            if (HasPlayerRider(strict: false)) {
                 Input.Rumble(RumbleStrength.Medium, RumbleLength.Medium);
             }
         }
@@ -281,9 +286,9 @@ public class SidewaysCloud : MaxHelpingHand.Entities.SidewaysJumpThru {
         else {
             speed += 1200f * Engine.DeltaTime;
             if (speed >= -100f) {
-                Player playerRider2 = GetPlayerRider();
-                if (playerRider2 != null && playerRider2.Speed.X * playerFacingX >= 0f) {
-                    PushOffPlayer(playerRider2);
+                Player playerRider2 = GetPlayerRider(strict: false);
+                if (playerRider2 != null) {
+                    ShakeOffPlayer(playerRider2);
                 }
                 if (fragile) {
                     Collidable = false;
@@ -303,8 +308,14 @@ public class SidewaysCloud : MaxHelpingHand.Entities.SidewaysJumpThru {
         MoveH(playerFacingX * speed * Engine.DeltaTime, num);
     }
 
-    public void PushOffPlayer(Player player) {
-        player.Speed.X = - ExitSpeed * playerFacingX;
+    public void ShakeOffPlayer(Player player) {
+        if (player.StateMachine.State == 1 && player.Facing == expectedPlayerFacing) {
+            // cancel StClimb
+            player.StateMachine.State = 0;
+        }
+        if (player.Speed.X * playerFacingX + ExitSpeed > 0f) {
+            player.Speed.X = -ExitSpeed * playerFacingX;
+        }
         player.jumpGraceTimer = MathF.Max(player.jumpGraceTimer, CoyoteTime);
     }
 
