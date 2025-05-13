@@ -1,10 +1,7 @@
-﻿using Celeste.Mod.CeilingUltra.Utils;
+﻿using Celeste.Mod.CeilingUltra.ModInterop;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
-using Mono.Cecil.Cil;
 using Monocle;
-using MonoMod.Cil;
-using System.Reflection;
 
 namespace Celeste.Mod.CeilingUltra.Entities;
 
@@ -15,13 +12,10 @@ namespace Celeste.Mod.CeilingUltra.Entities;
 public class SidewaysCloud : MaxHelpingHand.Entities.SidewaysJumpThru {
     private const string CustomEntityName = "CeilingUltra/SidewaysCloud";
 
-    public static readonly HashSet<string> SidewaysJumpthruNames = new() {
-        CustomEntityName,
-        "MaxHelpingHand/SidewaysJumpThru",
-        "MaxHelpingHand/AttachedSidewaysJumpThru",
-        "MaxHelpingHand/OneWayInvisibleBarrierHorizontal",
-        "MaxHelpingHand/SidewaysMovingPlatform"
-    };
+    [Initialize]
+    internal static void Initialize() {
+        MaddieEntityNameRegistry.RegisterSidewaysJumpThru(CustomEntityName);
+    }
 
     private Solid playerInteractingSolid;
 
@@ -31,44 +25,6 @@ public class SidewaysCloud : MaxHelpingHand.Entities.SidewaysJumpThru {
 
     public int playerFacingX;
 
-    [Initialize]
-    internal static void Initialize() {
-        if (typeof(MaxHelpingHand.Entities.SidewaysJumpThru).GetMethodInfo("onLevelLoad") is { } methodInfo) {
-            methodInfo.IlHook(il => {
-                ILCursor cursor = new ILCursor(il);
-                cursor.Index = -4;
-                Instruction target = cursor.Next;
-                cursor.Index = 5;
-                cursor.Emit(OpCodes.Ldarg_2);
-                // to avoid double foreach loop, we also check MaxHelpingHand sidewaysJumpthrus, and (de)activate hooks on our own
-                cursor.EmitDelegate(OnLevelLoad);
-                cursor.Emit(OpCodes.Ret);
-            });
-        }
-        else {
-            Logger.Log(LogLevel.Error, "CeilingUltra", "Fail to hook MaxHelpingHand, SidewaysCloud won't work properly!");
-        }
-    }
-
-    private static void OnLevelLoad(Session session) {
-        if (ShouldActivateHooks(session)) {
-            MaxHelpingHand.Entities.SidewaysJumpThru.activateHooks();
-        }
-        else {
-            MaxHelpingHand.Entities.SidewaysJumpThru.deactivateHooks();
-        }
-    }
-
-    private static bool ShouldActivateHooks(Session session) {
-        if (session.MapData?.Levels is { } levels) {
-            foreach (LevelData level in levels) {
-                if (level.Entities?.Any((EntityData entity) => SidewaysJumpthruNames.Contains(entity.Name)) ?? false) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
     public static ParticleType P_Cloud => Cloud.P_Cloud;
 
     public static ParticleType P_FragileCloud => Cloud.P_FragileCloud;

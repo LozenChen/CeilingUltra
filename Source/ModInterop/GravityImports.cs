@@ -24,7 +24,7 @@ public static class GravityImports {
     }
 
 
-    [Initialize]
+    [InitializeAtFirst]
     private static void Initialize() {
         typeof(GravityHelperImport).ModInterop();
     }

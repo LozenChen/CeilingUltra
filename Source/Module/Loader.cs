@@ -16,8 +16,7 @@ internal static class Loader {
     public static void Initialize() {
         HookLogs.Clear();
         CeilingUltraModule.Warnings = "";
-        HookHelper.InitializeAtFirst();
-        ModUtils.InitializeAtFirst();
+        AttributeUtils.Invoke<InitializeAtFirstAttribute>();
         AttributeUtils.Invoke<InitializeAttribute>();
         CeilingUltraModule.Instance.SaveSettings();
         if (Reloading) {

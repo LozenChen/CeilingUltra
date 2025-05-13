@@ -15,6 +15,7 @@ public class CeilingUltraModule : EverestModule {
         AttributeUtils.CollectMethods<UnloadAttribute>();
         AttributeUtils.CollectMethods<LoadContentAttribute>();
         AttributeUtils.CollectMethods<InitializeAttribute>();
+        AttributeUtils.CollectMethods<InitializeAtFirstAttribute>();
     }
 
     public override Type SettingsType => typeof(CeilingUltraSettings);

@@ -16,7 +16,7 @@ internal static class SpeedrunToolInterop {
 
     private static List<object> actions;
 
-    [Initialize]
+    [InitializeAtFirst]
     public static void Initialize() {
         typeof(SpeedrunToolImport).ModInterop();
         SpeedrunToolInstalled = SpeedrunToolImport.RegisterSaveLoadAction is not null;

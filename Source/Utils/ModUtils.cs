@@ -43,6 +43,8 @@ internal static class ModUtils {
 
     public static bool GravityHelperInstalled = false;
     public static bool UpsideDown => ExtendedVariantsUtils.UpsideDown;
+
+    [InitializeAtFirst]
     public static void InitializeAtFirst() {
         ExtendedVariantInstalled = IsInstalled("ExtendedVariantMode");
         SpeedrunToolInstalled = IsInstalled("SpeedrunTool");

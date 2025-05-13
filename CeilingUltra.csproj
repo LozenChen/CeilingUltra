@@ -60,8 +60,6 @@
 	<ItemGroup>
 		<Publicize Include="Celeste" />
 		<Publicize Include="MonoMod.Utils" />
-		<Publicize Include="MaxHelpingHand:Celeste.Mod.MaxHelpingHand.Entities.SidewaysJumpThru.activateHooks" />
-		<Publicize Include="MaxHelpingHand:Celeste.Mod.MaxHelpingHand.Entities.SidewaysJumpThru.deactivateHooks" />
 	</ItemGroup>
 	
   <ItemGroup>
