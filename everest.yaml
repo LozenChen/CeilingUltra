@@ -1,5 +1,5 @@
 - Name: CeilingUltra
-  Version: 1.4.4
+  Version: 1.4.5
   DLL: bin/Release/net7.0/CeilingUltra.dll
   Dependencies:
     - Name: Everest

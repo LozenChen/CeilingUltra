@@ -1,5 +1,4 @@
-﻿using Celeste;
-using Celeste.Mod.Entities;
+﻿using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
 using System.Collections;
@@ -32,6 +31,7 @@ SOFTWARE.
  */
 // the codes are based on ShroomHelper's codes
 // https://github.com/CommunalHelper/ShroomHelper/blob/dev/Code/Entities/CrumbleBlockOnTouch.cs
+// (which is almost vanilla codes though)
 
 [CustomEntity("CeilingUltra/CrumbleBlockOnTouch")]
 public class CrumbleBlockOnTouch : Solid {
@@ -50,7 +50,7 @@ public class CrumbleBlockOnTouch : Solid {
     private readonly char tileType;
     private EntityID id;
 
-    public CrumbleBlockOnTouch(EntityData data, Vector2 offset, EntityID id) : base(data.Position + offset, data.Width, data.Height, safe: true){
+    public CrumbleBlockOnTouch(EntityData data, Vector2 offset, EntityID id) : base(data.Position + offset, data.Width, data.Height, safe: true) {
         Depth = -12999;
         this.id = id;
         tileType = data.Char("tiletype", 'm');
