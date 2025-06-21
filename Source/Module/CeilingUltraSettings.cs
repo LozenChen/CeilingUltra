@@ -73,6 +73,7 @@ public class CeilingUltraSettings : EverestModuleSettings {
 
     public bool DownwardWallJumpAcceleration { get; set; } = true;
 
+    public bool WaterWaveDashEnabled { get; set; } = true;
     public bool QoLBufferVerticalHyper { get; set; } = true;
 
     public bool QoLBufferVerticalUltra { get; set; } = true;
@@ -91,7 +92,7 @@ public static class LevelSettings {
     }
 
     public static void ClearAllOverride() {
-        OverrideMainEnabled = OverrideCeilingTech = OverrideCeilingRefill = OverrideVerticalTech = OverrideWallRefill = OverrideBigInertiaUpdiagDash = OverrideUpwardWallJumpAcceleration = OverrideDownwardWallJumpAcceleration = OverrideGroundTech = OverrideQoL = null;
+        OverrideMainEnabled = OverrideCeilingTech = OverrideCeilingRefill = OverrideVerticalTech = OverrideWallRefill = OverrideBigInertiaUpdiagDash = OverrideUpwardWallJumpAcceleration = OverrideDownwardWallJumpAcceleration = OverrideWaterSurfaceTech = OverrideGroundTech = OverrideQoL = null;
     }
 
     public static bool? OverrideMainEnabled {
@@ -210,6 +211,18 @@ public static class LevelSettings {
     }
     public static bool DownwardWallJumpAcceleration => MainEnabled && OverrideDownwardWallJumpAcceleration.GetValueOrDefault(ceilingUltraSetting.DownwardWallJumpAcceleration);
 
+
+    // WaterSurfaceTech
+    public static bool? OverrideWaterSurfaceTech {
+        get => CeilingUltraSession.Instance?.OverrideWaterSurfaceTech;
+        set {
+            if (CeilingUltraSession.Instance is { } instance) {
+                instance.OverrideWaterSurfaceTech = value;
+            }
+        }
+    }
+
+    public static bool WaterWaveDashEnabled => MainEnabled && OverrideWaterSurfaceTech.GetValueOrDefault(ceilingUltraSetting.WaterWaveDashEnabled);
 
     // GroundTech
 

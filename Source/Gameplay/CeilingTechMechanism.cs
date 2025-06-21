@@ -449,7 +449,6 @@ public static class CeilingTechMechanism {
         if (result) {
             player.hurtbox = player.normalHurtbox;
         }
-
         return result;
     }
 
@@ -1053,6 +1052,7 @@ public static class CeilingTechMechanism {
     private static void CeilingHyperHookDashUpdate(ILContext il) {
         ILCursor cursor = new(il);
         bool success = true;
+        bool success2 = true;
         if (cursor.TryGotoNext(ins => ins.MatchLdsfld(typeof(CelesteInput).FullName, nameof(CelesteInput.Jump)), ins => ins.MatchCallvirt<VirtualButton>("get_Pressed"))) {
             cursor.Index += 2;
             cursor.EmitDelegate(CanGroundHyper);
@@ -1065,15 +1065,34 @@ public static class CeilingTechMechanism {
             Instruction next = cursor.Next;
             cursor.MoveAfterLabels();
             cursor.Emit(OpCodes.Ldarg_0);
-            cursor.EmitDelegate(CheckAndApplyCeilingHyper);
+            cursor.EmitDelegate(CheckAndApplyCeilingHyperAndWaterWaveDash);
             cursor.Emit(OpCodes.Brfalse, next);
             cursor.Emit(OpCodes.Ldc_I4_0);
             cursor.Emit(OpCodes.Ret);
         }
         else {
-            success = false;
+            success = success2 = false;
         }
+        /*
+         * this hook makes player.DashUpdate be like
+         * 
+        if (Math.Abs(DashDir.Y) < 0.1f) {
+            ...
+            if (CanUnDuck && Input.Jump.Pressed && GroundHyperEnabled && jumpGraceTimer > 0f) {
+                SuperJump();
+                return 0;
+            }
+        }
+        if (CheckAndApplyCeilingHyper(player) || CheckAndApplyWaterWaveDash(player)) {
+            return 0;
+        }
+        if (SuperWallJumpAngleCheck) {
+            ...
+        }
+        */
+
         "Player.DashUpdate".LogHookData("Ceiling Hyper", success);
+        "Player.DashUpdate".LogHookData("WaterSurface Wave Dash", success2);
     }
     private const float startRemainFullVerticalSpeed = -325f;
     private static void SkipDashEndLoseSpeed(Player player) {
@@ -1159,6 +1178,10 @@ public static class CeilingTechMechanism {
             return true;
         }
         return false;
+    }
+
+    private static bool CheckAndApplyCeilingHyperAndWaterWaveDash(Player player) {
+        return CheckAndApplyCeilingHyper(player) || WaterInteraction.CheckAndApplyWaterWaveDash(player);
     }
 
     private static bool CheckAndApplyCeilingHyperForRedDash(Player player) {

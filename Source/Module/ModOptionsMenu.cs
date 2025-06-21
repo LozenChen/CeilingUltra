@@ -52,6 +52,7 @@ internal static class ModOptionsMenu {
             bool overrideVertTech = LevelSettings.OverrideVerticalTech.HasValue;
             bool overrideUpWallJumpAcc = LevelSettings.OverrideUpwardWallJumpAcceleration.HasValue;
             bool overrideDownWallJumpAcc = LevelSettings.OverrideDownwardWallJumpAcceleration.HasValue;
+            bool overrideWaterTech = LevelSettings.OverrideWaterSurfaceTech.HasValue;
             bool overrideGroundTech = LevelSettings.OverrideGroundTech.HasValue;
             bool overrideQoL = LevelSettings.OverrideQoL.HasValue;
 
@@ -88,6 +89,10 @@ internal static class ModOptionsMenu {
             Add(new EaseInOnOffExt("Downward Wall Jump Acceleration".ToDialogText(), LevelSettings.DownwardWallJumpAcceleration, overrideDownWallJumpAcc).Change(value => ceilingUltraSetting.DownwardWallJumpAcceleration = value));
 
 
+            Add(new EaseInSubHeader("Water Surface Mechanisms".ToDialogText()) { HeightExtra = 30f });
+            Add(new EaseInOnOffExt("Real Wave Dash".ToDialogText(), ceilingUltraSetting.WaterWaveDashEnabled, overrideWaterTech).Change(value => ceilingUltraSetting.WaterWaveDashEnabled = value));
+
+
             Add(new EaseInSubHeader("Ground Mechanisms".ToDialogText()) { HeightExtra = 30f });
 
             Add(new EaseInOnOffExt("Ground Jump".ToDialogText(), LevelSettings.GroundJumpEnabled, overrideGroundTech).Change(value => ceilingUltraSetting.GroundJumpEnabled = value));
@@ -105,7 +110,7 @@ internal static class ModOptionsMenu {
             Add(QoL_RefillDashOnWallJump = new EaseInOnOffExt("Refill Dash on Wall Jump".ToDialogText(), LevelSettings.QoLRefillDashOnWallJump, overrideQoL).Change(value => ceilingUltraSetting.QoLRefillDashOnWallJump = value)); // refill dash on wall jump even if you are not adjacent to wall
             Add(CreateDescription(menu, QoL_RefillDashOnWallJump, "Refill Dash On Wall Jump Description".ToDialogText()));
 
-            if (overrideMain || overrideCeilRefill || overrideCeilTech || overrideVertTech || overrideWallRefill || overrideUpdiagEnd || overrideUpWallJumpAcc || overrideDownWallJumpAcc || overrideGroundTech || overrideQoL) {
+            if (overrideMain || overrideCeilRefill || overrideCeilTech || overrideVertTech || overrideWallRefill || overrideUpdiagEnd || overrideUpWallJumpAcc || overrideDownWallJumpAcc || overrideWaterTech || overrideGroundTech || overrideQoL) {
                 Add(new EaseInSubHeader("Lock By Map".ToDialogText()) { TextColor = Color.Goldenrod, HeightExtra = 10f });
             }
 

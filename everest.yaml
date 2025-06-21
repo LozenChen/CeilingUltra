@@ -1,9 +1,9 @@
 - Name: CeilingUltra
   Version: 1.4.5
-  DLL: bin/Release/net7.0/CeilingUltra.dll
+  DLL: bin/Release/net8.0/CeilingUltra.dll
   Dependencies:
     - Name: Everest
-      Version: 1.5421
+      Version: 1.5577
   OptionalDependencies:
     - Name: GravityHelper
       Version: 1.1.49

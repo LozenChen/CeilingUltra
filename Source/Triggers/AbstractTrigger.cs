@@ -1,7 +1,7 @@
 using Celeste.Mod.CeilingUltra.Module;
 using Microsoft.Xna.Framework;
 
-namespace Celeste.Mod.Entities.CeilingUltra.Triggers;
+namespace Celeste.Mod.CeilingUltra.Triggers;
 
 public class AbstractTrigger : Trigger {
     public bool OneUse;

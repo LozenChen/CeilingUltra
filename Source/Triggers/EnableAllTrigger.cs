@@ -1,8 +1,9 @@
 using Celeste.Mod.CeilingUltra.Module;
 using Microsoft.Xna.Framework;
 using Monocle;
+using Celeste.Mod.Entities;
 
-namespace Celeste.Mod.Entities.CeilingUltra.Triggers;
+namespace Celeste.Mod.CeilingUltra.Triggers;
 
 [Tracked]
 [CustomEntity("CeilingUltra/EnableAllTrigger")]
@@ -19,6 +20,8 @@ public class EnableAllTrigger : AbstractTrigger {
         DownwardWallJumpAcceleration = data.Bool("DownwardWallJumpAcceleration", true);
         GroundTech = data.Bool("GroundTech", true);
         QoL = data.Bool("QoL", false);
+        // for backward compatibility, newly added field should have default value false, unless it's QoL
+        WaterSurfaceTech = data.Bool("WaterSurfaceTech", false);
     }
 
     public bool WallRefill;
@@ -37,6 +40,8 @@ public class EnableAllTrigger : AbstractTrigger {
 
     public bool GroundTech;
 
+    public bool WaterSurfaceTech;
+
     public bool QoL;
 
     public override void OnEnter(Player player) {
@@ -50,6 +55,7 @@ public class EnableAllTrigger : AbstractTrigger {
         LevelSettings.OverrideUpwardWallJumpAcceleration = UpwardWallJumpAcceleration;
         LevelSettings.OverrideDownwardWallJumpAcceleration = DownwardWallJumpAcceleration;
         LevelSettings.OverrideGroundTech = GroundTech;
+        LevelSettings.OverrideWaterSurfaceTech = WaterSurfaceTech;
         LevelSettings.OverrideQoL = QoL;
     }
 }
