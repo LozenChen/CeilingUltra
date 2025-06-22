@@ -13,11 +13,12 @@ trigger.placements = {
             BigInertiaUpdiagDash = true,
             UpwardWallJumpAcceleration = true,
             DownwardWallJumpAcceleration = true,
+            WaterSurfaceTech = true,
             GroundTech = true,
-            QoL = false
+            QoL = true
         }
 }
 
-trigger.fieldOrder = {"x", "y", "width", "height", "ModEnable", "OneUse", "WallRefill", "CeilingRefill", "WallTech", "CeilingTech", "GroundTech", "UpwardWallJumpAcceleration", "DownwardWallJumpAcceleration", "BigInertiaUpdiagDash", "QoL"}
+trigger.fieldOrder = {"x", "y", "width", "height", "ModEnable", "OneUse", "WallRefill", "CeilingRefill", "WallTech", "CeilingTech", "WaterSurfaceTech", "GroundTech", "UpwardWallJumpAcceleration", "DownwardWallJumpAcceleration", "BigInertiaUpdiagDash", "QoL"}
 
 return trigger

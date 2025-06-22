@@ -892,11 +892,17 @@ public static class CeilingTechMechanism {
         jumpFlag = false;
     }
     private static void CheckAndApplyCeilingJumpInNormal(Player player) {
-        if (CeilingJumpEnabled && CeilingJumpGraceTimer > 0f && CelesteInput.Jump.Pressed && !jumpFlag && (TalkComponent.PlayerOver == null || !CelesteInput.Talk.Pressed)) {
-            bool needReCheck = TryBufferedCeilingUltra(player);
-            if (!needReCheck || (CeilingJumpGraceTimer > 0f && !jumpFlag)) {
-                // if Rebound / ReflectBounce in player.MoveV(-1, player.onCollideV), then we can't ceiling jump
+        if (CeilingJumpEnabled && CelesteInput.Jump.Pressed && !jumpFlag && (TalkComponent.PlayerOver == null || !CelesteInput.Talk.Pressed)) {
+            if (CeilingJumpGraceTimer > 0f) {
+                bool needReCheck = TryBufferedCeilingUltra(player);
+                if (!needReCheck || (CeilingJumpGraceTimer > 0f && !jumpFlag)) {
+                    // if Rebound / ReflectBounce in player.MoveV(-1, player.onCollideV), then we can't ceiling jump
+                    player.CeilingJump();
+                }
+            }
+            else if (player.CollideFirst<Water>(player.Position - Vector2.UnitY * 2f * GravityImports.InvertY) is Water water) {
                 player.CeilingJump();
+                water.BottomSurface?.DoRipple(player.Position, 1f);
             }
         }
     }
@@ -1008,7 +1014,7 @@ public static class CeilingTechMechanism {
         return false;
     }
 
-    private static void CeilingHyper(this Player player, bool wasDuck) {
+    internal static void CeilingHyper(this Player player, bool wasDuck) {
         // this actually contains ceiling super
         float xDirection = Math.Sign(CelesteInput.MoveX);
         if (xDirection == 0) {
