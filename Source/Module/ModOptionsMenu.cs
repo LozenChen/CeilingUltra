@@ -91,6 +91,8 @@ internal static class ModOptionsMenu {
 
             Add(new EaseInSubHeader("Water Surface Mechanisms".ToDialogText()) { HeightExtra = 30f });
             Add(new EaseInOnOffExt("Real Wave Dash".ToDialogText(), ceilingUltraSetting.WaterWaveDashEnabled, overrideWaterTech).Change(value => ceilingUltraSetting.WaterWaveDashEnabled = value));
+            Add(new EaseInOnOffExt("Water Ceiling Hyper".ToDialogText(), ceilingUltraSetting.WaterCeilingHyperEnabled, overrideWaterTech).Change(value => ceilingUltraSetting.WaterCeilingHyperEnabled = value));
+            Add(new EaseInOnOffExt("Water Bottom Surface Jump".ToDialogText(), ceilingUltraSetting.WaterBottomSurfaceJumpEnabled, overrideWaterTech).Change(value => ceilingUltraSetting.WaterBottomSurfaceJumpEnabled = value));
 
 
             Add(new EaseInSubHeader("Ground Mechanisms".ToDialogText()) { HeightExtra = 30f });

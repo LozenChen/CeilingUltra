@@ -3,40 +3,56 @@ using Monocle;
 using Celeste.Mod.CeilingUltra.ModInterop;
 using Celeste.Mod.CeilingUltra.Module;
 using Celeste.Mod.CeilingUltra.Utils;
+using CelesteInput = Celeste.Input;
 
 namespace Celeste.Mod.CeilingUltra.Gameplay;
 internal static class WaterInteraction {
     public static bool CanWaterWaveDash => LevelSettings.WaterWaveDashEnabled;
 
+    public static bool CanWaterCeilingHyper => LevelSettings.WaterCeilingHyperEnabled;
+
+    public static bool CanWaterBottomSurfaceJump => LevelSettings.WaterBottomSurfaceJumpEnabled;
+
     public static Vector2 DetectLeniency_TopSurface = new Vector2(0f, 3f);
 
     public static Vector2 DetectLeniency_BottomSurface = new Vector2(0f, -5f); // ensure when demo at the bottom surface, can still hyper
+    
+    public const int AirSearchDistance_StSwim = 12;
+    
+    public const int AirSearchDistance_StNormal = 10;
+    
+    public const int AirSearchDistance_StDash = 20; // how much deep can player be inside water
 
-    public const int AirSearchDistance = 20;
-
+    internal static bool TryCeilingJumpOutOfWater(Player player) {
+        if (CanWaterBottomSurfaceJump && CelesteInput.MoveY > 0f && FindSafeWaterSurface(player, top: false, AirSearchDistance_StSwim) is not null) {
+            player.CeilingJump(particles: true, playSfx: true, checkDownPress: false);
+            return true;
+        }
+        return false;
+    }
     internal static void TryCeilingJumpOnWaterSurface(Player player) {
-        if (FindSafeWaterSurface(player, top: false) is { } water) {
+        if (CanWaterBottomSurfaceJump && FindSafeWaterSurface(player, top: false, AirSearchDistance_StNormal) is { } water) {
             DoSurfaceRipple(water, player.Position, top: false);
-            player.CeilingJump();
+            player.CeilingJump(particles: true, playSfx: true, checkDownPress: false);
         }
     }
     internal static bool CheckAndApplyWaterWaveDash(Player player) {
-        if (!(CanWaterWaveDash && Input.Jump.Pressed && Math.Abs(player.DashDir.X) > 0.1f)) {
+        if (!(CelesteInput.Jump.Pressed && Math.Abs(player.DashDir.X) > 0.1f)) {
             return false;
         }
 
-        if (player.CanUnDuck && FindSafeWaterSurface(player, top: true) is { } water) {
+        if (CanWaterWaveDash && player.CanUnDuck && FindSafeWaterSurface(player, top: true, AirSearchDistance_StDash) is { } water) {
             DoSurfaceRipple(water, player.Position, top: true);
-            WaveDashOnWaterSurface(player);
+            WaterWaveDash(player);
             return true;
             // make it return to StNormal
         }
-        else if (CeilingTechMechanism.CeilingHyperEnabled
-            && FindSafeWaterSurface(player, top: false) is { } water2
+        else if (CanWaterCeilingHyper
+            && FindSafeWaterSurface(player, top: false, AirSearchDistance_StDash) is { } water2
             && player.TryCeilingUnduck(out bool wasDuck, (int)player.Facing)
             ) {
             DoSurfaceRipple(water2, player.Position, top: false);
-            CeilingWaveDashOnWaterSurface(player, wasDuck || player.DashDir.Y < 0f);
+            WaterCeilingHyper(player, wasDuck || player.DashDir.Y < 0f);
             return true;
             // make it return to StNormal
         }
@@ -44,7 +60,7 @@ internal static class WaterInteraction {
         return false;
     }
 
-    internal static void WaveDashOnWaterSurface(Player player) {
+    private static void WaterWaveDash(Player player) {
         if (player.DashDir.Y > 0f) {
             player.Ducking = true;
         }
@@ -63,7 +79,7 @@ internal static class WaterInteraction {
          */
     }
 
-    internal static void CeilingWaveDashOnWaterSurface(Player player, bool wasDuck) {
+    private static void WaterCeilingHyper(Player player, bool wasDuck) {
         player.CeilingHyper(wasDuck);
         player.DashDir.Y = 0f;
         if (!player.Inventory.NoRefills && player.dashRefillCooldownTimer <= 0f) { // we don't check CeilingRefillDash ... here the concept should be WaterRefillDash
@@ -71,13 +87,13 @@ internal static class WaterInteraction {
         }
     }
 
-    private static Entity FindSafeWaterSurface(Player player, bool top) {
-        // this assumes there is only one water entity nearby
+    private static Entity FindSafeWaterSurface(Player player, bool top, int airSearchDistance) {
+        // the AirCheck assumes there is only one type of water entity nearby
 
         Vector2 waterAt = player.Position + (top ? DetectLeniency_TopSurface : DetectLeniency_BottomSurface) * GravityImports.InvertY;
 
         if (player.CollideFirst<Water>(waterAt) is Water water) {
-            if (IsSafeWater(water) && AirCheck(player, water, top)){
+            if (IsSafeWater(water) && AirCheck(player, water, player.Scene.Tracker.GetEntities<Water>(), top, airSearchDistance)){
                 return water;
             }
             return null;
@@ -91,7 +107,7 @@ internal static class WaterInteraction {
                 )?.ToList() is List<Entity> safeWaters
             && safeWaters.IsNotNullOrEmpty()) {
             if (Collide.First(player, safeWaters, waterAt) is { } liquid) {
-                if (AirCheck(player, liquid, top)) {
+                if (AirCheck(player, liquid, liquids, top, airSearchDistance)) {
                     return liquid;
                 }
                 return null;
@@ -100,7 +116,7 @@ internal static class WaterInteraction {
 
         if (OmniZipWater is not null && player.Scene.Tracker.Entities.TryGetValue(OmniZipWater, out List<Entity> zipwaters) && zipwaters.IsNotNullOrEmpty()) {
             if (Collide.First(player, zipwaters, waterAt) is { } zipwater) {
-                if (AirCheck(player, zipwater, top)) {
+                if (AirCheck(player, zipwater, zipwaters, top, airSearchDistance)) {
                     return zipwater;
                 }
                 return null;
@@ -109,13 +125,13 @@ internal static class WaterInteraction {
 
         return null;
 
-        static bool AirCheck(Player player, Entity water, bool top) {
+        static bool AirCheck(Player player, Entity water, List<Entity> otherWater, bool top, int airSearchDistance) {
             float y = player.Position.Y;
             float height = player.Collider.Height;
             bool success = false;
             if (top ^ GravityImports.IsPlayerInverted) { // check upwards
                 int dist = -(int)(water.Top - player.Bottom);
-                if (dist <= AirSearchDistance) {
+                if (dist <= airSearchDistance) {
                     if (dist > 0) {
                         // check if we move player up by dist, then whether there is solid on this way
                         player.Position.Y -= dist;
@@ -126,7 +142,7 @@ internal static class WaterInteraction {
             }
             else {
                 int dist = (int)(water.Bottom - player.Top);
-                if (dist <= AirSearchDistance) {
+                if (dist <= airSearchDistance) {
                     if (dist > 0) {
                         player.Collider.Height += dist;
                     }
@@ -134,7 +150,9 @@ internal static class WaterInteraction {
                 }
             }
             if (success) {
-                success = !player.CollideCheck<Solid>();
+                water.Collidable = false;
+                success = !Collide.Check(player, otherWater) && !player.CollideCheck<Solid>(); // can't hyper when there's no enough space above/below water surface
+                water.Collidable = true;
             }
             player.Position.Y = y;
             player.Collider.Height = height;

@@ -25,7 +25,8 @@ public class CeilingUltraSettings : EverestModuleSettings {
                 CeilingUltraEnabled = CeilingRefillStamina = CeilingRefillDash = CeilingJumpEnabled = CeilingHyperEnabled =
                 UpdiagDashEndNoHorizontalSpeedLoss = VerticalHyperEnabled = VerticalUltraEnabled = DashBeginNoVerticalSpeedLoss =
                 UpdiagDashEndNoVerticalSpeedLoss = WallRefillStamina = WallRefillDash = HorizontalUltraIntoVerticalUltra =
-                VerticalUltraIntoHorizontalUltra = UpwardWallJumpAcceleration = DownwardWallJumpAcceleration = value;
+                VerticalUltraIntoHorizontalUltra = UpwardWallJumpAcceleration = DownwardWallJumpAcceleration =
+                WaterWaveDashEnabled = WaterCeilingHyperEnabled = WaterBottomSurfaceJumpEnabled = value;
             GroundJumpEnabled = GroundHyperEnabled = GroundUltraEnabled = true;
             QoLBufferVerticalHyper = false;
             QoLBufferVerticalUltra = false;
@@ -74,6 +75,10 @@ public class CeilingUltraSettings : EverestModuleSettings {
     public bool DownwardWallJumpAcceleration { get; set; } = true;
 
     public bool WaterWaveDashEnabled { get; set; } = true;
+
+    public bool WaterCeilingHyperEnabled { get; set; } = true;
+
+    public bool WaterBottomSurfaceJumpEnabled { get; set; } = true;
     public bool QoLBufferVerticalHyper { get; set; } = true;
 
     public bool QoLBufferVerticalUltra { get; set; } = true;
@@ -223,6 +228,10 @@ public static class LevelSettings {
     }
 
     public static bool WaterWaveDashEnabled => MainEnabled && OverrideWaterSurfaceTech.GetValueOrDefault(ceilingUltraSetting.WaterWaveDashEnabled);
+
+    public static bool WaterCeilingHyperEnabled => MainEnabled && OverrideWaterSurfaceTech.GetValueOrDefault(ceilingUltraSetting.WaterCeilingHyperEnabled);
+
+    public static bool WaterBottomSurfaceJumpEnabled => MainEnabled && OverrideWaterSurfaceTech.GetValueOrDefault(ceilingUltraSetting.WaterBottomSurfaceJumpEnabled);
 
     // GroundTech
 

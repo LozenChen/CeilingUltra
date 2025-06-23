@@ -808,7 +808,7 @@ public static class CeilingTechMechanism {
         // this looks quite contradictory...
     }
 
-    public static void CeilingJump(this Player player, bool particles = true, bool playSfx = true) {
+    public static void CeilingJump(this Player player, bool particles = true, bool playSfx = true, bool checkDownPress = true) {
         int priorDirection = (int)player.moveX;
         if (priorDirection == 0) {
             priorDirection = (int)player.Facing;
@@ -825,7 +825,7 @@ public static class CeilingTechMechanism {
         player.wallSlideTimer = 1.2f;
         player.wallBoostTimer = 0f;
         player.Speed.X += 40f * (float)player.moveX + player.LiftBoost.X;
-        bool downPressed = CelesteInput.MoveY > 0;
+        bool downPressed = checkDownPress && CelesteInput.MoveY > 0;
         if (downPressed) {
             NextMaxFall = 320f;
             player.Speed.Y = +280f;
@@ -892,8 +892,8 @@ public static class CeilingTechMechanism {
         jumpFlag = false;
     }
     private static void CheckAndApplyCeilingJumpInNormal(Player player) {
-        if (CeilingJumpEnabled && CelesteInput.Jump.Pressed && !jumpFlag && (TalkComponent.PlayerOver == null || !CelesteInput.Talk.Pressed)) {
-            if (CeilingJumpGraceTimer > 0f) {
+        if (CelesteInput.Jump.Pressed && !jumpFlag && (TalkComponent.PlayerOver == null || !CelesteInput.Talk.Pressed)) {
+            if (CeilingJumpEnabled && CeilingJumpGraceTimer > 0f) {
                 bool needReCheck = TryBufferedCeilingUltra(player);
                 if (!needReCheck || (CeilingJumpGraceTimer > 0f && !jumpFlag)) {
                     // if Rebound / ReflectBounce in player.MoveV(-1, player.onCollideV), then we can't ceiling jump
@@ -941,9 +941,14 @@ public static class CeilingTechMechanism {
     }
 
     private static bool CheckAndApplyCeilingJumpInWater(Player player) {
-        if (CeilingJumpEnabled && PlayerOnCeiling && Input.Jump.Pressed) {
-            player.CeilingJump();
-            return true;
+        if (CelesteInput.Jump.Pressed) {
+            if (CeilingJumpEnabled && PlayerOnCeiling) {
+                player.CeilingJump();
+                return true;
+            }
+            else if (WaterInteraction.TryCeilingJumpOutOfWater(player)) {
+                return true;
+            }
         }
         return false;
     }

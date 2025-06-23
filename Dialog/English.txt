@@ -32,8 +32,9 @@ CEILING_ULTRA_BUFFERED_CEILING_ULTRA=						  Buffered Ceiling Ultra
 CEILING_ULTRA_REFILL_DASH_ON_WALL_JUMP=						  Refill Dash on Wall Jump or Climb Jump
 CEILING_ULTRA_REFILL_DASH_ON_WALL_JUMP_DESCRIPTION=			  Need "Wall Refill Dash". Refill dash on wall jump or climb jump even if you are not adjacent to the wall.
 CEILING_ULTRA_WATER_SURFACE_MECHANISMS=						  > Water Surface Mechanisms
-CEILING_ULTRA_REAL_WAVE_DASH=								  Water Surface Super/Hyper
-
+CEILING_ULTRA_REAL_WAVE_DASH=								  Super/Hyper (Water Version)
+CEILING_ULTRA_WATER_CEILING_HYPER=							  Ceiling Super/Hyper (Water Version)
+CEILING_ULTRA_WATER_BOTTOM_SURFACE_JUMP=					  Ceiling Jump (Water Version)
 
 #========================================== Ceiling Ultra Tutorial =========================================
 CEILING_ULTRA_DESKTOP_POWERPOINT_CEILING_ULTRA=				  ceiling-{n}ultra.ppt
