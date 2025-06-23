@@ -900,9 +900,8 @@ public static class CeilingTechMechanism {
                     player.CeilingJump();
                 }
             }
-            else if (player.CollideFirst<Water>(player.Position - Vector2.UnitY * 2f * GravityImports.InvertY) is Water water) {
-                player.CeilingJump();
-                water.BottomSurface?.DoRipple(player.Position, 1f);
+            else {
+                WaterInteraction.TryCeilingJumpOnWaterSurface(player);
             }
         }
     }
