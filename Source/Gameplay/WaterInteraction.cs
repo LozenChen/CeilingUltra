@@ -1,8 +1,8 @@
-﻿using Microsoft.Xna.Framework;
-using Monocle;
-using Celeste.Mod.CeilingUltra.ModInterop;
+﻿using Celeste.Mod.CeilingUltra.ModInterop;
 using Celeste.Mod.CeilingUltra.Module;
 using Celeste.Mod.CeilingUltra.Utils;
+using Microsoft.Xna.Framework;
+using Monocle;
 using CelesteInput = Celeste.Input;
 
 namespace Celeste.Mod.CeilingUltra.Gameplay;
@@ -16,11 +16,11 @@ internal static class WaterInteraction {
     public static Vector2 DetectLeniency_TopSurface = new Vector2(0f, 3f);
 
     public static Vector2 DetectLeniency_BottomSurface = new Vector2(0f, -5f); // ensure when demo at the bottom surface, can still hyper
-    
+
     public const int AirSearchDistance_StSwim = 12;
-    
+
     public const int AirSearchDistance_StNormal = 10;
-    
+
     public const int AirSearchDistance_StDash = 20; // how much deep can player be inside water
 
     internal static bool TryCeilingJumpOutOfWater(Player player) {
@@ -93,7 +93,7 @@ internal static class WaterInteraction {
         Vector2 waterAt = player.Position + (top ? DetectLeniency_TopSurface : DetectLeniency_BottomSurface) * GravityImports.InvertY;
 
         if (player.CollideFirst<Water>(waterAt) is Water water) {
-            if (IsSafeWater(water) && AirCheck(player, water, player.Scene.Tracker.GetEntities<Water>(), top, airSearchDistance)){
+            if (IsSafeWater(water) && AirCheck(player, water, player.Scene.Tracker.GetEntities<Water>(), top, airSearchDistance)) {
                 return water;
             }
             return null;
@@ -161,7 +161,7 @@ internal static class WaterInteraction {
     }
 
     private static void DoSurfaceRipple(Entity entity, Vector2 position, bool top) {
-        if (entity is Water water){
+        if (entity is Water water) {
             if (top ^ GravityImports.IsPlayerInverted) {
                 water.TopSurface?.DoRipple(position, 1f);
             }
