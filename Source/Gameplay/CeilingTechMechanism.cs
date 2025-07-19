@@ -511,6 +511,7 @@ public static class CeilingTechMechanism {
                 ILLabel label2 = (ILLabel)cursor.Next.Next.Operand;
                 cursor.GotoLabel(label2);
                 cursor.Emit(OpCodes.Ldarg_0);
+                cursor.Emit(OpCodes.Ldarg_1);
                 cursor.EmitDelegate(CheckAndApplyCeilingUltra);
             }
         }
@@ -568,19 +569,23 @@ public static class CeilingTechMechanism {
         return true;
     }
 
-    private static void CheckAndApplyCeilingUltra(Player player) {
+    private static void CheckAndApplyCeilingUltra(Player player, CollisionData data) {
         // why do we check Speed.Y <= 0f instead of < 0f here: coz MaxHelpingHand.UpsideDownJumpThru kills Speed.Y on the start of collision
         // fuck
         if (CeilingUltraEnabled && player.Speed.Y <= 0f) { // this does not lie in the Speed.Y < 0f branch, so we need to check here
+            bool success = false;
             if (OverrideCeilingUltraDir.HasValue) {
                 if (LeftWallGraceTimer <= 0f && RightWallGraceTimer <= 0f && player.TryCeilingDuck(Math.Sign(player.Speed.X))) {
                     player.DashDir = OverrideCeilingUltraDir.Value;
-                    player.TryCeilingUltra();
+                    success = player.TryCeilingUltra();
                 }
                 ClearOverrideUltraDir();
             }
             else {
-                player.TryCeilingUltra(true);
+                success = player.TryCeilingUltra(true);
+            }
+            if (success && data.Hit is not null) {
+                LiftBoostHelper.GetLiftSpeedFromCeiling(player, data.Hit);
             }
         }
     }
@@ -637,16 +642,17 @@ public static class CeilingTechMechanism {
             if (player.DashDir.Y < 0f) {
                 InstantUltraLeaveGround = true; // in this case, we dont auto unsqueeze in this frame (although we may be on ground)
             }
-
+            player.GetLiftSpeedFromHorizontal(-sign);
             ApplyEffectsOnBlock(player, Vector2.UnitX * sign);
         }
         else if (CeilingUltraEnabled
             && PlayerOnCeiling
-            && (!player.Inventory.DreamDash || !player.CollideCheck<DreamBlock>(player.Position - Vector2.UnitY * GravityImports.InvertY))
+            && (!player.Inventory.DreamDash || !player.CollideCheck<DreamBlock>(player.Position + GravityImports.CeilingDir))
             && player.TryCeilingUltra()) {
             // already applied ceiling ultra
 
-            ApplyEffectsOnBlock(player, -Vector2.UnitY * GravityImports.InvertY);
+            player.GetLiftSpeedFromCeiling();
+            ApplyEffectsOnBlock(player, GravityImports.CeilingDir);
 
             // if ground ultra, then MoveBlock can be triggered by being standing on, so we don't need to apply effects
         }
@@ -725,6 +731,7 @@ public static class CeilingTechMechanism {
     private static void UpdateOnEndImpl(Player player) {
         HandleRefillDashCollision(player);
         UpdateMaxFallAndJumpGrace(player);
+        LiftBoostHelper.OnPlayerUpdateEnd();
     }
 
     private static void HandleRefillDashCollision(Player player) {
@@ -824,7 +831,7 @@ public static class CeilingTechMechanism {
         player.gliderBoostTimer = 0f;
         player.wallSlideTimer = 1.2f;
         player.wallBoostTimer = 0f;
-        player.Speed.X += 40f * (float)player.moveX + player.LiftBoost.X;
+        player.Speed.X += 40f * (float)player.moveX;
         bool downPressed = checkDownPress && CelesteInput.MoveY > 0;
         if (downPressed) {
             NextMaxFall = 320f;
@@ -836,7 +843,7 @@ public static class CeilingTechMechanism {
             player.Speed.Y = +105f;
             player.Sprite.Scale = new Vector2(0.6f, 1.4f);
         }
-        LiftBoostY.OnCeilingJump(player);
+        LiftBoostHelper.OnCeilingJump(player);
         player.varJumpSpeed = player.Speed.Y;
         player.LaunchedBoostCheck();
         if (playSfx) {
@@ -852,7 +859,7 @@ public static class CeilingTechMechanism {
         }
         if (particles) {
             int index = -1;
-            Platform platformByPriority = SurfaceIndex.GetPlatformByPriority(player.CollideAll<Platform>(player.Position - Vector2.UnitY * GravityImports.InvertY, player.temp));
+            Platform platformByPriority = SurfaceIndex.GetPlatformByPriority(player.CollideAll<Platform>(player.Position + GravityImports.CeilingDir, player.temp));
             if (platformByPriority != null) {
                 index = platformByPriority.GetLandSoundIndex(player);
             }
@@ -914,7 +921,7 @@ public static class CeilingTechMechanism {
             && QoL_BufferCeilingUltra
             && player.OnCeiling() // don't use PlayerOnCeiling as that may be faked by DashAttackBlockPosition
             && player.Speed.Y < 0f // will OnCollideV potentially
-            && (!player.Inventory.DreamDash || !player.CollideCheck<DreamBlock>(player.Position - Vector2.UnitY * GravityImports.InvertY))
+            && (!player.Inventory.DreamDash || !player.CollideCheck<DreamBlock>(player.Position + GravityImports.CeilingDir))
             && player.CanCeilingUltra()) {
             player.MoveV_GravityCompatible(-1, player.onCollideV);
             // this might trigger player.TryCeilingUltra(), but also maybe no
@@ -1032,9 +1039,9 @@ public static class CeilingTechMechanism {
         player.dashAttackTimer = 0f;
         player.wallSlideTimer = 1.2f;
         player.wallBoostTimer = 0f;
-        player.Speed.X = 260f * xDirection + player.LiftBoost.X;
+        player.Speed.X = 260f * xDirection;
         player.Speed.Y = +105f;
-        LiftBoostY.OnCeilingHyper(player);
+        LiftBoostHelper.OnCeilingHyper(player);
         player.gliderBoostTimer = 0.55f; // would be cursed i guess
         player.Play("event:/char/madeline/jump");
         if (wasDuck) {
@@ -1051,7 +1058,7 @@ public static class CeilingTechMechanism {
         player.launched = true;
         player.Sprite.Scale = new Vector2(0.6f, 1.4f);
         int index = -1;
-        Platform platformByPriority = SurfaceIndex.GetPlatformByPriority(player.CollideAll<Platform>(player.Position - Vector2.UnitY * GravityImports.InvertY, player.temp));
+        Platform platformByPriority = SurfaceIndex.GetPlatformByPriority(player.CollideAll<Platform>(player.Position + GravityImports.CeilingDir, player.temp));
         if (platformByPriority != null) {
             index = platformByPriority.GetLandSoundIndex(player);
         }

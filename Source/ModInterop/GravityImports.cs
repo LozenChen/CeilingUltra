@@ -10,6 +10,10 @@ public static class GravityImports {
     public static bool IsPlayerInverted => GravityHelperImport.IsPlayerInverted?.Invoke() ?? false;
 
     public static int InvertY => IsPlayerInverted ? -1 : 1;
+
+    public static Vector2 CeilingDir => IsPlayerInverted ? Vector2.UnitY : -Vector2.UnitY;
+
+    public static Vector2 GravityDir => IsPlayerInverted ? -Vector2.UnitY : Vector2.UnitY;
     public static Vector2 GetGravityAffectedVector2(this Vector2 vec) {
         if (IsPlayerInverted) {
             return new Vector2(vec.X, -vec.Y);

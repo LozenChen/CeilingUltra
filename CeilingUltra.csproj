@@ -58,7 +58,7 @@
 		<PublicizerRuntimeStrategies>Unsafe;IgnoresAccessChecksTo</PublicizerRuntimeStrategies>
 	</PropertyGroup>
 	<ItemGroup>
-		<Publicize Include="Celeste" />
+		<Publicize Include="Celeste" IncludeCompilerGeneratedMembers="false" />
 		<Publicize Include="MonoMod.Utils" />
 	</ItemGroup>
 	

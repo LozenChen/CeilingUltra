@@ -99,21 +99,30 @@ public static class VerticalTechMechanism {
 
     private static void OnPlayerWallJump(On.Celeste.Player.orig_WallJump orig, Player player, int dir) {
         float origSpeedY = player.Speed.Y;
+        bool justGetLiftSpeedY = player.LiftSpeed == Vector2.Zero;
         orig(player, dir); // ExtendedJumpGraceTimer is cleared here
+        // orig already gets liftspeed from the block
+        int newLiftSpeedDir = justGetLiftSpeedY ? Math.Sign(player.LiftSpeed.Y) : 0;
         QoL_RefillDashOnWallJumpOrClimbJump_Impl(player, dir); // make it easier to refill dash when vertical bhop
         if (player.StateMachine.State != 0 && player.StateMachine.State != 1) {
             return;
         }
         else if (CelesteInput.MoveY < 0 && UpwardWallJumpAcceleration) {
             player.Speed.Y = Math.Min(-105f, origSpeedY + upperWallJumpIncrement);
-            LiftBoostY.OnUpwardJump(player);
+            if (newLiftSpeedDir > 0) {
+                player.LiftSpeed = new Vector2(player.LiftSpeed.X, 0f);
+            }
+            LiftBoostHelper.OnUpwardJump(player);
             ModUtils.ExtendedVariantsUtils.TryVerticalUltraJump(player, dir);
             player.varJumpSpeed = player.Speed.Y;
             player.varJumpTimer = Monocle.Calc.LerpClamp(0.2f, 0.1f, (player.Speed.Y - (-105f)) / (-325f - (-105f)));
         }
         else if (CelesteInput.MoveY > 0 && DownwardWallJumpAcceleration) {
             player.Speed.Y = Math.Max(40f, origSpeedY + downwardWallJumpIncrement);
-            LiftBoostY.OnDownwardJump(player);
+            if (newLiftSpeedDir < 0) {
+                player.LiftSpeed = new Vector2(player.LiftSpeed.X, 0f);
+            }
+            LiftBoostHelper.OnDownwardJump(player);
             ModUtils.ExtendedVariantsUtils.TryVerticalUltraJump(player, dir);
             CeilingTechMechanism.NextMaxFall = player.Speed.Y + 20f;
             player.varJumpTimer = 0f;
@@ -182,6 +191,7 @@ public static class VerticalTechMechanism {
                 success1 = true;
                 cursor.MoveAfterLabels();
                 cursor.Emit(OpCodes.Ldarg_0);
+                cursor.Emit(OpCodes.Ldarg_1);
                 // cursor.EmitDelegate(TryVerticalUltra);
                 cursor.EmitDelegate(CheckAndApplyVerticalUltraWithRetention);
                 cursor.Emit(OpCodes.Brtrue, label2); // skip wallSpeedRetention, as in some sense, an ultra converts vertical speed into horizontal speed, so a vertical ultra should converts horizontal speed into vertical, and you will lose your horizontal speed anyway
@@ -260,11 +270,16 @@ public static class VerticalTechMechanism {
         return false;
     }
 
-    private static bool CheckAndApplyVerticalUltraWithRetention(this Player player) {
+    private static bool CheckAndApplyVerticalUltraWithRetention(this Player player, CollisionData data) {
         if (!VerticalUltraEnabled) {
             return false;
         }
-        return TryVerticalUltraWithRetentionAndOverrideDir(player);
+        int xDir = Math.Sign(player.Speed.X);
+        bool success = TryVerticalUltraWithRetentionAndOverrideDir(player);
+        if (success && data.Hit is not null) {
+            player.GetLiftSpeedFromHorizontal(data.Hit, -xDir);
+        }
+        return success;
     }
 
     public static bool TryVerticalUltraWithRetentionAndOverrideDir(this Player player) {
@@ -451,9 +466,9 @@ public static class VerticalTechMechanism {
         player.wallSlideTimer = 1.2f;
         player.wallBoostTimer = 0f;
 
-        player.Speed.X = 105f * xDirection + player.LiftBoost.X;
+        player.Speed.X = 105f * xDirection;
         player.Speed.Y = 260f * yDirection;
-        LiftBoostY.OnVerticalHyper(player);
+        LiftBoostHelper.OnVerticalHyper(player, xDirection);
         player.gliderBoostTimer = 0.55f;
         player.Play("event:/char/madeline/jump");
 

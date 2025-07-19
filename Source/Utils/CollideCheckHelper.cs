@@ -52,14 +52,18 @@ public static class CollideCheckHelper {
     }
 
     public static bool CanStand(this Entity entity, Vector2 direciton) {
+        return CanStand(entity, direciton, out Entity _);
+    }
+    public static bool CanStand(this Entity entity, Vector2 direciton, out Entity platform) {
         direciton.Y *= GravityImports.InvertY;
-
+        platform = null;
         Vector2 orig_Position = entity.Position;
         entity.Position += direciton;
         bool result = false;
         foreach (Solid solid in entity.Scene.Tracker.GetEntities<Solid>()) {
             if (entity.CollideCheck(solid)) {
                 result = true;
+                platform = solid;
                 break;
             }
         }
@@ -70,6 +74,7 @@ public static class CollideCheckHelper {
                     entity.Position = orig_Position;
                     if (!entity.CollideCheck(jumpthru)) {
                         result = true;
+                        platform = jumpthru;
                         break;
                     }
                     else {
