@@ -1,5 +1,5 @@
 - Name: CeilingUltra
-  Version: 1.5.0
+  Version: 1.5.1
   DLL: bin/Release/net8.0/CeilingUltra.dll
   Dependencies:
     - Name: Everest
@@ -8,4 +8,4 @@
     - Name: GravityHelper
       Version: 1.1.49
     - Name: MaxHelpingHand
-      Version: 1.35.2
+      Version: 1.37.2
