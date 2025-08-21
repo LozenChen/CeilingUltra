@@ -35,7 +35,7 @@ internal static class SpeedrunToolInterop {
 
         actions = new();
 
-        Type[] types = new Type[] { typeof(CeilingTechMechanism), typeof(VerticalTechMechanism) };
+        Type[] types = new Type[] { typeof(CeilingTechMechanism), typeof(VerticalTechMechanism), typeof(LiftBoostHelper) };
         foreach (Type type in types) {
             List<FieldInfo> type_staticFields = new();
             FieldInfo[] fieldInfos = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);

@@ -3,6 +3,7 @@ using Celeste.Mod.CeilingUltra.Utils;
 using Microsoft.Xna.Framework;
 using MonoMod.Cil;
 using Mono.Cecil.Cil;
+using Celeste.Mod.CeilingUltra.ModInterop;
 
 namespace Celeste.Mod.CeilingUltra.Gameplay;
 
@@ -19,7 +20,7 @@ public static class LiftBoostHelper {
     // upward / downward jump is some kind of ... to leave the wall strongly, and btw it's intended to be a boost, so it should not
     // vertical hyper, this touches the wall for a long time, and it seams reasonable to have a opposite liftboost
 
-    public static bool LiftBoostFromFourSides = true;
+    public static bool LiftBoostFromFourSides = false;
 
     public static void OnCeilingJump(Player player) {
         player.GetLiftSpeedFromCeiling();
@@ -134,6 +135,7 @@ public static class LiftBoostHelper {
         LiftSpeedDictionary.Clear();
     }
 
+    [SaveLoad]
     private static Dictionary<Entity, Vector2> LiftSpeedDictionary = new();
 
 }
