@@ -1,9 +1,9 @@
-using Monocle;
+using Celeste.Mod.CeilingUltra.ModInterop;
 using Celeste.Mod.CeilingUltra.Utils;
 using Microsoft.Xna.Framework;
-using MonoMod.Cil;
 using Mono.Cecil.Cil;
-using Celeste.Mod.CeilingUltra.ModInterop;
+using Monocle;
+using MonoMod.Cil;
 
 namespace Celeste.Mod.CeilingUltra.Gameplay;
 
@@ -63,7 +63,7 @@ public static class LiftBoostHelper {
         player.GetLiftSpeed(platform, xDir, yDir: 0);
     }
     public static void GetLiftSpeedFromCeiling(this Player player) {
-        player.GetLiftSpeed(- Vector2.UnitY, xDir: 0, yDir: 1);
+        player.GetLiftSpeed(-Vector2.UnitY, xDir: 0, yDir: 1);
         // CanStand already calculates Gravity
     }
 

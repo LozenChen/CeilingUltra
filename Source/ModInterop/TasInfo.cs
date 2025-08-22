@@ -1,9 +1,9 @@
+using Celeste.Mod.CeilingUltra.Gameplay;
 using Celeste.Mod.CeilingUltra.Module;
 using Celeste.Mod.CeilingUltra.Utils;
 using Mono.Cecil.Cil;
 using Monocle;
 using MonoMod.Cil;
-using Celeste.Mod.CeilingUltra.Gameplay;
 
 namespace Celeste.Mod.CeilingUltra.ModInterop;
 
