@@ -9,10 +9,7 @@ namespace Celeste.Mod.CeilingUltra.Entities;
 [CustomEntity("CeilingUltra/SidewaysCloud")]
 public class SidewaysCloud : Entity {
 
-    private Entity BaseSidewaysJumpthru;
-
-
-    private static ConstructorInfo SidewaysJumpthruCtor;
+    private static ConstructorInfo SidewaysJumpThruCtorInfo;
 
     [Initialize]
     private static void Initialize() {
@@ -23,14 +20,11 @@ public class SidewaysCloud : Entity {
 
         // so we use Composition instead of Inheritance
 
-        if (ModUtils.GetType("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Entities.SidewaysJumpThru")?.
-            GetConstructor(new Type[] { typeof(EntityData), typeof(Vector2) }) is { } info) {
-            SidewaysJumpthruCtor = info;
-        }
-        else {
-            SidewaysJumpthruCtor = null;
-        }
+        SidewaysJumpThruCtorInfo = ModUtils.GetType("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Entities.SidewaysJumpThru")?.
+            GetConstructor(new Type[] { typeof(EntityData), typeof(Vector2) });
     }
+
+    private Entity BaseSidewaysJumpthru;
 
     private Solid playerInteractingSolid;
 
@@ -80,47 +74,43 @@ public class SidewaysCloud : Entity {
 
     public float CoyoteTime = 0.1f;
 
-    public SidewaysCloud(EntityData data, Vector2 offset)
-        : base(Vector2.Zero) {
-
-        if (SidewaysJumpthruCtor is null) {
+    public SidewaysCloud(EntityData data, Vector2 offset) : base(Vector2.Zero) {
+        if (SidewaysJumpThruCtorInfo is null) {
             string error = "[CeilingUltra/SidewaysCloud] Fails to create an instance of MaxHelpingHand.Entities.SidewaysJumpThru. Add MaxHelpingHand to your map's dependency!";
             Logger.Log(LogLevel.Debug, "CeilingUltra", error);
             throw new Exception(error);
         }
 
         data.Width = 5;
-        data.Height = data.Bool("small") ? 26 : 32;
+        float height = data.Height = data.Bool("small") ? 26 : 32;
         data.Values["surfaceIndex"] = 4;
         data.Values["allowClimbing"] = true;
         data.Values["allowWallJumping"] = true;
         bool allowLeftToRight = !data.Bool("left");
 
-        BaseSidewaysJumpthru = (Entity)SidewaysJumpthruCtor.Invoke(new object[] { data, offset });
+        BaseSidewaysJumpthru = (Entity)SidewaysJumpThruCtorInfo.Invoke(new object[] { data, offset });
         BaseSidewaysJumpthru.Active = true;
         BaseSidewaysJumpthru.Visible = false;
-        this.Collider = new Hitbox(5f, data.Height, allowLeftToRight ? 3f : 0f); // purely visible (so light occlude can work), don't work
+        this.Collider = new Hitbox(5f, height, allowLeftToRight ? 3f : 0f); // purely visible (so light occlude can work)
         this.Collidable = false;
         this.Position = data.Position + offset;
         this.Depth = -60;
 
-        BaseSidewaysJumpthru.Collider.Position = new Vector2(-2f, -BaseSidewaysJumpthru.Height / 2f);
+        this.Collider.Position = new Vector2(-2f, -height / 2f);
         // don't use CenterOrigin(), coz width is not even
         // and if use that, then maddy can't climb up a left-facing cloud
-        Position.Y -= 16f;
         Small = data.Bool("small");
         IsLeft = data.Bool("left");
         expectedPlayerFacing = IsLeft ? Facings.Right : Facings.Left;
         playerFacingX = IsLeft ? 1 : -1;
-        playerInteractingSolid = new Solid(Position, 5f, 32f, safe: false);
-        playerInteractingSolid.Collidable = false;
-        playerInteractingSolid.Visible = false;
+
+        this.Position.Y -= 16f;
         if (Small) {
-            Position.Y += 2f;
-            playerInteractingSolid.Position.Y += 2f;
-            playerInteractingSolid.Collider.Height -= 6f;
+            this.Position.Y += 2f;
         }
-        playerInteractingSolid.Collider.Position = BaseSidewaysJumpthru.Collider.Position;
+
+        playerInteractingSolid = new Solid(Position, 5f, height, safe: false);
+        playerInteractingSolid.Collidable = playerInteractingSolid.Visible = false;
 
         fragile = data.Bool("fragile");
         startX = X;
@@ -133,6 +123,7 @@ public class SidewaysCloud : Entity {
         ExitSpeed = data.Float("ExitSpeed", 90f);
         CoyoteTime = data.Float("CoyoteTime", 0.1f);
 
+        playerInteractingSolid.Collider.Position = BaseSidewaysJumpthru.Collider.Position = this.Collider.Position;
         BaseSidewaysJumpthru.Position = this.Position;
     }
 
@@ -145,7 +136,7 @@ public class SidewaysCloud : Entity {
     public override void Added(Scene scene) {
         base.Added(scene);
         scene.Add(playerInteractingSolid);
-        string text = (fragile ? "cloudFragile" : "cloud");
+        string text = fragile ? "cloudFragile" : "cloud";
         if (Small) {
             text += "Remix";
         }
@@ -170,7 +161,13 @@ public class SidewaysCloud : Entity {
     }
 
     public override void DebugRender(Camera camera) {
-        // do nothing
+        // do nothing, let BaseSidewaysJumpThru debug render instead
+    }
+
+    public override void Removed(Scene scene) {
+        base.Removed(scene);
+        BaseSidewaysJumpthru?.RemoveSelf();
+        playerInteractingSolid?.RemoveSelf();
     }
 
     public Player GetPlayerRider(bool strict = true) {
@@ -220,8 +217,7 @@ public class SidewaysCloud : Entity {
             respawnTimer -= Engine.DeltaTime;
             if (respawnTimer <= 0f) {
                 waiting = true;
-                BaseSidewaysJumpthru.X = X = startX;
-                playerInteractingSolid.X = startX;
+                BaseSidewaysJumpthru.X = playerInteractingSolid.X = X = startX;
                 speed = 0f;
                 scale = Vector2.One;
                 BaseSidewaysJumpthru.Collidable = true;
