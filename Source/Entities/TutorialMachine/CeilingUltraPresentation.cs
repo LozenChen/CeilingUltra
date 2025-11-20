@@ -1,4 +1,4 @@
-using Celeste.Mod.CeilingUltra.Utils;
+﻿using Celeste.Mod.CeilingUltra.Utils;
 using FMOD.Studio;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -7,7 +7,7 @@ using System.Collections;
 
 namespace Celeste.Mod.CeilingUltra.Entities.TutorialMachine;
 
-
+[Tracked(false)]
 public class CeilingUltraPresentation : Entity {
     public Vector2 ScaleInPoint = new Vector2(1920f, 1080f) / 2f;
 
@@ -107,6 +107,12 @@ public class CeilingUltraPresentation : Entity {
 
     private void LoadingThread() {
         Gfx = new FakeAtlas();
+        VanillaGfx = Atlas.FromAtlas(Path.Combine("Graphics", "Atlases", "WaveDashing"), Atlas.AtlasDataFormat.Packer);
+        loading = false;
+    }
+
+    internal void OnSpeedrunToolLoad() {
+        VanillaGfx?.Dispose();
         VanillaGfx = Atlas.FromAtlas(Path.Combine("Graphics", "Atlases", "WaveDashing"), Atlas.AtlasDataFormat.Packer);
         loading = false;
     }

@@ -1,3 +1,4 @@
+﻿using Celeste.Mod.CeilingUltra.Entities.TutorialMachine;
 using Celeste.Mod.CeilingUltra.Gameplay;
 using Celeste.Mod.CeilingUltra.Utils;
 using MonoMod.ModInterop;
@@ -54,8 +55,9 @@ internal static class SpeedrunToolInterop {
                     dict["isSqueezed"] = level.GetPlayer()?.IsSqueezed() ?? false;
                 }
                 else {
-                    Dictionary<string, object> dict2 = new Dictionary<string, object>();
-                    dict2["isSqueezed"] = level.GetPlayer()?.IsSqueezed() ?? false;
+                    Dictionary<string, object> dict2 = new Dictionary<string, object> {
+                        ["isSqueezed"] = level.GetPlayer()?.IsSqueezed() ?? false
+                    };
                     savedValues[typeof(VerticalTechMechanism)] = dict2;
                 }
             },
@@ -63,6 +65,12 @@ internal static class SpeedrunToolInterop {
                 if (savedValues.TryGetValue(typeof(VerticalTechMechanism), out Dictionary<string, object> dict) && dict.TryGetValue("isSqueezed", out object isSqueezed)) {
                     if ((bool)isSqueezed && level.GetPlayer() is { } player) {
                         player.SetSqueezedHitbox();
+                    }
+                }
+                
+                if (level.Tracker.GetEntities<CeilingUltraPresentation>() is { } list && list.IsNotNullOrEmpty()) {
+                    foreach (CeilingUltraPresentation presentation in list) {
+                        presentation.OnSpeedrunToolLoad();
                     }
                 }
             },
