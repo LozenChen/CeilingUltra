@@ -67,7 +67,7 @@ internal static class SpeedrunToolInterop {
                         player.SetSqueezedHitbox();
                     }
                 }
-                
+
                 if (level.Tracker.GetEntities<CeilingUltraPresentation>() is { } list && list.IsNotNullOrEmpty()) {
                     foreach (CeilingUltraPresentation presentation in list) {
                         presentation.OnSpeedrunToolLoad();
