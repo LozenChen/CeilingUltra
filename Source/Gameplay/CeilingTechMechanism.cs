@@ -1,4 +1,4 @@
-using Celeste.Mod.CeilingUltra.Entities;
+ï»¿using Celeste.Mod.CeilingUltra.Entities;
 using Celeste.Mod.CeilingUltra.ModInterop;
 using Celeste.Mod.CeilingUltra.Module;
 using Celeste.Mod.CeilingUltra.Utils;
@@ -16,6 +16,8 @@ namespace Celeste.Mod.CeilingUltra.Gameplay;
 public static class CeilingTechMechanism {
 
     #region Settings
+
+    public static bool MainEnabled => LevelSettings.MainEnabled;
 
     public static bool CeilingUltraEnabled => LevelSettings.CeilingUltraEnabled;
 
@@ -168,6 +170,10 @@ public static class CeilingTechMechanism {
     }
 
     public static void UpdateOnCeilingAndWall(Player player) {
+        if (!MainEnabled) {
+            return;
+        }
+
         if (!LastFrameWriteOverrideUltraDir && LastFrameDashDir != player.DashDir) {
             ClearOverrideUltraDir();
         }
@@ -1188,7 +1194,7 @@ public static class CeilingTechMechanism {
         "Player.RedDashUpdate".LogHookData("Ceiling Hyper", success);
     }
 
-    // Ceiling Hyper ÔİÇÒÒëÎª: ñ·¶¥Âş²½. ²»¹ı±íÒâÉÏ±È½Ï¾«×¼µÄ¿ÉÄÜÊÇ, Ì¤Ìì¼²Ô¾.
+    // Ceiling Hyper æš‚ä¸”è¯‘ä¸º: ç©¹é¡¶æ¼«æ­¥. ä¸è¿‡è¡¨æ„ä¸Šæ¯”è¾ƒç²¾å‡†çš„å¯èƒ½æ˜¯, è¸å¤©ç–¾è·ƒ.
     private static bool CheckAndApplyCeilingHyper(Player player) {
         if (CeilingHyperEnabled && Math.Abs(player.DashDir.Y) < 0.1f && Input.Jump.Pressed && CeilingJumpGraceTimer > 0f && player.TryCeilingUnduck(out bool wasDuck, (int)player.Facing)) { // we take the prior direction to be the direction of hyper
             player.CeilingHyper(wasDuck);
