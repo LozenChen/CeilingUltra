@@ -1,4 +1,4 @@
-using Celeste.Mod.CeilingUltra.ModInterop;
+﻿using Celeste.Mod.CeilingUltra.ModInterop;
 using Microsoft.Xna.Framework;
 using Monocle;
 
@@ -262,6 +262,7 @@ public static class CollideCheckHelper {
         // TODO: Support SRT
         InitializeDictionary();
         return jumpThruDirections[jumpThru];
+        // it will throw exceptions if there are some jumpthrus we haven't covered
     }
 
     private static bool IsJumpThru(Entity entity) {
@@ -324,6 +325,18 @@ public static class CollideCheckHelper {
         if (ModUtils.GetType("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Entities.SidewaysJumpThru") is { } sideways) {
             jumpThruTypeDirections[sideways] = Direction.LeftRight;
             JumpThruIsNotJumpThruTypes.Add(sideways);
+        }
+
+        if (ModUtils.GetType("SpringCollab2020", "Celeste.Mod.SpringCollab2020.Entities.SidewaysJumpThru") is { } sc2020sideways) {
+            jumpThruTypeDirections[sc2020sideways] = Direction.LeftRight;
+            JumpThruIsNotJumpThruTypes.Add(sc2020sideways);
+            // basically an early version of Maddie jumpthru
+        }
+
+        if (ModUtils.GetType("SpringCollab2020","Celeste.Mod.SpringCollab2020.Entities.UpsideDownJumpThru") is { } sc2020upsidedown) {
+            jumpThruTypeDirections[sc2020upsidedown] = Direction.Up;
+            JumpThruIsNotJumpThruTypes.Add(sc2020upsidedown);
+            // basically an early version of Maddie jumpthru
         }
 
     }
