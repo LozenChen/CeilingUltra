@@ -137,13 +137,13 @@ public static class CeilingTechMechanism {
 
     [Load]
     public static void Load() {
-        On.Celeste.Level.LoadNewPlayer += OnLoadNewPlayer;
+        On.Celeste.Level.LoadNewPlayerForLevel += OnLoadNewPlayer;
     }
 
 
     [Unload]
     public static void Unload() {
-        On.Celeste.Level.LoadNewPlayer -= OnLoadNewPlayer;
+        On.Celeste.Level.LoadNewPlayerForLevel -= OnLoadNewPlayer;
     }
 
     [Initialize]
@@ -365,10 +365,11 @@ public static class CeilingTechMechanism {
     }
 
 
-    private static Player OnLoadNewPlayer(On.Celeste.Level.orig_LoadNewPlayer orig, Vector2 Position, PlayerSpriteMode spriteMode) {
-        Player player = orig(Position, spriteMode);
+    private static Player OnLoadNewPlayer(On.Celeste.Level.orig_LoadNewPlayerForLevel orig, Vector2 Position, PlayerSpriteMode spriteMode, Level lvl) {
+        Player player = orig(Position, spriteMode, lvl);
         ClearExtendedJumpGraceTimer();
         PlayerOnCeiling = PlayerOnLeftWall = PlayerOnRightWall = false;
+        CheckCeilingRefill = CheckLeftRefill = CheckRightRefill = false;
         LastFrameSetJumpTimerCalled = false;
         LastGroundJumpGraceTimer = 1f;
         NextMaxFall = float.MinValue;
@@ -379,6 +380,7 @@ public static class CeilingTechMechanism {
         InstantUltraLeaveGround = false;
         hitLastFrame = null;
         hitLastPosition = Vector2.Zero;
+        hitSuppressDashRefill = false;
         return player;
     }
 
@@ -791,8 +793,11 @@ public static class CeilingTechMechanism {
         LastGroundJumpGraceTimer = player.jumpGraceTimer;
     }
 
+    // 变量 CheckCeilingRefill 有可能在 MainEnabled == false 时未被更新而驻留.
+    // 而这是唯一一个不间接检测 MainEnabled 的 hook, 因此我们必须直接检测 MainEnabled
     public static void ExtendedRefillDash(Player player) {
-        if (!player.Inventory.NoRefills && player.Dashes < player.MaxDashes
+        if (    MainEnabled
+            && !player.Inventory.NoRefills && player.Dashes < player.MaxDashes
             && (
                 (CheckCeilingRefill && !player.CollideCheck<IceCeiling>()) ||
                 (CheckLeftRefill && !ClimbBlocker.Check(player.Scene, player, player.Position - Vector2.UnitX)) ||

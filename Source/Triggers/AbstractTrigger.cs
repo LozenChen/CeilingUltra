@@ -1,4 +1,4 @@
-using Celeste.Mod.CeilingUltra.Module;
+﻿using Celeste.Mod.CeilingUltra.Module;
 using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.CeilingUltra.Triggers;
@@ -19,6 +19,6 @@ public class AbstractTrigger : Trigger {
         if (OneUse) {
             RemoveSelf();
         }
-        Logger.Log("CeilingUltra", $"{this.GetType().Name} triggered");
+        Logger.Log("CeilingUltra", $"{this.GetType().Name}: {Enable}.");
     }
 }

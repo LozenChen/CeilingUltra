@@ -1,4 +1,4 @@
-using Celeste.Mod.CeilingUltra.Module;
+﻿using Celeste.Mod.CeilingUltra.Module;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -19,9 +19,9 @@ public class EnableAllTrigger : AbstractTrigger {
         UpwardWallJumpAcceleration = data.Bool("UpwardWallJumpAcceleration", true);
         DownwardWallJumpAcceleration = data.Bool("DownwardWallJumpAcceleration", true);
         GroundTech = data.Bool("GroundTech", true);
-        QoL = data.Bool("QoL", false);
-        // for backward compatibility, newly added field should have default value false, unless it's QoL
-        WaterSurfaceTech = data.Bool("WaterSurfaceTech", false);
+        QoL = data.Bool("QoL", true);
+        // for backward compatibility, newly added field should have default value null, unless it's QoL (which defaults to be true)
+        WaterSurfaceTech = data.Has("WaterSurfaceTech") ? data.Bool("WaterSurfaceTech", true) : null;
     }
 
     public bool WallRefill;
@@ -40,7 +40,7 @@ public class EnableAllTrigger : AbstractTrigger {
 
     public bool GroundTech;
 
-    public bool WaterSurfaceTech;
+    public bool? WaterSurfaceTech;
 
     public bool QoL;
 
@@ -57,5 +57,16 @@ public class EnableAllTrigger : AbstractTrigger {
         LevelSettings.OverrideGroundTech = GroundTech;
         LevelSettings.OverrideWaterSurfaceTech = WaterSurfaceTech;
         LevelSettings.OverrideQoL = QoL;
+        Logger.Info("Ceiling Ultra", $"MainEnabled: {Enable}\n" +
+            $"WallRefill: {WallRefill}\n" +
+            $"CeilingRefill: {CeilingRefill}\n" +
+            $"CeilingTech: {CeilingTech}\n" +
+            $"UpdiagDash: {BigInertiaUpdiagDash}\n" +
+            $"WallTech: {WallTech}\n" +
+            $"UpJumpAcc: {UpwardWallJumpAcceleration}\n" +
+            $"DownJumpAcc: {DownwardWallJumpAcceleration}\n" +
+            $"GroundTech: {GroundTech}\n" +
+            $"WaterTech: {WaterSurfaceTech}\n" +
+            $"QoL: {QoL}");
     }
 }
