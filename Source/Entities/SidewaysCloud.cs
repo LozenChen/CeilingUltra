@@ -1,4 +1,5 @@
-﻿using Celeste.Mod.CeilingUltra.Utils;
+﻿using Celeste.Mod.CeilingUltra.ModInterop;
+using Celeste.Mod.CeilingUltra.Utils;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -6,8 +7,10 @@ using System.Reflection;
 
 namespace Celeste.Mod.CeilingUltra.Entities;
 
-[CustomEntity("CeilingUltra/SidewaysCloud")]
+[CustomEntity(CustomEntityName)]
 public class SidewaysCloud : Entity {
+
+    public const string CustomEntityName = "CeilingUltra/SidewaysCloud";
 
     private static ConstructorInfo SidewaysJumpThruCtorInfo;
 
@@ -22,6 +25,10 @@ public class SidewaysCloud : Entity {
 
         SidewaysJumpThruCtorInfo = ModUtils.GetType("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Entities.SidewaysJumpThru")?.
             GetConstructor(new Type[] { typeof(EntityData), typeof(Vector2) });
+
+        if (SidewaysJumpThruCtorInfo is not null) {
+            MaddieEntityNameRegistry.RegisterSidewaysJumpThru(CustomEntityName);
+        }
     }
 
     private Entity BaseSidewaysJumpthru;
