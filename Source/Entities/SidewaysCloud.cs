@@ -203,7 +203,7 @@ public class SidewaysCloud : Entity {
         }
 
         // some conditions like Speed / Retention / MoveX check can be removed, if we had a On(Dash)Collide for it. Unluckily, no.
-        if (    player.Speed.X * playerFacingX > 0f
+        if (player.Speed.X * playerFacingX > 0f
             || (player.wallSpeedRetentionTimer > 0f && player.wallSpeedRetained * playerFacingX > 0f)
             || ((isLeft ? Facings.Right : Facings.Left) == player.Facing &&
                 (player.StateMachine.State == 1 || player.climbTriggerDir == playerFacingX || Input.MoveX.Value * playerFacingX > 0f)

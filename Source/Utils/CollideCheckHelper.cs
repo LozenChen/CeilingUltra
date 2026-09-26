@@ -333,7 +333,7 @@ public static class CollideCheckHelper {
             // basically an early version of Maddie jumpthru
         }
 
-        if (ModUtils.GetType("SpringCollab2020","Celeste.Mod.SpringCollab2020.Entities.UpsideDownJumpThru") is { } sc2020upsidedown) {
+        if (ModUtils.GetType("SpringCollab2020", "Celeste.Mod.SpringCollab2020.Entities.UpsideDownJumpThru") is { } sc2020upsidedown) {
             jumpThruTypeDirections[sc2020upsidedown] = Direction.Up;
             JumpThruIsNotJumpThruTypes.Add(sc2020upsidedown);
             // basically an early version of Maddie jumpthru

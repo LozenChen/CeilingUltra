@@ -796,7 +796,7 @@ public static class CeilingTechMechanism {
     // 变量 CheckCeilingRefill 有可能在 MainEnabled == false 时未被更新而驻留.
     // 而这是唯一一个不间接检测 MainEnabled 的 hook, 因此我们必须直接检测 MainEnabled
     public static void ExtendedRefillDash(Player player) {
-        if (    MainEnabled
+        if (MainEnabled
             && !player.Inventory.NoRefills && player.Dashes < player.MaxDashes
             && (
                 (CheckCeilingRefill && !player.CollideCheck<IceCeiling>()) ||

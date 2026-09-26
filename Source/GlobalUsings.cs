@@ -1,7 +1,6 @@
 ﻿global using Celeste.Mod.CeilingUltra.Utils.Attributes;
 global using static Celeste.Mod.CeilingUltra.GlobalVariables;
 using Celeste.Mod.CeilingUltra.Module;
-using Monocle;
 
 namespace Celeste.Mod.CeilingUltra;
 
