@@ -303,9 +303,9 @@ public class SidewaysCloud : Entity {
                 }
             }
         }
-        float num = -playerFacingX * speed;
+        float num = playerFacingX * speed;
         if (speed < 0f) {
-            num = -playerFacingX * 220f;
+            num = playerFacingX * (-220f);
         }
         MoveH(playerFacingX * speed * Engine.DeltaTime, num);
 
@@ -390,8 +390,10 @@ public class SidewaysCloud : Entity {
             }
             else if (actor is Player player && IsRiding_Relaxed(nonSolid, left, player, strict: true)) {
                 // 吸附过来
+                nonSolid.Collidable = false;
                 actor.MoveHExact(sign, null, null);
                 actor.LiftSpeed = LiftSpeed;
+                nonSolid.Collidable = true;
             }
             actor.Collidable = collidable;
         }
