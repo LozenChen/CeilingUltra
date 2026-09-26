@@ -24,7 +24,7 @@ public class SidewaysCloud : Entity {
         // so we use Composition instead of Inheritance
 
         SidewaysJumpThruCtorInfo = ModUtils.GetType("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Entities.SidewaysJumpThru")?.
-            GetConstructor(new Type[] { typeof(EntityData), typeof(Vector2) });
+            GetConstructor(new Type[] { typeof(EntityData), typeof(Vector2) })!;
 
         if (SidewaysJumpThruCtorInfo is not null) {
             MaddieEntityNameRegistry.RegisterSidewaysJumpThru(CustomEntityName);
@@ -365,13 +365,13 @@ public class SidewaysCloud : Entity {
         }
     }
 
-    public static void OneMove(Entity platform, bool left, int sign, Vector2 LiftSpeed) {
+    public static void OneMove(Entity nonSolid, bool left, int sign, Vector2 LiftSpeed) {
         if (Engine.Scene is not { } scene) {
             return;
         }
 
-        if (!platform.Collidable) {
-            platform.X += sign;
+        if (!nonSolid.Collidable) {
+            nonSolid.X += sign;
             return;
         }
 
@@ -382,19 +382,19 @@ public class SidewaysCloud : Entity {
             }
             bool collidable = actor.Collidable;
             actor.Collidable = true;
-            if (pushing && platform.CollideCheckOutside(actor, platform.Position + sign * Vector2.UnitX)) {
+            if (pushing && nonSolid.CollideCheckOutside(actor, nonSolid.Position + sign * Vector2.UnitX)) {
                 // push
                 actor.MoveHExact(sign, null, null);
                 // 这里我们并不调用 SquishCallback, 因为是云! 所以按理来说不应该造成挤压, 并且允许这种特殊情况下去穿过云
                 actor.LiftSpeed = LiftSpeed;
             }
-            else if (actor is Player player && IsRiding_Relaxed(platform, left, player, strict: true)) {
+            else if (actor is Player player && IsRiding_Relaxed(nonSolid, left, player, strict: true)) {
                 // 吸附过来
-                actor.X += sign;
+                actor.MoveHExact(sign, null, null);
                 actor.LiftSpeed = LiftSpeed;
             }
             actor.Collidable = collidable;
         }
-        platform.X += sign;
+        nonSolid.X += sign;
     }
 }
