@@ -31,9 +31,10 @@ public class SidewaysCloud : Entity {
         }
     }
 
-    private Entity BaseSidewaysJumpthru;
 
-    private Solid playerInteractingSolid;
+    private Entity BaseSidewaysJumpthru;
+    // 一方面其继承了 SidewaysJumpthru, 因此有单向板功能. 另一方面, 其运动由我们手写
+    // 而其容器实体 (SidewaysCloud) 则只充当背景板, 不参与交互
 
     public readonly bool IsLeft;
 
@@ -72,6 +73,8 @@ public class SidewaysCloud : Entity {
     private bool canRumble;
 
     public bool Small;
+
+    private bool OneUse;
 
     private static Vector2 scale_stretched = new Vector2(0.7f, 1.3f);
 
@@ -116,9 +119,6 @@ public class SidewaysCloud : Entity {
             this.Position.Y += 2f;
         }
 
-        playerInteractingSolid = new Solid(Position, 5f, height, safe: false);
-        playerInteractingSolid.Collidable = playerInteractingSolid.Visible = false;
-
         fragile = data.Bool("fragile");
         startX = X;
         timer = Calc.Random.NextFloat() * 4f;
@@ -129,9 +129,11 @@ public class SidewaysCloud : Entity {
         Add(sfx = new SoundSource());
         ExitSpeed = data.Float("ExitSpeed", 90f);
         CoyoteTime = data.Float("CoyoteTime", 0.1f);
+        OneUse = !data.Bool("Respawning", true);
 
-        playerInteractingSolid.Collider.Position = BaseSidewaysJumpthru.Collider.Position = this.Collider.Position;
+        BaseSidewaysJumpthru.Collider.Position = this.Collider.Position;
         BaseSidewaysJumpthru.Position = this.Position;
+        movementCounterX = 0f;
     }
 
     public override void Awake(Scene scene) {
@@ -142,7 +144,6 @@ public class SidewaysCloud : Entity {
 
     public override void Added(Scene scene) {
         base.Added(scene);
-        scene.Add(playerInteractingSolid);
         string text = fragile ? "cloudFragile" : "cloud";
         if (Small) {
             text += "Remix";
@@ -174,40 +175,43 @@ public class SidewaysCloud : Entity {
     public override void Removed(Scene scene) {
         base.Removed(scene);
         BaseSidewaysJumpthru?.RemoveSelf();
-        playerInteractingSolid?.RemoveSelf();
     }
 
     public Player GetPlayerRider(bool strict = true) {
-        bool orig = playerInteractingSolid.Collidable;
-        playerInteractingSolid.Collidable = true;
-        Player player = null;
-        foreach (Player entity in Scene.Tracker.GetEntities<Player>()) {
-            if (IsRiding(entity, strict)) {
-                player = entity;
-                break;
+        if (!BaseSidewaysJumpthru.Collidable) {
+            return null;
+        }
+        foreach (Player player in Scene.Tracker.GetEntities<Player>()) {
+            if (IsRiding_Relaxed(BaseSidewaysJumpthru, IsLeft, player, strict)) {
+                return player;
             }
         }
-        playerInteractingSolid.Collidable = orig;
-        return player;
-    }
-
-    public bool IsRiding(Player player, bool strict = true) {
-        if (player.StateMachine.State == 21 || player.StateMachine.State == 9) {
-            return false;
-        }
-        if (!strict) {
-            return player.CollideCheckOutside(playerInteractingSolid, player.Position + Vector2.UnitX * playerFacingX);
-        }
-        // some conditions like Speed / Retention / MoveX check can be removed, if we had a On(Dash)Collide for it. Unluckily, no.
-        if (player.Speed.X * playerFacingX > 0f || (player.wallSpeedRetentionTimer > 0f && player.wallSpeedRetained * playerFacingX > 0f) ||
-            (expectedPlayerFacing == player.Facing &&
-                (player.StateMachine.State == 1 || player.climbTriggerDir == playerFacingX || Input.MoveX.Value * playerFacingX > 0f))) {
-            return player.CollideCheckOutside(playerInteractingSolid, player.Position + Vector2.UnitX * playerFacingX);
-        }
-        return false;
+        return null;
     }
 
     public bool HasPlayerRider(bool strict = true) => GetPlayerRider(strict) != null;
+
+    public static bool IsRiding_Relaxed(Entity platform, bool isLeft, Player player, bool strict = true) {
+        if (player.StateMachine.State == 21 || player.StateMachine.State == 9) {
+            return false;
+        }
+
+        int playerFacingX = isLeft ? 1 : -1;
+
+        if (!strict) {
+            return player.CollideCheckOutside(platform, player.Position + Vector2.UnitX * playerFacingX);
+        }
+
+        // some conditions like Speed / Retention / MoveX check can be removed, if we had a On(Dash)Collide for it. Unluckily, no.
+        if (    player.Speed.X * playerFacingX > 0f
+            || (player.wallSpeedRetentionTimer > 0f && player.wallSpeedRetained * playerFacingX > 0f)
+            || ((isLeft ? Facings.Right : Facings.Left) == player.Facing &&
+                (player.StateMachine.State == 1 || player.climbTriggerDir == playerFacingX || Input.MoveX.Value * playerFacingX > 0f)
+               )) {
+            return player.CollideCheckOutside(platform, player.Position + Vector2.UnitX * playerFacingX);
+        }
+        return false;
+    }
 
     public override void Update() {
         base.Update();
@@ -223,11 +227,16 @@ public class SidewaysCloud : Entity {
         if (respawnTimer > 0f) {
             respawnTimer -= Engine.DeltaTime;
             if (respawnTimer <= 0f) {
+                if (OneUse) {
+                    RemoveSelf();
+                    return;
+                }
                 waiting = true;
-                BaseSidewaysJumpthru.X = playerInteractingSolid.X = X = startX;
+                BaseSidewaysJumpthru.X = X = startX;
                 speed = 0f;
                 scale = Vector2.One;
                 BaseSidewaysJumpthru.Collidable = true;
+                BaseSidewaysJumpthru.Active = true;
                 sprite.Play("spawn");
                 sfx.Play("event:/game/04_cliffside/cloud_pink_reappear");
             }
@@ -260,8 +269,7 @@ public class SidewaysCloud : Entity {
             return;
         }
         if (fragile && BaseSidewaysJumpthru.Collidable && !HasPlayerRider(strict: false)) {
-            BaseSidewaysJumpthru.Collidable = false;
-            sprite.Play("fade");
+            Fade();
         }
         if (speed < 0f && canRumble) {
             canRumble = false;
@@ -286,8 +294,7 @@ public class SidewaysCloud : Entity {
                     ShakeOffPlayer(playerRider2);
                 }
                 if (fragile) {
-                    BaseSidewaysJumpthru.Collidable = false;
-                    sprite.Play("fade");
+                    Fade();
                     respawnTimer = 2.5f;
                 }
                 else {
@@ -301,6 +308,13 @@ public class SidewaysCloud : Entity {
             num = -playerFacingX * 220f;
         }
         MoveH(playerFacingX * speed * Engine.DeltaTime, num);
+
+        void Fade() {
+            BaseSidewaysJumpthru.Collidable = false;
+            BaseSidewaysJumpthru.Active = false;
+            // MMH 的单向板即使 Uncollidable, 仍然会 pushPlayer, 这不应该 (可能 Maddie 压根没想到还有这种需求). 所以我们直接阻断其更新
+            sprite.Play("fade");
+        }
     }
 
     public void ShakeOffPlayer(Player player) {
@@ -314,21 +328,9 @@ public class SidewaysCloud : Entity {
         player.jumpGraceTimer = MathF.Max(player.jumpGraceTimer, CoyoteTime);
     }
 
-    public float ExactPositionX => playerInteractingSolid.ExactPosition.X;
+    public float movementCounterX;
 
-    public float LiftSpeedX {
-        get => playerInteractingSolid.LiftSpeed.X;
-        set {
-            playerInteractingSolid.LiftSpeed.X = value;
-        }
-    }
-
-    public float movementCounterX {
-        get => playerInteractingSolid.movementCounter.X;
-        set {
-            playerInteractingSolid.movementCounter.X = value;
-        }
-    }
+    public float ExactPositionX => (float)((double)X + (double)movementCounterX);
 
     public void MoveTowardsX(float x, float amount) {
         float x2 = Calc.Approach(ExactPositionX, x, amount);
@@ -336,40 +338,63 @@ public class SidewaysCloud : Entity {
     }
 
     public void MoveToX(float x) {
-        MoveH((float)((double)x - (double)playerInteractingSolid.Position.X - (double)movementCounterX));
+        MoveH((float)((double)x - (double)X - (double)movementCounterX));
     }
 
-    public void MoveH(float moveH) {
-        if (Engine.DeltaTime == 0f) {
-            LiftSpeedX = 0f;
-        }
-        else {
-            LiftSpeedX = moveH / Engine.DeltaTime;
-        }
-        movementCounterX += moveH;
+    public void MoveH(float move) {
+        float liftSpeedX = Engine.DeltaTime == 0f ? 0f : move / Engine.DeltaTime;
+        MoveH(move, liftSpeedX);
+    }
+
+    public void MoveH(float move, float liftSpeedX) {
+        movementCounterX += move;
         int num = (int)Math.Round(movementCounterX);
         if (num != 0) {
             movementCounterX -= num;
-            MoveHExact(num);
+            MoveHExact(num, liftSpeedX);
         }
     }
 
-    public void MoveH(float moveH, float liftSpeedH) {
-        LiftSpeedX = liftSpeedH;
-        movementCounterX += moveH;
-        int num = (int)Math.Round(movementCounterX);
-        if (num != 0) {
-            movementCounterX -= num;
-            MoveHExact(num);
+    public void MoveHExact(int move, float liftSpeedX) {
+        int sign = Math.Sign(move);
+        Vector2 LiftSpeed = new Vector2(liftSpeedX, 0f);
+        while (move != 0) {
+            OneMove(BaseSidewaysJumpthru, IsLeft, sign, LiftSpeed);
+            X = BaseSidewaysJumpthru.X;
+            move -= sign;
         }
     }
 
-    public void MoveHExact(int move) {
-        MoveImpl(Vector2.UnitX * move);
-    }
+    public static void OneMove(Entity platform, bool left, int sign, Vector2 LiftSpeed) {
+        if (Engine.Scene is not { } scene) {
+            return;
+        }
 
-    public void MoveImpl(Vector2 move) {
-        MaxHelpingHand.Entities.SidewaysMovingPlatform.SidewaysJumpthruOnMove(BaseSidewaysJumpthru, playerInteractingSolid, IsLeft, move);
-        this.Position = BaseSidewaysJumpthru.Position;
+        if (!platform.Collidable) {
+            platform.X += sign;
+            return;
+        }
+
+        bool pushing = (left ? -1 : 1) == sign;
+        foreach (Actor actor in scene.Tracker.GetEntities<Actor>()) {
+            if (!actor.AllowPushing || actor.TreatNaive) {
+                continue;
+            }
+            bool collidable = actor.Collidable;
+            actor.Collidable = true;
+            if (pushing && platform.CollideCheckOutside(actor, platform.Position + sign * Vector2.UnitX)) {
+                // push
+                actor.MoveHExact(sign, null, null);
+                // 这里我们并不调用 SquishCallback, 因为是云! 所以按理来说不应该造成挤压, 并且允许这种特殊情况下去穿过云
+                actor.LiftSpeed = LiftSpeed;
+            }
+            else if (actor is Player player && IsRiding_Relaxed(platform, left, player, strict: true)) {
+                // 吸附过来
+                actor.X += sign;
+                actor.LiftSpeed = LiftSpeed;
+            }
+            actor.Collidable = collidable;
+        }
+        platform.X += sign;
     }
 }

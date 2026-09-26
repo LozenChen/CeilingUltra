@@ -1,4 +1,4 @@
-local drawableSpriteStruct = require("structs.drawable_sprite")
+﻿local drawableSpriteStruct = require("structs.drawable_sprite")
 
 local cloud = {}
 
@@ -9,6 +9,7 @@ cloud.placements = {
     data = {
         left = true,
         fragile = false,
+        Respawning = true,
         small = false,
         letSeekersThrough = false,
         pushPlayer = true,
@@ -18,7 +19,7 @@ cloud.placements = {
     }
 }
 cloud.associatedMods = {"MaxHelpingHand", "CeilingUltra"}
-cloud.fieldOrder = {"x", "y", "ExitSpeed", "CoyoteTime", "left", "fragile", "small", "letSeekersThrough", "pushPlayer", "cornerCorrect" }
+cloud.fieldOrder = {"x", "y", "ExitSpeed", "CoyoteTime", "left", "fragile", "Respawning", "small", "letSeekersThrough", "pushPlayer", "cornerCorrect" }
 
 local normalScale = 1.0
 local smallScale = 29 / 35
