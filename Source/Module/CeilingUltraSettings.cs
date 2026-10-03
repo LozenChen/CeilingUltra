@@ -1,4 +1,4 @@
-namespace Celeste.Mod.CeilingUltra.Module;
+﻿namespace Celeste.Mod.CeilingUltra.Module;
 
 [SettingName("Ceiling Ultra")]
 public class CeilingUltraSettings : EverestModuleSettings {
@@ -19,7 +19,6 @@ public class CeilingUltraSettings : EverestModuleSettings {
     // we provide this property for tas set command.
     // if it's not a mod map which use ceiling ultra on its own, please set this to true
     public bool TasEnableAll {
-        get => Enabled;
         set {
             Enabled =
                 CeilingUltraEnabled = CeilingRefillStamina = CeilingRefillDash = CeilingJumpEnabled = CeilingHyperEnabled =
