@@ -252,24 +252,38 @@ public static class CollideCheckHelper {
         }
     }
 
-    public static Direction GetDirection(this Entity jumpThru) {
-        // the direction in which the jumpThru is blocking you to go
-        if (jumpThruDirections.TryGetValue(jumpThru, out Direction dir)) {
-            return dir;
-        }
-        // we don't initialize this when load level, so we dont need to worry about SRT ...
-        // okay but we will need re-init after save load
-        // TODO: Support SRT
-        InitializeDictionary();
-        return jumpThruDirections[jumpThru];
-        // it will throw exceptions if there are some jumpthrus we haven't covered
+
+    public static Alignment InvertY(Alignment align) {
+        return align switch {
+            Alignment.Top => Alignment.Bottom,
+            Alignment.Bottom => Alignment.Top,
+            Alignment.TopLeft => Alignment.BottomLeft,
+            Alignment.TopCenter => Alignment.BottomCenter,
+            Alignment.TopRight => Alignment.BottomRight,
+            Alignment.BottomLeft => Alignment.TopLeft,
+            Alignment.BottomCenter => Alignment.TopCenter,
+            Alignment.BottomRight => Alignment.TopRight,
+            _ => align
+        };
     }
 
-    private static bool IsJumpThru(Entity entity) {
+
+    private static bool IsJumpThru(Entity entity) => JumpthruClassifier.IsJumpThru(entity);
+
+
+    internal static List<Entity> GetJumpThrus() => JumpthruClassifier.GetJumpThrus();
+
+
+    public static Direction GetDirection(this Entity jumpThru) => JumpthruClassifier.GetDirection(jumpThru);
+}
+
+public static class JumpthruClassifier {
+
+    public static bool IsJumpThru(Entity entity) {
         return entity is JumpThru || JumpThruIsNotJumpThruTypes.Contains(entity.GetType());
     }
 
-    internal static List<Entity> GetJumpThrus() {
+    public static List<Entity> GetJumpThrus() {
         // why we need this: SideWaysJumpThru is not a JumpThru, nor a Solid, not even a Platform
 
         if (Engine.Scene is not Level level) {
@@ -290,6 +304,20 @@ public static class CollideCheckHelper {
         }
 
         return results.Distinct().ToList();
+    }
+
+
+    public static Direction GetDirection(Entity jumpThru) {
+        // the direction in which the jumpThru is blocking you to go
+        if (jumpThruDirections.TryGetValue(jumpThru, out Direction dir)) {
+            return dir;
+        }
+        // we don't initialize this when load level, so we dont need to worry about SRT ...
+        // okay but we will need re-init after save load
+        // TODO: Support SRT
+        InitializeDictionary();
+        return jumpThruDirections[jumpThru];
+        // it will throw exceptions if there are some jumpthrus we haven't covered
     }
 
     [Initialize]
@@ -339,6 +367,24 @@ public static class CollideCheckHelper {
             // basically an early version of Maddie jumpthru
         }
 
+        if (ModUtils.GetType("ChroniaHelper", "ChroniaHelper.Entities.SampleJumpThroughDown") is { } chroniadown) {
+            jumpThruTypeDirections[chroniadown] = Direction.Up;
+        }
+
+        if (ModUtils.GetType("ChroniaHelper", "ChroniaHelper.Entities.SampleJumpThroughSideways") is { } chroniasideways) {
+            jumpThruTypeDirections[chroniasideways] = Direction.LeftRight;
+            JumpThruIsNotJumpThruTypes.Add(chroniasideways);
+        }
+
+        if (ModUtils.GetType("ChroniaHelper", "ChroniaHelper.Entities.SampleJumpThroughUp") is { } chroniaup) {
+            jumpThruTypeDirections[chroniaup] = Direction.Down;
+        }
+
+        foreach (KeyValuePair<Type, Direction> tuple in jumpThruTypeDirections) {
+            Type t = tuple.Key;
+            Direction dir = tuple.Value;
+            Logger.Debug($"CeilingUltra {nameof(JumpthruClassifier)}", $"Register: {t} -> {dir}");
+        }
     }
 
     private static void InitializeDictionary() {
@@ -373,19 +419,7 @@ public static class CollideCheckHelper {
 
     private static List<Type> JumpThruIsNotJumpThruTypes = new();
 
-    public static Alignment InvertY(Alignment align) {
-        return align switch {
-            Alignment.Top => Alignment.Bottom,
-            Alignment.Bottom => Alignment.Top,
-            Alignment.TopLeft => Alignment.BottomLeft,
-            Alignment.TopCenter => Alignment.BottomCenter,
-            Alignment.TopRight => Alignment.BottomRight,
-            Alignment.BottomLeft => Alignment.TopLeft,
-            Alignment.BottomCenter => Alignment.TopCenter,
-            Alignment.BottomRight => Alignment.TopRight,
-            _ => align
-        };
-    }
+
 }
 
 
