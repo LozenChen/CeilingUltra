@@ -3,3 +3,5 @@ bin
 obj
 /Libs/Celeste.exe
 /Libs/Celeste.dll
+# local agent instructions (like TASHelper: kept out of the repo)
+/AGENTS.md

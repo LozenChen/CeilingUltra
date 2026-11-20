@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -12,6 +12,11 @@
     <RootNamespace>Celeste.Mod.CeilingUltra</RootNamespace>
     <Configurations>Release</Configurations>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+
+    <!-- Optional: when set, the built mod is deployed into a Celeste Mods directory.
+         Empty by default, so a plain build only produces bin\<Configuration>\net8.0.
+         Example: dotnet build -c Release -p:CelestePrefix="D:\Games\...\Celeste" -p:DeployDir="D:\Games\...\Celeste\Mods\CeilingUltra" -->
+    <DeployDir Condition="'$(DeployDir)' == ''"></DeployDir>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -77,6 +82,25 @@
   <ItemGroup>
     <Folder Include="Graphics\Atlases\Gameplay\CeilingUltra\" />
   </ItemGroup>
+
+  <!-- Deploy the mod layout everest.yaml expects: everest.yaml + bin\<Configuration>\net8.0\<DLL>
+       + Dialog + Graphics + Loenn + Tutorials. The .pdb is deliberately not copied:
+       replacing it at runtime makes Everest's FileSystemModContent throw on hot reload. -->
+  <Target Name="DeployToGame" AfterTargets="Build" Condition="'$(DeployDir)' != ''">
+    <ItemGroup>
+      <_DeployDialog Include="$(MSBuildProjectDirectory)\Dialog\**\*" />
+      <_DeployGraphics Include="$(MSBuildProjectDirectory)\Graphics\**\*" />
+      <_DeployLoenn Include="$(MSBuildProjectDirectory)\Loenn\**\*" />
+      <_DeployTutorials Include="$(MSBuildProjectDirectory)\Tutorials\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\everest.yaml" DestinationFolder="$(DeployDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(DeployDir)\bin\$(Configuration)\$(TargetFramework)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(_DeployDialog)" DestinationFiles="@(_DeployDialog->'$(DeployDir)\Dialog\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(_DeployGraphics)" DestinationFiles="@(_DeployGraphics->'$(DeployDir)\Graphics\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(_DeployLoenn)" DestinationFiles="@(_DeployLoenn->'$(DeployDir)\Loenn\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(_DeployTutorials)" DestinationFiles="@(_DeployTutorials->'$(DeployDir)\Tutorials\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+    <Message Importance="high" Text="Deployed $(AssemblyName) -> $(DeployDir)" />
+  </Target>
 
 
 			
