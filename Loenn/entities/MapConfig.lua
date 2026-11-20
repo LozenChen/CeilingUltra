@@ -1,7 +1,8 @@
 local map_config = {}
 
 map_config.name = "CeilingUltra/CeilingUltraMapConfig"
-map_config.depth = 0
+map_config.depth = -20000
+map_config.texture = "CeilingUltra/MapConfig/MapConfigIcon"
 
 local advancedFieldOrder = {
     "x", "y",
@@ -49,7 +50,7 @@ local normalFieldOrder = {
 
 map_config.placements = {
     {
-        name = "Ceiling Ultra Map Config (Advanced)",
+        name = "Map Config (Advanced)",
         data = {
             ModEnable = true,
             CeilingUltraEnabled = true,
@@ -81,7 +82,7 @@ map_config.placements = {
         }
     },
     {
-        name = "Ceiling Ultra Map Config",
+        name = "Map Config",
         data = {
             ModEnable = true,
             WallRefill = true,
