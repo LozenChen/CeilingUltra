@@ -3,68 +3,106 @@ local map_config = {}
 map_config.name = "CeilingUltra/CeilingUltraMapConfig"
 map_config.depth = 0
 
-map_config.placements = {
-    name = "Ceiling Ultra Map Config",
-    data = {
-        Enabled = true,
-        CeilingUltraEnabled = true,
-        CeilingRefillStamina = true,
-        CeilingRefillDash = true,
-        CeilingJumpEnabled = true,
-        CeilingHyperEnabled = true,
-        GroundJumpEnabled = true,
-        GroundUltraEnabled = true,
-        GroundHyperEnabled = true,
-        UpdiagDashEndNoHorizontalSpeedLoss = true,
-        VerticalUltraEnabled = true,
-        VerticalHyperEnabled = true,
-        DashBeginNoVerticalSpeedLoss = true,
-        UpdiagDashEndNoVerticalSpeedLoss = true,
-        WallRefillStamina = true,
-        WallRefillDash = true,
-        HorizontalUltraIntoVerticalUltra = true,
-        VerticalUltraIntoHorizontalUltra = true,
-        UpwardWallJumpAcceleration = true,
-        DownwardWallJumpAcceleration = true,
-        WaterWaveDashEnabled = true,
-        WaterCeilingHyperEnabled = true,
-        WaterBottomSurfaceJumpEnabled = true,
-        QoLBufferVerticalHyper = true,
-        QoLBufferVerticalUltra = true,
-        QoLRefillDashOnWallJump = true,
-        QoLBufferCeilingUltra = true,
-    }
-}
-
-map_config.fieldOrder = {
+local advancedFieldOrder = {
     "x", "y",
-    "Enabled",
-    "CeilingUltraEnabled",
+    "ModEnable",
     "CeilingRefillStamina",
     "CeilingRefillDash",
     "CeilingJumpEnabled",
     "CeilingHyperEnabled",
-    "GroundJumpEnabled",
-    "GroundUltraEnabled",
-    "GroundHyperEnabled",
+    "CeilingUltraEnabled",
     "UpdiagDashEndNoHorizontalSpeedLoss",
-    "VerticalUltraEnabled",
-    "VerticalHyperEnabled",
-    "DashBeginNoVerticalSpeedLoss",
-    "UpdiagDashEndNoVerticalSpeedLoss",
     "WallRefillStamina",
     "WallRefillDash",
-    "HorizontalUltraIntoVerticalUltra",
-    "VerticalUltraIntoHorizontalUltra",
+    "VerticalHyperEnabled",
+    "VerticalUltraEnabled",
+    "DashBeginNoVerticalSpeedLoss",
+    "UpdiagDashEndNoVerticalSpeedLoss",
     "UpwardWallJumpAcceleration",
     "DownwardWallJumpAcceleration",
     "WaterWaveDashEnabled",
     "WaterCeilingHyperEnabled",
     "WaterBottomSurfaceJumpEnabled",
+    "GroundJumpEnabled",
+    "GroundHyperEnabled",
+    "GroundUltraEnabled",
     "QoLBufferVerticalHyper",
     "QoLBufferVerticalUltra",
     "QoLRefillDashOnWallJump",
     "QoLBufferCeilingUltra",
 }
+
+local normalFieldOrder = {
+    "x", "y",
+    "ModEnable",
+    "WallRefill",
+    "WallTech",
+    "CeilingRefill",
+    "CeilingTech",
+    "BigInertiaUpdiagDash",
+    "UpwardWallJumpAcceleration",
+    "DownwardWallJumpAcceleration",
+    "WaterSurfaceTech",
+    "GroundTech",
+    "QoL",
+}
+
+map_config.placements = {
+    {
+        name = "Ceiling Ultra Map Config (Advanced)",
+        data = {
+            ModEnable = true,
+            CeilingUltraEnabled = true,
+            CeilingRefillStamina = true,
+            CeilingRefillDash = true,
+            CeilingJumpEnabled = true,
+            CeilingHyperEnabled = true,
+            GroundJumpEnabled = true,
+            GroundUltraEnabled = true,
+            GroundHyperEnabled = true,
+            UpdiagDashEndNoHorizontalSpeedLoss = true,
+            VerticalUltraEnabled = true,
+            VerticalHyperEnabled = true,
+            DashBeginNoVerticalSpeedLoss = true,
+            UpdiagDashEndNoVerticalSpeedLoss = true,
+            WallRefillStamina = true,
+            WallRefillDash = true,
+            HorizontalUltraIntoVerticalUltra = true,
+            VerticalUltraIntoHorizontalUltra = true,
+            UpwardWallJumpAcceleration = true,
+            DownwardWallJumpAcceleration = true,
+            WaterWaveDashEnabled = true,
+            WaterCeilingHyperEnabled = true,
+            WaterBottomSurfaceJumpEnabled = true,
+            QoLBufferVerticalHyper = true,
+            QoLBufferVerticalUltra = true,
+            QoLRefillDashOnWallJump = true,
+            QoLBufferCeilingUltra = true,
+        }
+    },
+    {
+        name = "Ceiling Ultra Map Config",
+        data = {
+            ModEnable = true,
+            WallRefill = true,
+            WallTech = true,
+            CeilingRefill = true,
+            CeilingTech = true,
+            BigInertiaUpdiagDash = true,
+            UpwardWallJumpAcceleration = true,
+            DownwardWallJumpAcceleration = true,
+            WaterSurfaceTech = true,
+            GroundTech = true,
+            QoL = true,
+        }
+    }
+}
+
+map_config.fieldOrder = function(entity)
+    if entity ~= nil and entity.WallRefill ~= nil then
+        return normalFieldOrder
+    end
+    return advancedFieldOrder
+end
 
 return map_config

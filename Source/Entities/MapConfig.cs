@@ -11,6 +11,7 @@ public class MapConfig : Entity {
     public MapConfig(EntityData data, Vector2 offset) : base(data.Position + offset) {
         Visible = false;
         Collidable = false;
+        Active = false;
     }
 
     // all necessary stuff is in data, and is read by MapConfigValues.TryRead
