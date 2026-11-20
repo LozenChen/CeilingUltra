@@ -1,4 +1,4 @@
-﻿using Celeste.Mod.CeilingUltra.Module;
+using Celeste.Mod.CeilingUltra.Module;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -14,6 +14,8 @@ public class WaterSurfaceTechTrigger : AbstractTrigger {
 
     public override void OnEnter(Player player) {
         base.OnEnter(player);
-        LevelSettings.OverrideWaterSurfaceTech = Enable;
+        LevelSettings.OverrideWaterWaveDashEnabled = Enable;
+        LevelSettings.OverrideWaterCeilingHyperEnabled = Enable;
+        LevelSettings.OverrideWaterBottomSurfaceJumpEnabled = Enable;
     }
 }

@@ -14,6 +14,8 @@ public class GroundTechTrigger : AbstractTrigger {
 
     public override void OnEnter(Player player) {
         base.OnEnter(player);
-        LevelSettings.OverrideGroundTech = Enable;
+        LevelSettings.OverrideGroundJumpEnabled = Enable;
+        LevelSettings.OverrideGroundHyperEnabled = Enable;
+        LevelSettings.OverrideGroundUltraEnabled = Enable;
     }
 }

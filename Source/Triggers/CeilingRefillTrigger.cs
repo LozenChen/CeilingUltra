@@ -14,6 +14,7 @@ public class CeilingRefillTrigger : AbstractTrigger {
 
     public override void OnEnter(Player player) {
         base.OnEnter(player);
-        LevelSettings.OverrideCeilingRefill = Enable;
+        LevelSettings.OverrideCeilingRefillStamina = Enable;
+        LevelSettings.OverrideCeilingRefillDash = Enable;
     }
 }

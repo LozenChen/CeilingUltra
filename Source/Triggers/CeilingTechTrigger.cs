@@ -14,6 +14,8 @@ public class CeilingTechTrigger : AbstractTrigger {
 
     public override void OnEnter(Player player) {
         base.OnEnter(player);
-        LevelSettings.OverrideCeilingTech = Enable;
+        LevelSettings.OverrideCeilingJumpEnabled = Enable;
+        LevelSettings.OverrideCeilingHyperEnabled = Enable;
+        LevelSettings.OverrideCeilingUltraEnabled = Enable;
     }
 }

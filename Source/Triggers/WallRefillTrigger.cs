@@ -14,6 +14,7 @@ public class WallRefillTrigger : AbstractTrigger {
 
     public override void OnEnter(Player player) {
         base.OnEnter(player);
-        LevelSettings.OverrideWallRefill = Enable;
+        LevelSettings.OverrideWallRefillStamina = Enable;
+        LevelSettings.OverrideWallRefillDash = Enable;
     }
 }

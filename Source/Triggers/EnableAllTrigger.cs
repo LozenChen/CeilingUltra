@@ -1,4 +1,4 @@
-﻿using Celeste.Mod.CeilingUltra.Module;
+using Celeste.Mod.CeilingUltra.Module;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -47,16 +47,39 @@ public class EnableAllTrigger : AbstractTrigger {
     public override void OnEnter(Player player) {
         base.OnEnter(player);
         LevelSettings.OverrideMainEnabled = Enable;
-        LevelSettings.OverrideWallRefill = WallRefill;
-        LevelSettings.OverrideCeilingRefill = CeilingRefill;
-        LevelSettings.OverrideCeilingTech = CeilingTech;
-        LevelSettings.OverrideBigInertiaUpdiagDash = BigInertiaUpdiagDash;
-        LevelSettings.OverrideVerticalTech = WallTech;
+        LevelSettings.OverrideWallRefillStamina = WallRefill;
+        LevelSettings.OverrideWallRefillDash = WallRefill;
+
+        LevelSettings.OverrideCeilingRefillStamina = CeilingRefill;
+        LevelSettings.OverrideCeilingRefillDash = CeilingRefill;
+        LevelSettings.OverrideCeilingJumpEnabled = CeilingTech;
+        LevelSettings.OverrideCeilingHyperEnabled = CeilingTech;
+        LevelSettings.OverrideCeilingUltraEnabled = CeilingTech;
+
+        LevelSettings.OverrideUpdiagDashEndNoHorizontalSpeedLoss = BigInertiaUpdiagDash;
+
+        LevelSettings.OverrideVerticalUltraEnabled = WallTech;
+        LevelSettings.OverrideVerticalHyperEnabled = WallTech;
+        LevelSettings.OverrideDashBeginNoVerticalSpeedLoss = WallTech;
+        LevelSettings.OverrideUpdiagDashEndNoVerticalSpeedLoss = WallTech;
+
         LevelSettings.OverrideUpwardWallJumpAcceleration = UpwardWallJumpAcceleration;
+
         LevelSettings.OverrideDownwardWallJumpAcceleration = DownwardWallJumpAcceleration;
-        LevelSettings.OverrideGroundTech = GroundTech;
-        LevelSettings.OverrideWaterSurfaceTech = WaterSurfaceTech;
-        LevelSettings.OverrideQoL = QoL;
+
+        LevelSettings.OverrideGroundJumpEnabled = GroundTech;
+        LevelSettings.OverrideGroundHyperEnabled = GroundTech;
+        LevelSettings.OverrideGroundUltraEnabled = GroundTech;
+
+        LevelSettings.OverrideWaterWaveDashEnabled = WaterSurfaceTech;
+        LevelSettings.OverrideWaterCeilingHyperEnabled = WaterSurfaceTech;
+        LevelSettings.OverrideWaterBottomSurfaceJumpEnabled = WaterSurfaceTech;
+
+        LevelSettings.OverrideQoLBufferVerticalHyper = QoL;
+        LevelSettings.OverrideQoLBufferVerticalUltra = QoL;
+        LevelSettings.OverrideQoLRefillDashOnWallJump = QoL;
+        LevelSettings.OverrideQoLBufferCeilingUltra = QoL;
+
         Logger.Info("Ceiling Ultra", $"MainEnabled: {Enable}\n" +
             $"WallRefill: {WallRefill}\n" +
             $"CeilingRefill: {CeilingRefill}\n" +

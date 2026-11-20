@@ -14,6 +14,6 @@ public class BigInertiaUpdiagDashTrigger : AbstractTrigger {
 
     public override void OnEnter(Player player) {
         base.OnEnter(player);
-        LevelSettings.OverrideBigInertiaUpdiagDash = Enable;
+        LevelSettings.OverrideUpdiagDashEndNoHorizontalSpeedLoss = Enable;
     }
 }

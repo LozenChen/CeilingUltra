@@ -14,6 +14,9 @@ public class WallTechTrigger : AbstractTrigger {
 
     public override void OnEnter(Player player) {
         base.OnEnter(player);
-        LevelSettings.OverrideVerticalTech = Enable;
+        LevelSettings.OverrideVerticalUltraEnabled = Enable;
+        LevelSettings.OverrideVerticalHyperEnabled = Enable;
+        LevelSettings.OverrideDashBeginNoVerticalSpeedLoss = Enable;
+        LevelSettings.OverrideUpdiagDashEndNoVerticalSpeedLoss = Enable;
     }
 }

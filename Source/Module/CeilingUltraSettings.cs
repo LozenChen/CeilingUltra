@@ -1,4 +1,4 @@
-﻿namespace Celeste.Mod.CeilingUltra.Module;
+namespace Celeste.Mod.CeilingUltra.Module;
 
 [SettingName("Ceiling Ultra")]
 public class CeilingUltraSettings : EverestModuleSettings {
@@ -90,179 +90,349 @@ public class CeilingUltraSettings : EverestModuleSettings {
 
 public static class LevelSettings {
 
+    private static CeilingUltraSession? Session => CeilingUltraSession.Instance;
+
     [Monocle.Command("ceiling_ultra_cheat", "clear all map settings so you can edit them yourself.")]
     private static void Command_ClearAllOverride() {
         ClearAllOverride();
     }
 
     public static void ClearAllOverride() {
-        OverrideMainEnabled = OverrideCeilingTech = OverrideCeilingRefill = OverrideVerticalTech = OverrideWallRefill = OverrideBigInertiaUpdiagDash = OverrideUpwardWallJumpAcceleration = OverrideDownwardWallJumpAcceleration = OverrideWaterSurfaceTech = OverrideGroundTech = OverrideQoL = null;
+        OverrideMainEnabled = OverrideCeilingUltraEnabled = OverrideCeilingRefillStamina = OverrideCeilingRefillDash = null;
+        OverrideCeilingJumpEnabled = OverrideCeilingHyperEnabled = OverrideUpdiagDashEndNoHorizontalSpeedLoss = null;
+        OverrideWallRefillStamina = OverrideWallRefillDash = OverrideVerticalUltraEnabled = OverrideVerticalHyperEnabled = null;
+        OverrideDashBeginNoVerticalSpeedLoss = OverrideUpdiagDashEndNoVerticalSpeedLoss = null;
+        OverrideUpwardWallJumpAcceleration = OverrideDownwardWallJumpAcceleration = null;
+        OverrideWaterWaveDashEnabled = OverrideWaterCeilingHyperEnabled = OverrideWaterBottomSurfaceJumpEnabled = null;
+        OverrideGroundJumpEnabled = OverrideGroundHyperEnabled = OverrideGroundUltraEnabled = null;
+        OverrideQoLBufferVerticalHyper = OverrideQoLBufferVerticalUltra = null;
+        OverrideQoLRefillDashOnWallJump = OverrideQoLBufferCeilingUltra = null;
+        OverrideHorizontalUltraIntoVerticalUltra = OverrideVerticalUltraIntoHorizontalUltra = null;
     }
 
     public static bool? OverrideMainEnabled {
-        get => CeilingUltraSession.Instance?.OverrideMainEnabled;
+        get => Session?.OverrideMainEnabled;
         set {
-            if (CeilingUltraSession.Instance is { } instance) {
-                instance.OverrideMainEnabled = value;
+            if (Session is { } session) {
+                session.OverrideMainEnabled = value;
             }
         }
     }
 
     public static bool MainEnabled => OverrideMainEnabled.GetValueOrDefault(ceilingUltraSetting.Enabled);
 
-    // CeilingTech
-
-    public static bool? OverrideCeilingTech {
-        get => CeilingUltraSession.Instance?.OverrideCeilingTech;
+    public static bool? OverrideCeilingUltraEnabled {
+        get => Session?.OverrideCeilingUltraEnabled;
         set {
-            if (CeilingUltraSession.Instance is { } instance) {
-                instance.OverrideCeilingTech = value;
-            }
-        }
-    }
-    public static bool CeilingUltraEnabled => MainEnabled && OverrideCeilingTech.GetValueOrDefault(ceilingUltraSetting.CeilingUltraEnabled);
-
-    public static bool CeilingJumpEnabled => MainEnabled && OverrideCeilingTech.GetValueOrDefault(ceilingUltraSetting.CeilingJumpEnabled);
-
-    public static bool CeilingHyperEnabled => MainEnabled && OverrideCeilingTech.GetValueOrDefault(ceilingUltraSetting.CeilingHyperEnabled);
-
-    // Big Inertia Updiag Dash End
-    // it will affect normal gameplay even if you dont use those new techs, so it should be controlled by a standalone trigger
-
-    public static bool? OverrideBigInertiaUpdiagDash {
-        get => CeilingUltraSession.Instance?.OverrideBigInertiaUpdiagDash;
-        set {
-            if (CeilingUltraSession.Instance is { } instance) {
-                instance.OverrideBigInertiaUpdiagDash = value;
+            if (Session is { } session) {
+                session.OverrideCeilingUltraEnabled = value;
             }
         }
     }
 
-    public static bool UpdiagDashEndNoHorizontalSpeedLoss => MainEnabled && OverrideBigInertiaUpdiagDash.GetValueOrDefault(ceilingUltraSetting.UpdiagDashEndNoHorizontalSpeedLoss);
+    public static bool CeilingUltraEnabled => MainEnabled && OverrideCeilingUltraEnabled.GetValueOrDefault(ceilingUltraSetting.CeilingUltraEnabled);
 
-    // CeilingRefill
-
-    public static bool? OverrideCeilingRefill {
-        get => CeilingUltraSession.Instance?.OverrideCeilingRefill;
+    public static bool? OverrideCeilingRefillStamina {
+        get => Session?.OverrideCeilingRefillStamina;
         set {
-            if (CeilingUltraSession.Instance is { } instance) {
-                instance.OverrideCeilingRefill = value;
+            if (Session is { } session) {
+                session.OverrideCeilingRefillStamina = value;
             }
         }
     }
-    public static bool CeilingRefillStamina => MainEnabled && OverrideCeilingRefill.GetValueOrDefault(ceilingUltraSetting.CeilingRefillStamina);
 
-    public static bool CeilingRefillDash => MainEnabled && OverrideCeilingRefill.GetValueOrDefault(ceilingUltraSetting.CeilingRefillDash);
+    public static bool CeilingRefillStamina => MainEnabled && OverrideCeilingRefillStamina.GetValueOrDefault(ceilingUltraSetting.CeilingRefillStamina);
 
-    // WallRefill
-
-    public static bool? OverrideWallRefill {
-        get => CeilingUltraSession.Instance?.OverrideWallRefill;
+    public static bool? OverrideCeilingRefillDash {
+        get => Session?.OverrideCeilingRefillDash;
         set {
-            if (CeilingUltraSession.Instance is { } instance) {
-                instance.OverrideWallRefill = value;
+            if (Session is { } session) {
+                session.OverrideCeilingRefillDash = value;
             }
         }
     }
-    public static bool WallRefillStamina => MainEnabled && OverrideWallRefill.GetValueOrDefault(ceilingUltraSetting.WallRefillStamina);
 
-    public static bool WallRefillDash => MainEnabled && OverrideWallRefill.GetValueOrDefault(ceilingUltraSetting.WallRefillDash);
+    public static bool CeilingRefillDash => MainEnabled && OverrideCeilingRefillDash.GetValueOrDefault(ceilingUltraSetting.CeilingRefillDash);
 
-    // VerticallTech
-
-    public static bool? OverrideVerticalTech {
-        get => CeilingUltraSession.Instance?.OverrideVerticalTech;
+    public static bool? OverrideCeilingJumpEnabled {
+        get => Session?.OverrideCeilingJumpEnabled;
         set {
-            if (CeilingUltraSession.Instance is { } instance) {
-                instance.OverrideVerticalTech = value;
+            if (Session is { } session) {
+                session.OverrideCeilingJumpEnabled = value;
             }
         }
     }
-    public static bool UpdiagDashEndNoVerticalSpeedLoss => MainEnabled && OverrideVerticalTech.GetValueOrDefault(ceilingUltraSetting.UpdiagDashEndNoVerticalSpeedLoss);
 
-    public static bool VerticalUltraEnabled => MainEnabled && OverrideVerticalTech.GetValueOrDefault(ceilingUltraSetting.VerticalUltraEnabled);
+    public static bool CeilingJumpEnabled => MainEnabled && OverrideCeilingJumpEnabled.GetValueOrDefault(ceilingUltraSetting.CeilingJumpEnabled);
 
-    public static bool VerticalHyperEnabled => MainEnabled && OverrideVerticalTech.GetValueOrDefault(ceilingUltraSetting.VerticalHyperEnabled);
+    public static bool? OverrideCeilingHyperEnabled {
+        get => Session?.OverrideCeilingHyperEnabled;
+        set {
+            if (Session is { } session) {
+                session.OverrideCeilingHyperEnabled = value;
+            }
+        }
+    }
 
-    public static bool DashBeginNoVerticalSpeedLoss => MainEnabled && OverrideVerticalTech.GetValueOrDefault(ceilingUltraSetting.DashBeginNoVerticalSpeedLoss);
+    public static bool CeilingHyperEnabled => MainEnabled && OverrideCeilingHyperEnabled.GetValueOrDefault(ceilingUltraSetting.CeilingHyperEnabled);
 
-    // DelayedUltra
+    public static bool? OverrideUpdiagDashEndNoHorizontalSpeedLoss {
+        get => Session?.OverrideUpdiagDashEndNoHorizontalSpeedLoss;
+        set {
+            if (Session is { } session) {
+                session.OverrideUpdiagDashEndNoHorizontalSpeedLoss = value;
+            }
+        }
+    }
 
-    public static bool HorizontalUltraIntoVerticalUltra => MainEnabled && ceilingUltraSetting.HorizontalUltraIntoVerticalUltra;
+    public static bool UpdiagDashEndNoHorizontalSpeedLoss => MainEnabled && OverrideUpdiagDashEndNoHorizontalSpeedLoss.GetValueOrDefault(ceilingUltraSetting.UpdiagDashEndNoHorizontalSpeedLoss);
 
-    public static bool VerticalUltraIntoHorizontalUltra => MainEnabled && ceilingUltraSetting.VerticalUltraIntoHorizontalUltra;
+    public static bool? OverrideWallRefillStamina {
+        get => Session?.OverrideWallRefillStamina;
+        set {
+            if (Session is { } session) {
+                session.OverrideWallRefillStamina = value;
+            }
+        }
+    }
 
-    // WallJumpAcceleration
+    public static bool WallRefillStamina => MainEnabled && OverrideWallRefillStamina.GetValueOrDefault(ceilingUltraSetting.WallRefillStamina);
+
+    public static bool? OverrideWallRefillDash {
+        get => Session?.OverrideWallRefillDash;
+        set {
+            if (Session is { } session) {
+                session.OverrideWallRefillDash = value;
+            }
+        }
+    }
+
+    public static bool WallRefillDash => MainEnabled && OverrideWallRefillDash.GetValueOrDefault(ceilingUltraSetting.WallRefillDash);
+
+    public static bool? OverrideVerticalUltraEnabled {
+        get => Session?.OverrideVerticalUltraEnabled;
+        set {
+            if (Session is { } session) {
+                session.OverrideVerticalUltraEnabled = value;
+            }
+        }
+    }
+
+    public static bool VerticalUltraEnabled => MainEnabled && OverrideVerticalUltraEnabled.GetValueOrDefault(ceilingUltraSetting.VerticalUltraEnabled);
+
+    public static bool? OverrideVerticalHyperEnabled {
+        get => Session?.OverrideVerticalHyperEnabled;
+        set {
+            if (Session is { } session) {
+                session.OverrideVerticalHyperEnabled = value;
+            }
+        }
+    }
+
+    public static bool VerticalHyperEnabled => MainEnabled && OverrideVerticalHyperEnabled.GetValueOrDefault(ceilingUltraSetting.VerticalHyperEnabled);
+
+    public static bool? OverrideDashBeginNoVerticalSpeedLoss {
+        get => Session?.OverrideDashBeginNoVerticalSpeedLoss;
+        set {
+            if (Session is { } session) {
+                session.OverrideDashBeginNoVerticalSpeedLoss = value;
+            }
+        }
+    }
+
+    public static bool DashBeginNoVerticalSpeedLoss => MainEnabled && OverrideDashBeginNoVerticalSpeedLoss.GetValueOrDefault(ceilingUltraSetting.DashBeginNoVerticalSpeedLoss);
+
+    public static bool? OverrideUpdiagDashEndNoVerticalSpeedLoss {
+        get => Session?.OverrideUpdiagDashEndNoVerticalSpeedLoss;
+        set {
+            if (Session is { } session) {
+                session.OverrideUpdiagDashEndNoVerticalSpeedLoss = value;
+            }
+        }
+    }
+
+    public static bool UpdiagDashEndNoVerticalSpeedLoss => MainEnabled && OverrideUpdiagDashEndNoVerticalSpeedLoss.GetValueOrDefault(ceilingUltraSetting.UpdiagDashEndNoVerticalSpeedLoss);
+
+    public static bool? OverrideHorizontalUltraIntoVerticalUltra {
+        get => Session?.OverrideHorizontalUltraIntoVerticalUltra;
+        set {
+            if (Session is { } session) {
+                session.OverrideHorizontalUltraIntoVerticalUltra = value;
+            }
+        }
+    }
+
+    public static bool HorizontalUltraIntoVerticalUltra => MainEnabled && OverrideHorizontalUltraIntoVerticalUltra.GetValueOrDefault(ceilingUltraSetting.HorizontalUltraIntoVerticalUltra);
+
+    public static bool? OverrideVerticalUltraIntoHorizontalUltra {
+        get => Session?.OverrideVerticalUltraIntoHorizontalUltra;
+        set {
+            if (Session is { } session) {
+                session.OverrideVerticalUltraIntoHorizontalUltra = value;
+            }
+        }
+    }
+
+    public static bool VerticalUltraIntoHorizontalUltra => MainEnabled && OverrideVerticalUltraIntoHorizontalUltra.GetValueOrDefault(ceilingUltraSetting.VerticalUltraIntoHorizontalUltra);
 
     public static bool? OverrideUpwardWallJumpAcceleration {
-        get => CeilingUltraSession.Instance?.OverrideUpwardWallJumpAcceleration;
+        get => Session?.OverrideUpwardWallJumpAcceleration;
         set {
-            if (CeilingUltraSession.Instance is { } instance) {
-                instance.OverrideUpwardWallJumpAcceleration = value;
+            if (Session is { } session) {
+                session.OverrideUpwardWallJumpAcceleration = value;
             }
         }
     }
+
     public static bool UpwardWallJumpAcceleration => MainEnabled && OverrideUpwardWallJumpAcceleration.GetValueOrDefault(ceilingUltraSetting.UpwardWallJumpAcceleration);
 
-
     public static bool? OverrideDownwardWallJumpAcceleration {
-        get => CeilingUltraSession.Instance?.OverrideDownwardWallJumpAcceleration;
+        get => Session?.OverrideDownwardWallJumpAcceleration;
         set {
-            if (CeilingUltraSession.Instance is { } instance) {
-                instance.OverrideDownwardWallJumpAcceleration = value;
+            if (Session is { } session) {
+                session.OverrideDownwardWallJumpAcceleration = value;
             }
         }
     }
+
     public static bool DownwardWallJumpAcceleration => MainEnabled && OverrideDownwardWallJumpAcceleration.GetValueOrDefault(ceilingUltraSetting.DownwardWallJumpAcceleration);
 
-
-    // WaterSurfaceTech
-    public static bool? OverrideWaterSurfaceTech {
-        get => CeilingUltraSession.Instance?.OverrideWaterSurfaceTech;
+    public static bool? OverrideWaterWaveDashEnabled {
+        get => Session?.OverrideWaterWaveDashEnabled;
         set {
-            if (CeilingUltraSession.Instance is { } instance) {
-                instance.OverrideWaterSurfaceTech = value;
+            if (Session is { } session) {
+                session.OverrideWaterWaveDashEnabled = value;
             }
         }
     }
 
-    public static bool WaterWaveDashEnabled => MainEnabled && OverrideWaterSurfaceTech.GetValueOrDefault(ceilingUltraSetting.WaterWaveDashEnabled);
+    public static bool WaterWaveDashEnabled => MainEnabled && OverrideWaterWaveDashEnabled.GetValueOrDefault(ceilingUltraSetting.WaterWaveDashEnabled);
 
-    public static bool WaterCeilingHyperEnabled => MainEnabled && OverrideWaterSurfaceTech.GetValueOrDefault(ceilingUltraSetting.WaterCeilingHyperEnabled);
-
-    public static bool WaterBottomSurfaceJumpEnabled => MainEnabled && OverrideWaterSurfaceTech.GetValueOrDefault(ceilingUltraSetting.WaterBottomSurfaceJumpEnabled);
-
-    // GroundTech
-
-    public static bool? OverrideGroundTech {
-        get => CeilingUltraSession.Instance?.OverrideGroundTech;
+    public static bool? OverrideWaterCeilingHyperEnabled {
+        get => Session?.OverrideWaterCeilingHyperEnabled;
         set {
-            if (CeilingUltraSession.Instance is { } instance) {
-                instance.OverrideGroundTech = value;
+            if (Session is { } session) {
+                session.OverrideWaterCeilingHyperEnabled = value;
             }
         }
     }
-    public static bool GroundJumpEnabled => !MainEnabled || OverrideGroundTech.GetValueOrDefault(ceilingUltraSetting.GroundJumpEnabled);
 
-    public static bool GroundHyperEnabled => !MainEnabled || OverrideGroundTech.GetValueOrDefault(ceilingUltraSetting.GroundHyperEnabled);
+    public static bool WaterCeilingHyperEnabled => MainEnabled && OverrideWaterCeilingHyperEnabled.GetValueOrDefault(ceilingUltraSetting.WaterCeilingHyperEnabled);
 
-    public static bool GroundUltraEnabled => !MainEnabled || OverrideGroundTech.GetValueOrDefault(ceilingUltraSetting.GroundUltraEnabled);
-
-    // QoL
-
-    public static bool? OverrideQoL {
-        get => CeilingUltraSession.Instance?.OverrideQoL;
+    public static bool? OverrideWaterBottomSurfaceJumpEnabled {
+        get => Session?.OverrideWaterBottomSurfaceJumpEnabled;
         set {
-            if (CeilingUltraSession.Instance is { } instance) {
-                instance.OverrideQoL = value;
+            if (Session is { } session) {
+                session.OverrideWaterBottomSurfaceJumpEnabled = value;
             }
         }
     }
-    public static bool QoLBufferVerticalHyper => MainEnabled && OverrideQoL.GetValueOrDefault(ceilingUltraSetting.QoLBufferVerticalHyper);
 
-    public static bool QoLBufferVerticalUltra => MainEnabled && OverrideQoL.GetValueOrDefault(ceilingUltraSetting.QoLBufferVerticalUltra);
+    public static bool WaterBottomSurfaceJumpEnabled => MainEnabled && OverrideWaterBottomSurfaceJumpEnabled.GetValueOrDefault(ceilingUltraSetting.WaterBottomSurfaceJumpEnabled);
 
-    public static bool QoLRefillDashOnWallJump => MainEnabled && OverrideQoL.GetValueOrDefault(ceilingUltraSetting.QoLRefillDashOnWallJump);
+    public static bool? OverrideGroundJumpEnabled {
+        get => Session?.OverrideGroundJumpEnabled;
+        set {
+            if (Session is { } session) {
+                session.OverrideGroundJumpEnabled = value;
+            }
+        }
+    }
 
-    public static bool QoLBufferCeilingUltra => MainEnabled && OverrideQoL.GetValueOrDefault(ceilingUltraSetting.QoLBufferCeilingUltra);
+    public static bool GroundJumpEnabled => !MainEnabled || OverrideGroundJumpEnabled.GetValueOrDefault(ceilingUltraSetting.GroundJumpEnabled);
+
+    public static bool? OverrideGroundHyperEnabled {
+        get => Session?.OverrideGroundHyperEnabled;
+        set {
+            if (Session is { } session) {
+                session.OverrideGroundHyperEnabled = value;
+            }
+        }
+    }
+
+    public static bool GroundHyperEnabled => !MainEnabled || OverrideGroundHyperEnabled.GetValueOrDefault(ceilingUltraSetting.GroundHyperEnabled);
+
+    public static bool? OverrideGroundUltraEnabled {
+        get => Session?.OverrideGroundUltraEnabled;
+        set {
+            if (Session is { } session) {
+                session.OverrideGroundUltraEnabled = value;
+            }
+        }
+    }
+
+    public static bool GroundUltraEnabled => !MainEnabled || OverrideGroundUltraEnabled.GetValueOrDefault(ceilingUltraSetting.GroundUltraEnabled);
+
+    public static bool? OverrideQoLBufferVerticalHyper {
+        get => Session?.OverrideQoLBufferVerticalHyper;
+        set {
+            if (Session is { } session) {
+                session.OverrideQoLBufferVerticalHyper = value;
+            }
+        }
+    }
+
+    public static bool QoLBufferVerticalHyper => MainEnabled && OverrideQoLBufferVerticalHyper.GetValueOrDefault(ceilingUltraSetting.QoLBufferVerticalHyper);
+
+    public static bool? OverrideQoLBufferVerticalUltra {
+        get => Session?.OverrideQoLBufferVerticalUltra;
+        set {
+            if (Session is { } session) {
+                session.OverrideQoLBufferVerticalUltra = value;
+            }
+        }
+    }
+
+    public static bool QoLBufferVerticalUltra => MainEnabled && OverrideQoLBufferVerticalUltra.GetValueOrDefault(ceilingUltraSetting.QoLBufferVerticalUltra);
+
+    public static bool? OverrideQoLRefillDashOnWallJump {
+        get => Session?.OverrideQoLRefillDashOnWallJump;
+        set {
+            if (Session is { } session) {
+                session.OverrideQoLRefillDashOnWallJump = value;
+            }
+        }
+    }
+
+    public static bool QoLRefillDashOnWallJump => MainEnabled && OverrideQoLRefillDashOnWallJump.GetValueOrDefault(ceilingUltraSetting.QoLRefillDashOnWallJump);
+
+    public static bool? OverrideQoLBufferCeilingUltra {
+        get => Session?.OverrideQoLBufferCeilingUltra;
+        set {
+            if (Session is { } session) {
+                session.OverrideQoLBufferCeilingUltra = value;
+            }
+        }
+    }
+
+    public static bool QoLBufferCeilingUltra => MainEnabled && OverrideQoLBufferCeilingUltra.GetValueOrDefault(ceilingUltraSetting.QoLBufferCeilingUltra);
+
+    public static bool AnyOverride =>
+        OverrideMainEnabled.HasValue
+        || OverrideCeilingUltraEnabled.HasValue
+        || OverrideCeilingRefillStamina.HasValue
+        || OverrideCeilingRefillDash.HasValue
+        || OverrideCeilingJumpEnabled.HasValue
+        || OverrideCeilingHyperEnabled.HasValue
+        || OverrideUpdiagDashEndNoHorizontalSpeedLoss.HasValue
+        || OverrideWallRefillStamina.HasValue
+        || OverrideWallRefillDash.HasValue
+        || OverrideVerticalUltraEnabled.HasValue
+        || OverrideVerticalHyperEnabled.HasValue
+        || OverrideDashBeginNoVerticalSpeedLoss.HasValue
+        || OverrideUpdiagDashEndNoVerticalSpeedLoss.HasValue
+        || OverrideHorizontalUltraIntoVerticalUltra.HasValue
+        || OverrideVerticalUltraIntoHorizontalUltra.HasValue
+        || OverrideUpwardWallJumpAcceleration.HasValue
+        || OverrideDownwardWallJumpAcceleration.HasValue
+        || OverrideWaterWaveDashEnabled.HasValue
+        || OverrideWaterCeilingHyperEnabled.HasValue
+        || OverrideWaterBottomSurfaceJumpEnabled.HasValue
+        || OverrideGroundJumpEnabled.HasValue
+        || OverrideGroundHyperEnabled.HasValue
+        || OverrideGroundUltraEnabled.HasValue
+        || OverrideQoLBufferVerticalHyper.HasValue
+        || OverrideQoLBufferVerticalUltra.HasValue
+        || OverrideQoLRefillDashOnWallJump.HasValue
+        || OverrideQoLBufferCeilingUltra.HasValue;
 }

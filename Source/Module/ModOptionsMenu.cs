@@ -44,75 +44,65 @@ internal static class ModOptionsMenu {
             }
             disabledItems = new List<TextMenu.Item>();
 
-            bool overrideMain = LevelSettings.OverrideMainEnabled.HasValue;
-            bool overrideCeilTech = LevelSettings.OverrideCeilingTech.HasValue;
-            bool overrideCeilRefill = LevelSettings.OverrideCeilingRefill.HasValue;
-            bool overrideUpdiagEnd = LevelSettings.OverrideBigInertiaUpdiagDash.HasValue;
-            bool overrideWallRefill = LevelSettings.OverrideWallRefill.HasValue;
-            bool overrideVertTech = LevelSettings.OverrideVerticalTech.HasValue;
-            bool overrideUpWallJumpAcc = LevelSettings.OverrideUpwardWallJumpAcceleration.HasValue;
-            bool overrideDownWallJumpAcc = LevelSettings.OverrideDownwardWallJumpAcceleration.HasValue;
-            bool overrideWaterTech = LevelSettings.OverrideWaterSurfaceTech.HasValue;
-            bool overrideGroundTech = LevelSettings.OverrideGroundTech.HasValue;
-            bool overrideQoL = LevelSettings.OverrideQoL.HasValue;
-
 
             Add(new EaseInSubHeader("Ceiling Mechanisms".ToDialogText()) { HeightExtra = 30f });
 
 
-            Add(new EaseInOnOffExt("Ceiling Refill Stamina".ToDialogText(), LevelSettings.CeilingRefillStamina, overrideCeilRefill).Change(value => ceilingUltraSetting.CeilingRefillStamina = value));
-            Add(new EaseInOnOffExt("Ceiling Refill Dash".ToDialogText(), LevelSettings.CeilingRefillDash, overrideCeilRefill).Change(value => ceilingUltraSetting.CeilingRefillDash = value));
+            Add(new EaseInOnOffExt("Ceiling Refill Stamina".ToDialogText(), LevelSettings.CeilingRefillStamina, LevelSettings.OverrideCeilingRefillStamina).Change(value => ceilingUltraSetting.CeilingRefillStamina = value));
+            Add(new EaseInOnOffExt("Ceiling Refill Dash".ToDialogText(), LevelSettings.CeilingRefillDash, LevelSettings.OverrideCeilingRefillDash).Change(value => ceilingUltraSetting.CeilingRefillDash = value));
 
 
-            Add(new EaseInOnOffExt("Ceiling Jump".ToDialogText(), LevelSettings.CeilingJumpEnabled, overrideCeilTech).Change(value => ceilingUltraSetting.CeilingJumpEnabled = value));
-            Add(new EaseInOnOffExt("Ceiling Super Hyper".ToDialogText(), LevelSettings.CeilingHyperEnabled, overrideCeilTech).Change(value => ceilingUltraSetting.CeilingHyperEnabled = value));
-            Add(new EaseInOnOffExt("Ceiling Ultra".ToDialogText(), LevelSettings.CeilingUltraEnabled, overrideCeilTech).Change(value => ceilingUltraSetting.CeilingUltraEnabled = value));
+            Add(new EaseInOnOffExt("Ceiling Jump".ToDialogText(), LevelSettings.CeilingJumpEnabled, LevelSettings.OverrideCeilingJumpEnabled).Change(value => ceilingUltraSetting.CeilingJumpEnabled = value));
+            Add(new EaseInOnOffExt("Ceiling Super Hyper".ToDialogText(), LevelSettings.CeilingHyperEnabled, LevelSettings.OverrideCeilingHyperEnabled).Change(value => ceilingUltraSetting.CeilingHyperEnabled = value));
+            Add(new EaseInOnOffExt("Ceiling Ultra".ToDialogText(), LevelSettings.CeilingUltraEnabled, LevelSettings.OverrideCeilingUltraEnabled).Change(value => ceilingUltraSetting.CeilingUltraEnabled = value));
 
 
-            Add(new EaseInOnOffExt("Updiag Dash End No Horizontal Speed Loss".ToDialogText(), LevelSettings.UpdiagDashEndNoHorizontalSpeedLoss, overrideUpdiagEnd).Change(value => ceilingUltraSetting.UpdiagDashEndNoHorizontalSpeedLoss = value));
+            Add(new EaseInOnOffExt("Updiag Dash End No Horizontal Speed Loss".ToDialogText(), LevelSettings.UpdiagDashEndNoHorizontalSpeedLoss, LevelSettings.OverrideUpdiagDashEndNoHorizontalSpeedLoss).Change(value => ceilingUltraSetting.UpdiagDashEndNoHorizontalSpeedLoss = value));
 
 
             Add(new EaseInSubHeader("Vertical Mechanisms".ToDialogText()) { HeightExtra = 30f });
 
 
-            Add(new EaseInOnOffExt("Wall Refill Stamina".ToDialogText(), LevelSettings.WallRefillStamina, overrideWallRefill).Change(value => ceilingUltraSetting.WallRefillStamina = value));
-            Add(new EaseInOnOffExt("Wall Refill Dash".ToDialogText(), LevelSettings.WallRefillDash, overrideWallRefill).Change(value => ceilingUltraSetting.WallRefillDash = value));
+            Add(new EaseInOnOffExt("Wall Refill Stamina".ToDialogText(), LevelSettings.WallRefillStamina, LevelSettings.OverrideWallRefillStamina).Change(value => ceilingUltraSetting.WallRefillStamina = value));
+            Add(new EaseInOnOffExt("Wall Refill Dash".ToDialogText(), LevelSettings.WallRefillDash, LevelSettings.OverrideWallRefillDash).Change(value => ceilingUltraSetting.WallRefillDash = value));
 
 
-            Add(new EaseInOnOffExt("Vertical Hyper".ToDialogText(), LevelSettings.VerticalHyperEnabled, overrideVertTech).Change(value => ceilingUltraSetting.VerticalHyperEnabled = value));
-            Add(new EaseInOnOffExt("Vertical Ultra".ToDialogText(), LevelSettings.VerticalUltraEnabled, overrideVertTech).Change(value => ceilingUltraSetting.VerticalUltraEnabled = value));
-            Add(new EaseInOnOffExt("Dash Begin No Vertical Speed Loss".ToDialogText(), LevelSettings.DashBeginNoVerticalSpeedLoss, overrideVertTech).Change(value => ceilingUltraSetting.DashBeginNoVerticalSpeedLoss = value));
-            Add(new EaseInOnOffExt("Updiag Dash End No Vertical Speed Loss".ToDialogText(), LevelSettings.UpdiagDashEndNoVerticalSpeedLoss, overrideVertTech).Change(value => ceilingUltraSetting.UpdiagDashEndNoVerticalSpeedLoss = value));
+            Add(new EaseInOnOffExt("Vertical Hyper".ToDialogText(), LevelSettings.VerticalHyperEnabled, LevelSettings.OverrideVerticalHyperEnabled).Change(value => ceilingUltraSetting.VerticalHyperEnabled = value));
+            Add(new EaseInOnOffExt("Vertical Ultra".ToDialogText(), LevelSettings.VerticalUltraEnabled, LevelSettings.OverrideVerticalUltraEnabled).Change(value => ceilingUltraSetting.VerticalUltraEnabled = value));
+            Add(new EaseInOnOffExt("Dash Begin No Vertical Speed Loss".ToDialogText(), LevelSettings.DashBeginNoVerticalSpeedLoss, LevelSettings.OverrideDashBeginNoVerticalSpeedLoss).Change(value => ceilingUltraSetting.DashBeginNoVerticalSpeedLoss = value));
+            Add(new EaseInOnOffExt("Updiag Dash End No Vertical Speed Loss".ToDialogText(), LevelSettings.UpdiagDashEndNoVerticalSpeedLoss, LevelSettings.OverrideUpdiagDashEndNoVerticalSpeedLoss).Change(value => ceilingUltraSetting.UpdiagDashEndNoVerticalSpeedLoss = value));
 
 
-            Add(new EaseInOnOffExt("Upward Wall Jump Acceleration".ToDialogText(), LevelSettings.UpwardWallJumpAcceleration, overrideUpWallJumpAcc).Change(value => ceilingUltraSetting.UpwardWallJumpAcceleration = value));
-            Add(new EaseInOnOffExt("Downward Wall Jump Acceleration".ToDialogText(), LevelSettings.DownwardWallJumpAcceleration, overrideDownWallJumpAcc).Change(value => ceilingUltraSetting.DownwardWallJumpAcceleration = value));
+            Add(new EaseInOnOffExt("Upward Wall Jump Acceleration".ToDialogText(), LevelSettings.UpwardWallJumpAcceleration, LevelSettings.OverrideUpwardWallJumpAcceleration).Change(value => ceilingUltraSetting.UpwardWallJumpAcceleration = value));
+            Add(new EaseInOnOffExt("Downward Wall Jump Acceleration".ToDialogText(), LevelSettings.DownwardWallJumpAcceleration, LevelSettings.OverrideDownwardWallJumpAcceleration).Change(value => ceilingUltraSetting.DownwardWallJumpAcceleration = value));
 
 
             Add(new EaseInSubHeader("Water Surface Mechanisms".ToDialogText()) { HeightExtra = 30f });
-            Add(new EaseInOnOffExt("Real Wave Dash".ToDialogText(), ceilingUltraSetting.WaterWaveDashEnabled, overrideWaterTech).Change(value => ceilingUltraSetting.WaterWaveDashEnabled = value));
-            Add(new EaseInOnOffExt("Water Ceiling Hyper".ToDialogText(), ceilingUltraSetting.WaterCeilingHyperEnabled, overrideWaterTech).Change(value => ceilingUltraSetting.WaterCeilingHyperEnabled = value));
-            Add(new EaseInOnOffExt("Water Bottom Surface Jump".ToDialogText(), ceilingUltraSetting.WaterBottomSurfaceJumpEnabled, overrideWaterTech).Change(value => ceilingUltraSetting.WaterBottomSurfaceJumpEnabled = value));
+            Add(new EaseInOnOffExt("Real Wave Dash".ToDialogText(), ceilingUltraSetting.WaterWaveDashEnabled, LevelSettings.OverrideWaterWaveDashEnabled).Change(value => ceilingUltraSetting.WaterWaveDashEnabled = value));
+            Add(new EaseInOnOffExt("Water Ceiling Hyper".ToDialogText(), ceilingUltraSetting.WaterCeilingHyperEnabled, LevelSettings.OverrideWaterCeilingHyperEnabled).Change(value => ceilingUltraSetting.WaterCeilingHyperEnabled = value));
+            Add(new EaseInOnOffExt("Water Bottom Surface Jump".ToDialogText(), ceilingUltraSetting.WaterBottomSurfaceJumpEnabled, LevelSettings.OverrideWaterBottomSurfaceJumpEnabled).Change(value => ceilingUltraSetting.WaterBottomSurfaceJumpEnabled = value));
 
 
             Add(new EaseInSubHeader("Ground Mechanisms".ToDialogText()) { HeightExtra = 30f });
 
-            Add(new EaseInOnOffExt("Ground Jump".ToDialogText(), LevelSettings.GroundJumpEnabled, overrideGroundTech).Change(value => ceilingUltraSetting.GroundJumpEnabled = value));
-            Add(new EaseInOnOffExt("Ground Super Hyper".ToDialogText(), LevelSettings.GroundHyperEnabled, overrideGroundTech).Change(value => ceilingUltraSetting.GroundHyperEnabled = value));
-            Add(new EaseInOnOffExt("Ground Ultra".ToDialogText(), LevelSettings.GroundUltraEnabled, overrideGroundTech).Change(value => ceilingUltraSetting.GroundUltraEnabled = value));
+            Add(new EaseInOnOffExt("Ground Jump".ToDialogText(), LevelSettings.GroundJumpEnabled, LevelSettings.OverrideGroundJumpEnabled).Change(value => ceilingUltraSetting.GroundJumpEnabled = value));
+            Add(new EaseInOnOffExt("Ground Super Hyper".ToDialogText(), LevelSettings.GroundHyperEnabled, LevelSettings.OverrideGroundHyperEnabled).Change(value => ceilingUltraSetting.GroundHyperEnabled = value));
+            Add(new EaseInOnOffExt("Ground Ultra".ToDialogText(), LevelSettings.GroundUltraEnabled, LevelSettings.OverrideGroundUltraEnabled).Change(value => ceilingUltraSetting.GroundUltraEnabled = value));
 
 
             Add(new EaseInSubHeader("QoL".ToDialogText()) { HeightExtra = 30f });
 
-            Add(new EaseInOnOffExt("Buffered Vertical Hyper".ToDialogText(), LevelSettings.QoLBufferVerticalHyper, overrideQoL).Change(value => ceilingUltraSetting.QoLBufferVerticalHyper = value)); // actually not buffered but stops wall jump when dash
-            Add(new EaseInOnOffExt("Buffered Vertical Ultra".ToDialogText(), LevelSettings.QoLBufferVerticalUltra, overrideQoL).Change(value => ceilingUltraSetting.QoLBufferVerticalUltra = value)); // stops some wall jump when in normal update
-            Add(new EaseInOnOffExt("Buffered Ceiling Ultra".ToDialogText(), LevelSettings.QoLBufferCeilingUltra, overrideQoL).Change(value => ceilingUltraSetting.QoLBufferCeilingUltra = value)); // force a ceiling ultra when ceiling jump in normal update
+            Add(new EaseInOnOffExt("Buffered Vertical Hyper".ToDialogText(), LevelSettings.QoLBufferVerticalHyper, LevelSettings.OverrideQoLBufferVerticalHyper).Change(value => ceilingUltraSetting.QoLBufferVerticalHyper = value)); // actually not buffered but stops wall jump when dash
+            Add(new EaseInOnOffExt("Buffered Vertical Ultra".ToDialogText(), LevelSettings.QoLBufferVerticalUltra, LevelSettings.OverrideQoLBufferVerticalUltra).Change(value => ceilingUltraSetting.QoLBufferVerticalUltra = value)); // stops some wall jump when in normal update
+            Add(new EaseInOnOffExt("Buffered Ceiling Ultra".ToDialogText(), LevelSettings.QoLBufferCeilingUltra, LevelSettings.OverrideQoLBufferCeilingUltra).Change(value => ceilingUltraSetting.QoLBufferCeilingUltra = value)); // force a ceiling ultra when ceiling jump in normal update
 
             TextMenu.Item QoL_RefillDashOnWallJump;
-            Add(QoL_RefillDashOnWallJump = new EaseInOnOffExt("Refill Dash on Wall Jump".ToDialogText(), LevelSettings.QoLRefillDashOnWallJump, overrideQoL).Change(value => ceilingUltraSetting.QoLRefillDashOnWallJump = value)); // refill dash on wall jump even if you are not adjacent to wall
+            Add(QoL_RefillDashOnWallJump = new EaseInOnOffExt("Refill Dash on Wall Jump".ToDialogText(), LevelSettings.QoLRefillDashOnWallJump, LevelSettings.OverrideQoLRefillDashOnWallJump).Change(value => ceilingUltraSetting.QoLRefillDashOnWallJump = value)); // refill dash on wall jump even if you are not adjacent to wall
             Add(CreateDescription(menu, QoL_RefillDashOnWallJump, "Refill Dash On Wall Jump Description".ToDialogText()));
 
-            if (overrideMain || overrideCeilRefill || overrideCeilTech || overrideVertTech || overrideWallRefill || overrideUpdiagEnd || overrideUpWallJumpAcc || overrideDownWallJumpAcc || overrideWaterTech || overrideGroundTech || overrideQoL) {
+
+            if (LevelSettings.AnyOverride)
+            {
                 Add(new EaseInSubHeader("Lock By Map".ToDialogText()) { TextColor = Color.Goldenrod, HeightExtra = 10f });
             }
 
@@ -319,6 +309,11 @@ public class EaseInOnOffExt : OnOffExt, IEaseInItem {
         FadeVisible = Visible = true;
     }
 
+    public EaseInOnOffExt(string label, bool on, bool? overrideValue) : base(label, on, overrideValue.HasValue) {
+        alpha = unEasedAlpha = 1f;
+        FadeVisible = Visible = true;
+    }
+
     public override float Height() => MathHelper.Lerp(-Container.ItemSpacing, base.Height(), alpha);
 
     public override void Update() {
@@ -343,27 +338,27 @@ public class EaseInOnOffExt : OnOffExt, IEaseInItem {
 
 public class OnOffExt : Item {
     //
-    // 摘要:
+    // 鎽樿:
     //     The displayed name for this setting.
     public string Label;
 
     //
-    // 摘要:
+    // 鎽樿:
     //     The index of the current selection in Celeste.TextMenu.Option`1.Values.
     public int Index;
 
     //
-    // 摘要:
+    // 鎽樿:
     //     Invoked when the value changes.
     public Action<bool> OnValueChange;
 
     //
-    // 摘要:
+    // 鎽樿:
     //     The previously selected index.
     public int PreviousIndex;
 
     //
-    // 摘要:
+    // 鎽樿:
     //     The list of label/value pairs.
     public List<Tuple<string, bool>> Values;
 
@@ -376,16 +371,16 @@ public class OnOffExt : Item {
     public List<string> cachedRightWidthContent = new List<string>();
 
     //
-    // 摘要:
+    // 鎽樿:
     //     The color the text takes when the option is active, but unselected (defaults
     //     to white).
     public Color UnselectedColor = Color.White;
 
     //
-    // 摘要:
+    // 鎽樿:
     //     Create a new Celeste.TextMenu.Option`1.
     //
-    // 参数:
+    // 鍙傛暟:
     //   label:
     //     The display name for this setting.
     public OnOffExt(string label) : base() {
@@ -406,10 +401,10 @@ public class OnOffExt : Item {
     public bool disabled = false;
 
     //
-    // 摘要:
+    // 鎽樿:
     //     Add an option.
     //
-    // 参数:
+    // 鍙傛暟:
     //   label:
     //     The display text for this option.
     //
@@ -428,10 +423,10 @@ public class OnOffExt : Item {
     }
 
     //
-    // 摘要:
+    // 鎽樿:
     //     Set the action that will be invoked when the value changes.
     //
-    // 参数:
+    // 鍙傛暟:
     //   action:
     public OnOffExt Change(Action<bool> action) {
         OnValueChange = action;

@@ -14,6 +14,9 @@ public class QoLTrigger : AbstractTrigger {
 
     public override void OnEnter(Player player) {
         base.OnEnter(player);
-        LevelSettings.OverrideQoL = Enable;
+        LevelSettings.OverrideQoLBufferVerticalHyper = Enable;
+        LevelSettings.OverrideQoLBufferVerticalUltra = Enable;
+        LevelSettings.OverrideQoLRefillDashOnWallJump = Enable;
+        LevelSettings.OverrideQoLBufferCeilingUltra = Enable;
     }
 }
