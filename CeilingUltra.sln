@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.4.33213.308
@@ -12,6 +12,7 @@ Global
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{8AA4040A-8388-48E7-9726-BC2D75BF49CB}.Debug|Any CPU.ActiveCfg = Release|Any CPU
+		{8AA4040A-8388-48E7-9726-BC2D75BF49CB}.Debug|Any CPU.Build.0 = Release|Any CPU
 		{8AA4040A-8388-48E7-9726-BC2D75BF49CB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8AA4040A-8388-48E7-9726-BC2D75BF49CB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection

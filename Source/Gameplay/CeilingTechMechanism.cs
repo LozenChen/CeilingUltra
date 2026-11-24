@@ -257,7 +257,7 @@ public static class CeilingTechMechanism {
         }
 
         if (PlayerOnCeiling) {
-            if (CeilingRefillStamina && !player.CollideCheck<IceCeiling>()) {
+            if (CeilingRefillStamina && !CollideCheckHelper.CheckIceCeiling(player)) {
                 player.Stamina = 110f;
                 player.wallSlideTimer = 1.2f;
             }
@@ -314,7 +314,7 @@ public static class CeilingTechMechanism {
         "Player.orig_Update".LogHookData("Ceiling Jump", true);
         "Player.orig_Update".LogHookData("Ceiling/Wall RefillStamina", true);
 
-        bool success = true;
+        bool success = false;
         if (cursor.TryGotoNext(MoveType.AfterLabel, ins => ins.OpCode == OpCodes.Ldarg_0, ins => ins.MatchLdfld<Player>(nameof(Player.dashRefillCooldownTimer)), ins => ins.MatchLdcR4(0f), ins => ins.OpCode == OpCodes.Ble_Un_S)) {
             cursor.Emit(OpCodes.Ldarg_0);
             cursor.EmitDelegate(RecordGroundJumpGraceTimer);
@@ -322,10 +322,19 @@ public static class CeilingTechMechanism {
             cursor.GotoLabel(target);
             cursor.Emit(OpCodes.Ldarg_0);
             cursor.EmitDelegate(ExtendedRefillDash);
+            if (cursor.TryGotoNext(ins => ins.MatchLdfld<Assists>(nameof(Assists.Invincible)))) {
+                if (cursor.TryGotoNext(ins => ins.MatchCallvirt<Player>(nameof(Player.RefillDash)))) {
+                    Instruction skipRefill = cursor.Next.Next.Next;
+                    cursor.Index--;
+                    cursor.MoveAfterLabels();
+                    cursor.Emit(OpCodes.Ldarg_0);
+                    cursor.EmitDelegate(IceCeilingHelper.NoCeilingUltraIceFloor);
+                    cursor.Emit(OpCodes.Brfalse, skipRefill);
+                    success = true;
+                }
+            }
         }
-        else {
-            success = false;
-        }
+
         "Player.orig_Update".LogHookData("Ceiling/Wall RefillDash", success);
     }
 
@@ -770,7 +779,7 @@ public static class CeilingTechMechanism {
         if (stillNextTo && !player.Inventory.NoRefills && player.Dashes < player.MaxDashes && (!FixedSpikeCollisionCheck(player) || SaveData.Instance.Assists.Invincible)) {
             // we don't want player to refill dash, when colliding with a moving block with spikes, by abusing Order of Operations
             hitSuppressDashRefill = CollisionDirection switch {
-                CollisionDirections.Up => player.CollideCheck<IceCeiling>(),
+                CollisionDirections.Up => CollideCheckHelper.CheckIceCeiling(player),
                 CollisionDirections.Left => ClimbBlocker.Check(player.Scene, player, player.Position - Vector2.UnitX),
                 CollisionDirections.Right => ClimbBlocker.Check(player.Scene, player, player.Position + Vector2.UnitX),
                 _ => false
@@ -799,7 +808,7 @@ public static class CeilingTechMechanism {
         if (MainEnabled
             && !player.Inventory.NoRefills && player.Dashes < player.MaxDashes
             && (
-                (CheckCeilingRefill && !player.CollideCheck<IceCeiling>()) ||
+                (CheckCeilingRefill && !CollideCheckHelper.CheckIceCeiling(player)) ||
                 (CheckLeftRefill && !ClimbBlocker.Check(player.Scene, player, player.Position - Vector2.UnitX)) ||
                 (CheckRightRefill && !ClimbBlocker.Check(player.Scene, player, player.Position + Vector2.UnitX))
             )

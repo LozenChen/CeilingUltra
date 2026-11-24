@@ -1,3 +1,5 @@
+﻿using Celeste.Mod.CeilingUltra.ModInterop;
+using Celeste.Mod.CeilingUltra.Utils;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -31,8 +33,6 @@ public class IceCeiling : Entity {
     private List<Sprite> tiles;
 
     private Vector2 imageOffset;
-
-
 
     private List<Sprite> BuildSprite() {
         List<Sprite> list = new List<Sprite>();
@@ -78,4 +78,74 @@ public class IceCeiling : Entity {
     }
 
     public static SpriteBank IceCeilingSpriteBank;
+}
+
+internal static class IceCeilingHelper {
+
+
+    private static Type ChroniaIceFloor = null;
+
+    private static Type VortexFloorBooster = null;
+
+    [Initialize]
+    public static void Initialize() {
+        ChroniaIceFloor = ModUtils.GetType("ChroniaHelper", "ChroniaHelper.Entities.IceFloor");
+
+        VortexFloorBooster = ModUtils.GetType("VortexHelper", "Celeste.Mod.VortexHelper.Entities.FloorBooster");
+
+        // no CavernHelper IcyFloor coz it doesn't affect player
+    }
+
+    public static bool CheckCeiling(Player player) {
+        if (GravityImports.IsPlayerInverted) {
+            if (ChroniaIceFloor != null && Engine.Scene.Tracker.GetEntitiesTrackIfNeeded(ChroniaIceFloor) is { } chroniaIceFloor && chroniaIceFloor.IsNotEmpty()) {
+                foreach (Entity e in chroniaIceFloor) {
+                    if (player.CollideCheck(e)) {
+                        return true;
+                    }
+                }
+            }
+
+            if (VortexFloorBooster != null && Engine.Scene.Tracker.GetEntitiesTrackIfNeeded(VortexFloorBooster) is { } floorBoosters && floorBoosters.IsNotEmpty()) {
+                foreach (Entity e in floorBoosters) {
+                    if (player.Bottom <= e.Bottom && player.CollideCheck(e) && IsVortexIceFloor(e)) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+        else {
+            if (player.CollideCheck<IceCeiling>()) {
+                return true;
+            }
+
+            if (VortexFloorBooster != null && Engine.Scene.Tracker.GetEntitiesTrackIfNeeded(VortexFloorBooster) is { } floorBoosters && floorBoosters.IsNotEmpty()) {
+                foreach (Entity e in floorBoosters) {
+                    if (player.Top >= e.Top && player.CollideCheck(e) && IsVortexIceCeiling(e)) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        static bool IsVortexIceFloor(Entity e) {
+            return !e.GetFieldValue<bool>("Ceiling") && e.GetFieldValue<bool>("IceMode") && e.GetFieldValue<bool>("NoRefillsOnIce");
+        }
+
+        static bool IsVortexIceCeiling(Entity e) {
+            // assume player is inverted
+            return e.GetFieldValue<bool>("Ceiling") && e.GetFieldValue<bool>("IceMode") && e.GetFieldValue<bool>("NoRefillsOnIce");
+        }
+    }
+
+    public static bool NoCeilingUltraIceFloor(Player player) {
+        if (!GravityImports.IsPlayerInverted) {
+            return true;
+        }
+        return !player.CollideCheck<IceCeiling>();
+    }
 }
